@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Team Schedule — VL / On-site / WFH</title>
+  <title>Scheduler</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,47 +21,46 @@
 </head>
 
 <body class="bg-slate-50 text-slate-800">
-  <header class="grad text-white">
-    <div class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center"><span class="text-lg">🗓️</span></div>
-          <h1 class="text-xl sm:text-2xl font-semibold">Team Scheduler (VL / On-site / WFH)</h1>
-        </div>
-        <div class="mt-2 sm:mt-0">
-          <input id="userName" type="text" placeholder="Enter your name"
-            class="px-3 py-1.5 rounded-lg text-sm bg-white/20 placeholder-white/70 text-white outline-none focus:ring-2 focus:ring-white/40 w-56" />
-        </div>
-		<!-- Responders filters -->
-		<div class="mt-3 sm:mt-0 grid grid-cols-1 md:grid-cols-5 gap-2 w-full">
-		  <select id="selDivision"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-			<option value="">Loading divisions…</option>
-		  </select>
-		  <select id="selDepartment" class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-			<option value="">Loading departments…</option>
-		  </select>
-		  <select id="selTeam"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-			<option value="">Loading teams…</option>
-		  </select>
-		  <select id="selPosition"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-			<option value="">Loading positions…</option>
-		  </select>
-		  <select id="selName"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-			<option value="">Loading names…</option>
-		  </select>
-		</div>
-
+<header class="grad text-white">
+  <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
+    <!-- Title + Save -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center"><span class="text-lg">🗓️</span></div>
+        <h1 class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
-
       <div class="flex items-center gap-2 text-sm">
-        <button id="exportBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Upload to GitHub</button>
-        <label class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition cursor-pointer">
-          Import <input id="importInput" type="file" accept="application/json" class="hidden" />
-        </label>
-        <button id="resetBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Reset</button>
+        <button id="exportBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Save</button>
       </div>
     </div>
-  </header>
+
+    <!-- Filters -->
+    <div class="grid grid-cols-1 gap-2">
+      <!-- Line 1 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <select id="selDivision"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+          <option value="">Loading divisions…</option>
+        </select>
+        <select id="selDepartment" class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+          <option value="">Loading departments…</option>
+        </select>
+        <select id="selTeam"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+          <option value="">Loading teams…</option>
+        </select>
+      </div>
+      <!-- Line 2 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <select id="selPosition"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+          <option value="">Loading positions…</option>
+        </select>
+        <select id="selName"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+          <option value="">Loading names…</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</header>
+
 
   <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Calendar Card -->
@@ -184,7 +183,6 @@
 	  const teamSel = document.getElementById("selTeam");
 	  const posSel  = document.getElementById("selPosition");
 	  const nameSel = document.getElementById("selName");
-	  const nameInput = document.getElementById("userName");
 
 	  // Current selections (persisted or defaults)
 	  let cur = {
@@ -226,9 +224,6 @@
 	  const names = uniq(rows4.map(r => normVal(r.NAME))).sort();
 	  fillSelect(nameSel, names, cur.NAME || names[0]);
 	  cur.NAME = normVal(nameSel.value || "");
-
-	  // Sync name input with chosen NAME
-	  if (cur.NAME) nameInput.value = cur.NAME;
 
 	  // Persist minimal selections (optional)
 	  localStorage.setItem("responders-filters", JSON.stringify(cur));
@@ -283,17 +278,13 @@
 	  const teamSel = document.getElementById("selTeam");
 	  const posSel  = document.getElementById("selPosition");
 	  const nameSel = document.getElementById("selName");
-	  const nameInput = document.getElementById("userName");
 
 	  divSel.addEventListener("change", () => populateRespondersUI());
 	  depSel.addEventListener("change", () => populateRespondersUI());
 	  teamSel.addEventListener("change", () => populateRespondersUI());
 	  posSel.addEventListener("change", () => populateRespondersUI());
-	  nameSel.addEventListener("change", () => { 
-		document.getElementById("userName").value = nameSel.value; 
-		populateRespondersUI(); // keep persistence in sync
-	  });
-
+	  nameSel.addEventListener("change", () => populateRespondersUI());
+	}
 	  // If user types a name manually, try to snap selects to that record
 	  nameInput.addEventListener("blur", () => {
 		const typed = normVal(nameInput.value);
@@ -435,23 +426,42 @@
     // ======== GitHub Upload via Cloudflare Worker ========
     const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
 
-    async function uploadScheduleViaProxy(){
-    const nameInput = document.getElementById('userName');
-    const exportBtn = document.getElementById('exportBtn');
+	async function uploadScheduleViaProxy(){
+	  const exportBtn = document.getElementById('exportBtn');
+	  const selName = document.getElementById('selName');
+	  const selDivision = document.getElementById('selDivision');
+	  const selDepartment = document.getElementById('selDepartment');
+	  const selTeam = document.getElementById('selTeam');
+	  const selPosition = document.getElementById('selPosition');
 
-    const name = (nameInput.value || '').trim();
-    if(!name){ alert("Enter your name first."); nameInput.focus(); return; }
+	  const name = (selName.value || '').trim();
+	  if(!name){ alert("Pick a Name first."); selName.focus(); return; }
 
-    if(Object.keys(state.data).length === 0){
-      if(!confirm("Your schedule is empty. Upload anyway?")) return;
-    }
+	  if(Object.keys(state.data).length === 0){
+		if(!confirm("Your schedule is empty. Save anyway?")) return;
+	  }
 
-    exportBtn.disabled = true;
-    const prevText = exportBtn.textContent;
-    exportBtn.textContent = "Uploading…";
+	  exportBtn.disabled = true;
+	  const prevText = exportBtn.textContent;
+	  exportBtn.textContent = "Saving…";
 
-    const payload = { name, data: state.data };
-    try{
+	  // include metadata
+	  const payload = {
+		name,
+		data: {
+		  ...state.data,
+		  _meta: {
+			division: selDivision.value,
+			department: selDepartment.value,
+			team: selTeam.value,
+			position: selPosition.value,
+			name,
+			lastSaved: new Date().toISOString()
+		  }
+		}
+	  };
+
+	  try{
 		console.log("Uploading to:", PROXY_URL);
 		const res = await fetch(PROXY_URL, {
 		  method: "POST",
@@ -459,31 +469,28 @@
 		  body: JSON.stringify(payload),
 		});
 
+		if(!res.ok){
+		  const txt = await res.text().catch(()=> "");
+		  throw new Error(txt || `Save failed with status ${res.status}`);
+		}
 
-      if(!res.ok){
-        const txt = await res.text().catch(()=> "");
-        throw new Error(txt || `Upload failed with status ${res.status}`);
-      }
+		const j = await res.json();
+		const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-600 underline">View on GitHub</a>` : '';
+		alert(`Saved ✅\n${j.url || ''}`);
+		document.getElementById('selectedList').innerHTML =
+		  link || '<span class="text-xs text-slate-500">Saved.</span>';
 
-      const j = await res.json();
-      // nicer UI than alert
-      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-600 underline">View on GitHub</a>` : '';
-      alert(`Uploaded to GitHub ✅\n${j.url || ''}`);
-      // also show link under "Selected:"
-      document.getElementById('selectedList').innerHTML =
-        link || '<span class="text-xs text-slate-500">Uploaded.</span>';
+	  } catch(e){
+		alert("Save failed:\n" + e.message);
+	  } finally {
+		exportBtn.disabled = false;
+		exportBtn.textContent = prevText;
+	  }
+	}
 
-    } catch(e){
-      alert("Upload failed:\n" + e.message);
-    } finally {
-      exportBtn.disabled = false;
-      exportBtn.textContent = prevText;
-    }
-  }
 
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
-    loadStore(); render();
 	
 	// ===== Init =====
 	(async () => {
