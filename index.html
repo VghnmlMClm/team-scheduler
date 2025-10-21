@@ -32,6 +32,25 @@
           <input id="userName" type="text" placeholder="Enter your name"
             class="px-3 py-1.5 rounded-lg text-sm bg-white/20 placeholder-white/70 text-white outline-none focus:ring-2 focus:ring-white/40 w-56" />
         </div>
+		<!-- Responders filters -->
+		<div class="mt-3 sm:mt-0 grid grid-cols-1 md:grid-cols-5 gap-2 w-full">
+		  <select id="selDivision"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+			<option value="">Loading divisions…</option>
+		  </select>
+		  <select id="selDepartment" class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+			<option value="">Loading departments…</option>
+		  </select>
+		  <select id="selTeam"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+			<option value="">Loading teams…</option>
+		  </select>
+		  <select id="selPosition"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+			<option value="">Loading positions…</option>
+		  </select>
+		  <select id="selName"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
+			<option value="">Loading names…</option>
+		  </select>
+		</div>
+
       </div>
 
       <div class="flex items-center gap-2 text-sm">
@@ -129,6 +148,168 @@
       storeKey: 'calendar-scheduler-v2-status-only',
       data: {}
     };
+
+	// ===== Responders (directory) =====
+	const RESPONDERS_URL = "Responders.json"; // path in your Pages repo
+
+	// Defaults
+	const DEFAULTS = {
+	  DIVISION: "MDM",
+	  DEPARTMENT: "GDS",
+	  TEAM: "GDM"
+	};
+
+	// State for responders
+	let RESPONDERS = []; // array of { POSITION, DIVISION, DEPARTMENT, TEAM, NAME }
+
+	// Helpers
+	const normKey = k => String(k).trim().toUpperCase();
+	const normVal = v => String(v ?? "").trim();
+	const uniq = arr => [...new Set(arr)];
+	function byKeys(rows, filters) {
+	  return rows.filter(r =>
+		Object.entries(filters).every(([k, v]) => !v || normVal(r[k]) === v)
+	  );
+	}
+	function fillSelect(sel, values, selected) {
+	  sel.innerHTML = values.map(v =>
+		`<option value="${v}">${v}</option>`).join("");
+	  if (selected && values.includes(selected)) sel.value = selected;
+	}
+
+	// Main populate logic
+	function populateRespondersUI(init=false) {
+	  const divSel  = document.getElementById("selDivision");
+	  const depSel  = document.getElementById("selDepartment");
+	  const teamSel = document.getElementById("selTeam");
+	  const posSel  = document.getElementById("selPosition");
+	  const nameSel = document.getElementById("selName");
+	  const nameInput = document.getElementById("userName");
+
+	  // Current selections (persisted or defaults)
+	  let cur = {
+		DIVISION: normVal(divSel.value) || (init ? DEFAULTS.DIVISION : ""),
+		DEPARTMENT: normVal(depSel.value) || (init ? DEFAULTS.DEPARTMENT : ""),
+		TEAM: normVal(teamSel.value) || (init ? DEFAULTS.TEAM : ""),
+		POSITION: normVal(posSel.value),
+		NAME: normVal(nameSel.value)
+	  };
+
+	  // 1) DIVISION
+	  const divisions = uniq(RESPONDERS.map(r => normVal(r.DIVISION))).sort();
+	  if (init && !divisions.includes(DEFAULTS.DIVISION) && divisions.length) DEFAULTS.DIVISION = divisions[0];
+	  fillSelect(divSel, divisions, cur.DIVISION);
+	  cur.DIVISION = normVal(divSel.value);
+
+	  // 2) DEPARTMENT limited by DIVISION
+	  const rows1 = byKeys(RESPONDERS, { DIVISION: cur.DIVISION });
+	  const departments = uniq(rows1.map(r => normVal(r.DEPARTMENT))).sort();
+	  if (init && !departments.includes(DEFAULTS.DEPARTMENT) && departments.length) DEFAULTS.DEPARTMENT = departments[0];
+	  fillSelect(depSel, departments, cur.DEPARTMENT || DEFAULTS.DEPARTMENT);
+	  cur.DEPARTMENT = normVal(depSel.value);
+
+	  // 3) TEAM limited by DIVISION+DEPARTMENT
+	  const rows2 = byKeys(rows1, { DEPARTMENT: cur.DEPARTMENT });
+	  const teams = uniq(rows2.map(r => normVal(r.TEAM))).sort();
+	  if (init && !teams.includes(DEFAULTS.TEAM) && teams.length) DEFAULTS.TEAM = teams[0];
+	  fillSelect(teamSel, teams, cur.TEAM || DEFAULTS.TEAM);
+	  cur.TEAM = normVal(teamSel.value);
+
+	  // 4) POSITION limited by DIVISION+DEPARTMENT+TEAM
+	  const rows3 = byKeys(rows2, { TEAM: cur.TEAM });
+	  const positions = uniq(rows3.map(r => normVal(r.POSITION))).sort();
+	  fillSelect(posSel, positions, cur.POSITION);
+	  cur.POSITION = normVal(posSel.value || positions[0] || "");
+
+	  // 5) NAME limited by DIVISION+DEPARTMENT+TEAM+POSITION
+	  const rows4 = byKeys(rows3, { POSITION: cur.POSITION });
+	  const names = uniq(rows4.map(r => normVal(r.NAME))).sort();
+	  fillSelect(nameSel, names, cur.NAME || names[0]);
+	  cur.NAME = normVal(nameSel.value || "");
+
+	  // Sync name input with chosen NAME
+	  if (cur.NAME) nameInput.value = cur.NAME;
+
+	  // Persist minimal selections (optional)
+	  localStorage.setItem("responders-filters", JSON.stringify(cur));
+	}
+
+	async function loadResponders() {
+	  try {
+		const res = await fetch(RESPONDERS_URL, { headers: { "Accept": "application/json" }});
+		if (!res.ok) throw new Error(`Failed to load Responders.json (${res.status})`);
+		const raw = await res.json();
+
+		// Accept either array of objects OR object with rows—normalize to array
+		const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
+		RESPONDERS = rows.map(r => ({
+		  POSITION:   normVal(r.POSITION   ?? r.position),
+		  DIVISION:   normVal(r.DIVISION   ?? r.division),
+		  DEPARTMENT: normVal(r.DEPARTMENT ?? r.department),
+		  TEAM:       normVal(r.TEAM       ?? r.team),
+		  NAME:       normVal(r.NAME       ?? r.name)
+		})).filter(r => r.NAME);
+
+		// Restore previous filters if any
+		const saved = JSON.parse(localStorage.getItem("responders-filters") || "null");
+		if (saved) {
+		  const divSel  = document.getElementById("selDivision");
+		  const depSel  = document.getElementById("selDepartment");
+		  const teamSel = document.getElementById("selTeam");
+		  const posSel  = document.getElementById("selPosition");
+		  const nameSel = document.getElementById("selName");
+		  divSel.value  = saved.DIVISION || "";
+		  depSel.value  = saved.DEPARTMENT || "";
+		  teamSel.value = saved.TEAM || "";
+		  posSel.value  = saved.POSITION || "";
+		  nameSel.value = saved.NAME || "";
+		}
+
+		populateRespondersUI(true);
+	  } catch (e) {
+		console.error(e);
+		// Fallback: keep controls disabled
+		["selDivision","selDepartment","selTeam","selPosition","selName"].forEach(id=>{
+		  const el = document.getElementById(id);
+		  if (el) { el.innerHTML = `<option>Error loading</option>`; el.disabled = true; }
+		});
+	  }
+	}
+
+	// Event wiring for cascading filters
+	function wireResponderEvents() {
+	  const divSel  = document.getElementById("selDivision");
+	  const depSel  = document.getElementById("selDepartment");
+	  const teamSel = document.getElementById("selTeam");
+	  const posSel  = document.getElementById("selPosition");
+	  const nameSel = document.getElementById("selName");
+	  const nameInput = document.getElementById("userName");
+
+	  divSel.addEventListener("change", () => populateRespondersUI());
+	  depSel.addEventListener("change", () => populateRespondersUI());
+	  teamSel.addEventListener("change", () => populateRespondersUI());
+	  posSel.addEventListener("change", () => populateRespondersUI());
+	  nameSel.addEventListener("change", () => { 
+		document.getElementById("userName").value = nameSel.value; 
+		populateRespondersUI(); // keep persistence in sync
+	  });
+
+	  // If user types a name manually, try to snap selects to that record
+	  nameInput.addEventListener("blur", () => {
+		const typed = normVal(nameInput.value);
+		if (!typed) return;
+		const match = RESPONDERS.find(r => normVal(r.NAME) === typed);
+		if (match) {
+		  document.getElementById("selDivision").value   = match.DIVISION;
+		  document.getElementById("selDepartment").value = match.DEPARTMENT;
+		  document.getElementById("selTeam").value       = match.TEAM;
+		  document.getElementById("selPosition").value   = match.POSITION;
+		  document.getElementById("selName").value       = match.NAME;
+		  populateRespondersUI();
+		}
+	  });
+	}
+
 
     function loadStore(){
       try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
@@ -303,6 +484,15 @@
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
     loadStore(); render();
+	
+	// ===== Init =====
+	(async () => {
+	  loadStore();
+	  await loadResponders();   // fetch Responders.json and populate the selects
+	  wireResponderEvents();    // hook up cascading dropdown behavior
+	  render();                 // draw the calendar
+	})();
+
   </script>
 </body>
 </html>
