@@ -173,58 +173,94 @@
     if (selected && values.includes(selected)) sel.value = selected;
   }
 
-  // Main populate logic
-  function populateRespondersUI(init=false) {
-    const divSel  = document.getElementById("selDivision");
-    const depSel  = document.getElementById("selDepartment");
-    const teamSel = document.getElementById("selTeam");
-    const posSel  = document.getElementById("selPosition");
-    const nameSel = document.getElementById("selName");
+// Hierarchical populate with override + flexible position scope
+function populateRespondersUI(changed = null, init = false) {
+  const divSel  = document.getElementById("selDivision");
+  const depSel  = document.getElementById("selDepartment");
+  const teamSel = document.getElementById("selTeam");
+  const posSel  = document.getElementById("selPosition");
+  const nameSel = document.getElementById("selName");
 
-    // Current selections (persisted or defaults)
-    let cur = {
-      DIVISION: normVal(divSel.value) || (init ? DEFAULTS.DIVISION : ""),
-      DEPARTMENT: normVal(depSel.value) || (init ? DEFAULTS.DEPARTMENT : ""),
-      TEAM: normVal(teamSel.value) || (init ? DEFAULTS.TEAM : ""),
-      POSITION: normVal(posSel.value),
-      NAME: normVal(nameSel.value)
-    };
+  // Current values
+  let cur = {
+    DIVISION:  normVal(divSel.value),
+    DEPARTMENT:normVal(depSel.value),
+    TEAM:      normVal(teamSel.value),
+    POSITION:  normVal(posSel.value),
+    NAME:      normVal(nameSel.value),
+  };
 
-    // 1) DIVISION
-    const divisions = uniq(RESPONDERS.map(r => normVal(r.DIVISION))).sort();
-    if (init && !divisions.includes(DEFAULTS.DIVISION) && divisions.length) DEFAULTS.DIVISION = divisions[0];
-    fillSelect(divSel, divisions, cur.DIVISION);
-    cur.DIVISION = normVal(divSel.value);
-
-    // 2) DEPARTMENT limited by DIVISION
-    const rows1 = byKeys(RESPONDERS, { DIVISION: cur.DIVISION });
-    const departments = uniq(rows1.map(r => normVal(r.DEPARTMENT))).sort();
-    if (init && !departments.includes(DEFAULTS.DEPARTMENT) && departments.length) DEFAULTS.DEPARTMENT = departments[0];
-    fillSelect(depSel, departments, cur.DEPARTMENT || DEFAULTS.DEPARTMENT);
-    cur.DEPARTMENT = normVal(depSel.value);
-
-    // 3) TEAM limited by DIVISION+DEPARTMENT
-    const rows2 = byKeys(rows1, { DEPARTMENT: cur.DEPARTMENT });
-    const teams = uniq(rows2.map(r => normVal(r.TEAM))).sort();
-    if (init && !teams.includes(DEFAULTS.TEAM) && teams.length) DEFAULTS.TEAM = teams[0];
-    fillSelect(teamSel, teams, cur.TEAM || DEFAULTS.TEAM);
-    cur.TEAM = normVal(teamSel.value);
-
-    // 4) POSITION limited by DIVISION+DEPARTMENT+TEAM
-    const rows3 = byKeys(rows2, { TEAM: cur.TEAM });
-    const positions = uniq(rows3.map(r => normVal(r.POSITION))).sort();
-    fillSelect(posSel, positions, cur.POSITION);
-    cur.POSITION = normVal(posSel.value || positions[0] || "");
-
-    // 5) NAME limited by DIVISION+DEPARTMENT+TEAM+POSITION
-    const rows4 = byKeys(rows3, { POSITION: cur.POSITION });
-    const names = uniq(rows4.map(r => normVal(r.NAME))).sort();
-    fillSelect(nameSel, names, cur.NAME || names[0]);
-    cur.NAME = normVal(nameSel.value || "");
-
-    // Persist minimal selections
-    localStorage.setItem("responders-filters", JSON.stringify(cur));
+  // Enforce override behavior (reset everything to the right of the changed level)
+  if (changed === "DIVISION") {
+    cur.DEPARTMENT = ""; cur.TEAM = ""; cur.POSITION = ""; cur.NAME = "";
+  } else if (changed === "DEPARTMENT") {
+    cur.TEAM = ""; cur.POSITION = ""; cur.NAME = "";
+  } else if (changed === "TEAM") {
+    cur.POSITION = ""; cur.NAME = "";
+  } else if (changed === "POSITION") {
+    cur.NAME = "";
   }
+
+  // Apply defaults only once on first load
+  if (init) {
+    if (!cur.DIVISION)   cur.DIVISION   = DEFAULTS.DIVISION;
+    if (!cur.DEPARTMENT) cur.DEPARTMENT = DEFAULTS.DEPARTMENT;
+    if (!cur.TEAM)       cur.TEAM       = DEFAULTS.TEAM;
+  }
+
+  // Build scopes
+  const all = RESPONDERS;
+
+  // Division scope
+  const divValues = uniq(all.map(r => normVal(r.DIVISION))).sort();
+  if (init && !divValues.includes(cur.DIVISION) && divValues.length) cur.DIVISION = divValues[0];
+  fillSelect(divSel, divValues, cur.DIVISION);
+  const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
+
+  // Department scope (limited by division)
+  const depValues = uniq(scopeDiv.map(r => normVal(r.DEPARTMENT))).sort();
+  if (!cur.DEPARTMENT || (changed === "DIVISION" && depValues.length)) {
+    // try default, else first available
+    cur.DEPARTMENT = depValues.includes(DEFAULTS.DEPARTMENT) ? DEFAULTS.DEPARTMENT : (depValues[0] || "");
+  }
+  fillSelect(depSel, depValues, cur.DEPARTMENT);
+  const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
+
+  // Team scope (limited by division+department)
+  const teamValues = uniq(scopeDep.map(r => normVal(r.TEAM))).sort();
+  if (!cur.TEAM || (["DIVISION","DEPARTMENT"].includes(changed) && teamValues.length)) {
+    cur.TEAM = teamValues.includes(DEFAULTS.TEAM) ? DEFAULTS.TEAM : (teamValues[0] || "");
+  }
+  fillSelect(teamSel, teamValues, cur.TEAM);
+
+  // Position scope:
+  // - If TEAM is chosen, positions come from that TEAM.
+  // - If TEAM is blank or not relevant, positions come from division+department scope.
+  const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
+  const scopeForPositions = cur.TEAM ? scopeTeam : scopeDep; // <- key flexibility
+  const posValues = uniq(scopeForPositions.map(r => normVal(r.POSITION))).sort();
+
+  if (!cur.POSITION || (["DIVISION","DEPARTMENT","TEAM"].includes(changed) && posValues.length)) {
+    cur.POSITION = posValues[0] || "";
+  }
+  fillSelect(posSel, posValues, cur.POSITION);
+
+  // Name scope:
+  // - Start from TEAM scope if team is selected; otherwise from department scope.
+  // - Then filter by POSITION if selected.
+  let scopeForNames = cur.TEAM ? scopeTeam : scopeDep;
+  if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
+  const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
+
+  if (!cur.NAME || (["DIVISION","DEPARTMENT","TEAM","POSITION"].includes(changed) && nameValues.length)) {
+    cur.NAME = nameValues[0] || "";
+  }
+  fillSelect(nameSel, nameValues, cur.NAME);
+
+  // Persist selections
+  localStorage.setItem("responders-filters", JSON.stringify(cur));
+}
+
 
   async function loadResponders() {
     try {
@@ -263,20 +299,21 @@
     }
   }
 
-  // Event wiring for cascading filters
+  // Wire events to respect hierarchy (left change overrides everything to the right)
   function wireResponderEvents() {
     const divSel  = document.getElementById("selDivision");
     const depSel  = document.getElementById("selDepartment");
     const teamSel = document.getElementById("selTeam");
     const posSel  = document.getElementById("selPosition");
     const nameSel = document.getElementById("selName");
-
-    divSel.addEventListener("change", () => populateRespondersUI());
-    depSel.addEventListener("change", () => populateRespondersUI());
-    teamSel.addEventListener("change", () => populateRespondersUI());
-    posSel.addEventListener("change", () => populateRespondersUI());
-    nameSel.addEventListener("change", () => populateRespondersUI());
+  
+    divSel.addEventListener("change", () => populateRespondersUI("DIVISION"));
+    depSel.addEventListener("change", () => populateRespondersUI("DEPARTMENT"));
+    teamSel.addEventListener("change", () => populateRespondersUI("TEAM"));
+    posSel.addEventListener("change", () => populateRespondersUI("POSITION"));
+    nameSel.addEventListener("change", () => populateRespondersUI("NAME"));
   }
+
 
   function loadStore(){
     try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
