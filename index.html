@@ -30,7 +30,7 @@
         <h1 class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
-        <button id="exportBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Save</button>
+        <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Save</button>
       </div>
     </div>
 
@@ -131,6 +131,15 @@
 
 <!-- ====== SCRIPT ====== -->
 <script>
+  // Where saved schedules live (public raw URL of your repo)
+  const SCHEDULE_BASE_URL = "https://raw.githubusercontent.com/VghnmlMClm/team-scheduler/main/schedules/";
+  // Proxy (Cloudflare Worker) for saving to GitHub
+  const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
+  // turn "Juan Dela Cruz" → "Juan_Dela_Cruz"
+  const safeFileName = name => name.trim().replace(/\s+/g, "_");
+  // strip meta keys when loading a schedule file
+  const stripMeta = obj => Object.fromEntries(Object.entries(obj || {}).filter(([k]) => !k.startsWith("_")));
+
   const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
   const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
   const pad = n => String(n).padStart(2,'0');
@@ -149,120 +158,139 @@
 
   // ===== Responders (directory) =====
   const RESPONDERS_URL = "Responders.json"; // path in your Pages repo
-
-  // Defaults
-  const DEFAULTS = {
-    DIVISION: "MDM",
-    DEPARTMENT: "GDS",
-    TEAM: "GDM"
-  };
-
-  // State for responders
   let RESPONDERS = []; // array of { POSITION, DIVISION, DEPARTMENT, TEAM, NAME }
 
   // Helpers
   const normVal = v => String(v ?? "").trim();
   const uniq = arr => [...new Set(arr)];
-  function byKeys(rows, filters) {
-    return rows.filter(r =>
-      Object.entries(filters).every(([k, v]) => !v || normVal(r[k]) === v)
-    );
-  }
-  function fillSelect(sel, values, selected) {
-    sel.innerHTML = values.length
-    ? values.map(v => `<option value="${v}">${v}</option>`).join("")
-    : `<option value="">— none —</option>`;
-    if (selected && values.includes(selected)) sel.value = selected;
-  }
 
-// Hierarchical populate with override + flexible position scope
-function populateRespondersUI(changed = null, init = false) {
-  const divSel  = document.getElementById("selDivision");
-  const depSel  = document.getElementById("selDepartment");
-  const teamSel = document.getElementById("selTeam");
-  const posSel  = document.getElementById("selPosition");
-  const nameSel = document.getElementById("selName");
-
-  // Current values
-  let cur = {
-    DIVISION:  normVal(divSel.value),
-    DEPARTMENT:normVal(depSel.value),
-    TEAM:      normVal(teamSel.value),
-    POSITION:  normVal(posSel.value),
-    NAME:      normVal(nameSel.value),
-  };
-
-  // Enforce override behavior (reset everything to the right of the changed level)
-  if (changed === "DIVISION") {
-    cur.DEPARTMENT = ""; cur.TEAM = ""; cur.POSITION = ""; cur.NAME = "";
-  } else if (changed === "DEPARTMENT") {
-    cur.TEAM = ""; cur.POSITION = ""; cur.NAME = "";
-  } else if (changed === "TEAM") {
-    cur.POSITION = ""; cur.NAME = "";
-  } else if (changed === "POSITION") {
-    cur.NAME = "";
+  // Dropdown renderer (always includes a blank option first)
+  function fillSelect(sel, values, selected, blankLabel = "— select —") {
+    sel.innerHTML =
+      `<option value="">${blankLabel}</option>` +
+      (values.length
+        ? values.map(v => `<option value="${v}">${v}</option>`).join("")
+        : `<option value="" disabled>— none —</option>`);
+    if (selected !== undefined) sel.value = selected; // selected can be ""
   }
 
-  // Apply defaults only once on first load
-  if (init) {
-    if (!cur.DIVISION)   cur.DIVISION   = DEFAULTS.DIVISION;
-    if (!cur.DEPARTMENT) cur.DEPARTMENT = DEFAULTS.DEPARTMENT;
-    if (!cur.TEAM)       cur.TEAM       = DEFAULTS.TEAM;
+  // Enable/disable Save button
+  function setSaveEnabled(enabled) {
+    const btn = document.getElementById('exportBtn');
+    btn.disabled = !enabled;
+    btn.classList.toggle('opacity-60', !enabled);
+    btn.classList.toggle('cursor-not-allowed', !enabled);
   }
 
-  // Build scopes
-  const all = RESPONDERS;
+  // Hierarchical populate with override + flexible position scope
+  function populateRespondersUI(changed = null, init = false) {
+    const divSel  = document.getElementById("selDivision");
+    const depSel  = document.getElementById("selDepartment");
+    const teamSel = document.getElementById("selTeam");
+    const posSel  = document.getElementById("selPosition");
+    const nameSel = document.getElementById("selName");
 
-  // Division scope
-  const divValues = uniq(all.map(r => normVal(r.DIVISION))).sort();
-  if (init && !divValues.includes(cur.DIVISION) && divValues.length) cur.DIVISION = divValues[0];
-  fillSelect(divSel, divValues, cur.DIVISION);
-  const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
+    // current values (may be "")
+    let cur = {
+      DIVISION:  normVal(divSel.value),
+      DEPARTMENT:normVal(depSel.value),
+      TEAM:      normVal(teamSel.value),
+      POSITION:  normVal(posSel.value),
+      NAME:      normVal(nameSel.value),
+    };
 
-  // Department scope (limited by division)
-  const depValues = uniq(scopeDiv.map(r => normVal(r.DEPARTMENT))).sort();
-  if (!cur.DEPARTMENT || (changed === "DIVISION" && depValues.length)) {
-    // try default, else first available
-    cur.DEPARTMENT = depValues.includes(DEFAULTS.DEPARTMENT) ? DEFAULTS.DEPARTMENT : (depValues[0] || "");
+    // Reset to the right of what changed
+    if (changed === "DIVISION")   { cur.DEPARTMENT = ""; cur.TEAM = ""; cur.POSITION = ""; cur.NAME = ""; }
+    if (changed === "DEPARTMENT") { cur.TEAM = "";       cur.POSITION = ""; cur.NAME = ""; }
+    if (changed === "TEAM")       {                      cur.POSITION = ""; cur.NAME = ""; }
+    if (changed === "POSITION")   {                                       cur.NAME = ""; }
+
+    const all = RESPONDERS;
+
+    // DIVISION
+    const divValues = uniq(all.map(r => normVal(r.DIVISION))).sort();
+    if (cur.DIVISION && !divValues.includes(cur.DIVISION)) cur.DIVISION = "";
+    fillSelect(divSel, divValues, cur.DIVISION, "— select division —");
+    const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
+
+    // DEPARTMENT (limited by division)
+    const depValues = uniq(scopeDiv.map(r => normVal(r.DEPARTMENT))).sort();
+    if (cur.DEPARTMENT && !depValues.includes(cur.DEPARTMENT)) cur.DEPARTMENT = "";
+    fillSelect(depSel, depValues, cur.DEPARTMENT, "— select department —");
+    const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
+
+    // TEAM (limited by division+department) — allow blank as "All teams"
+    const teamValues = uniq(scopeDep.map(r => normVal(r.TEAM))).sort();
+    if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
+    fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
+
+    // POSITIONS:
+    // If TEAM chosen, positions from that TEAM; else from department scope (so team-less roles still appear)
+    const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
+    const posValues = uniq(scopeTeam.map(r => normVal(r.POSITION))).sort();
+    if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
+    fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
+
+    // NAMES: from scopeTeam filtered by POSITION if set
+    let scopeForNames = scopeTeam;
+    if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
+    const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
+    if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
+    fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
+
+    // If Name is cleared (or not yet selected), clear the calendar immediately
+    if (!cur.NAME) {
+      state.data = {};
+      saveStore();
+      render();
+    }
+
+    // Persist
+    localStorage.setItem("responders-filters", JSON.stringify(cur));
+
+    // Update Save button availability
+    setSaveEnabled(!!cur.NAME);
   }
-  fillSelect(depSel, depValues, cur.DEPARTMENT);
-  const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
 
-  // Team scope (limited by division+department)
-  const teamValues = uniq(scopeDep.map(r => normVal(r.TEAM))).sort();
-  if (!cur.TEAM || (["DIVISION","DEPARTMENT"].includes(changed) && teamValues.length)) {
-    cur.TEAM = teamValues.includes(DEFAULTS.TEAM) ? DEFAULTS.TEAM : (teamValues[0] || "");
+  // Schedule loader (guarded against redundant loads)
+  let lastLoadedName = "";
+  async function loadScheduleForName(name) {
+    if (!name || name === lastLoadedName) {
+      setSaveEnabled(!!name);
+      return;
+    }
+    lastLoadedName = name;
+
+    // clear current schedule first
+    state.data = {};
+    saveStore();
+    render();
+
+    const url = SCHEDULE_BASE_URL + safeFileName(name) + "_TeamSched.json";
+    try {
+      const res = await fetch(url, { headers: { "Accept": "application/json" }});
+      if (!res.ok) {
+        console.warn("No schedule found for", name, res.status);
+        setSaveEnabled(true); // still allow saving a new blank schedule
+        return;
+      }
+      const json = await res.json();
+
+      // Strip meta and validate keys
+      const loaded = stripMeta(json);
+      const valid = {};
+      for (const [k, v] of Object.entries(loaded)) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
+      }
+      state.data = valid;
+      saveStore();
+      render();
+    } catch (e) {
+      console.error("Failed to load schedule:", e);
+    } finally {
+      setSaveEnabled(true);
+    }
   }
-  fillSelect(teamSel, teamValues, cur.TEAM);
-
-  // Position scope:
-  // - If TEAM is chosen, positions come from that TEAM.
-  // - If TEAM is blank or not relevant, positions come from division+department scope.
-  const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
-  const scopeForPositions = cur.TEAM ? scopeTeam : scopeDep; // <- key flexibility
-  const posValues = uniq(scopeForPositions.map(r => normVal(r.POSITION))).sort();
-
-  if (!cur.POSITION || (["DIVISION","DEPARTMENT","TEAM"].includes(changed) && posValues.length)) {
-    cur.POSITION = posValues[0] || "";
-  }
-  fillSelect(posSel, posValues, cur.POSITION);
-
-  // Name scope:
-  // - Start from TEAM scope if team is selected; otherwise from department scope.
-  // - Then filter by POSITION if selected.
-  let scopeForNames = cur.TEAM ? scopeTeam : scopeDep;
-  if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
-  const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
-
-  if (!cur.NAME || (["DIVISION","DEPARTMENT","TEAM","POSITION"].includes(changed) && nameValues.length)) {
-    cur.NAME = nameValues[0] || "";
-  }
-  fillSelect(nameSel, nameValues, cur.NAME);
-
-  // Persist selections
-  localStorage.setItem("responders-filters", JSON.stringify(cur));
-}
-
 
   async function loadResponders() {
     try {
@@ -308,21 +336,26 @@ function populateRespondersUI(changed = null, init = false) {
     const teamSel = document.getElementById("selTeam");
     const posSel  = document.getElementById("selPosition");
     const nameSel = document.getElementById("selName");
-  
+
     divSel.addEventListener("change", () => populateRespondersUI("DIVISION"));
     depSel.addEventListener("change", () => populateRespondersUI("DEPARTMENT"));
     teamSel.addEventListener("change", () => populateRespondersUI("TEAM"));
     posSel.addEventListener("change", () => populateRespondersUI("POSITION"));
-    nameSel.addEventListener("change", () => populateRespondersUI("NAME"));
+
+    nameSel.addEventListener("change", async () => {
+      populateRespondersUI("NAME");
+      await loadScheduleForName(nameSel.value);
+    });
   }
 
-
+  // ===== Local store helpers =====
   function loadStore(){
     try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
     catch(e){ state.data = {}; }
   }
   function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
 
+  // ===== Calendar =====
   const monthLabel = document.getElementById('monthLabel');
   const selectedCount = document.getElementById('selectedCount');
   const grid = document.getElementById('calendarGrid');
@@ -372,30 +405,29 @@ function populateRespondersUI(changed = null, init = false) {
     return cell;
   }
 
-function onDayClick(id, shift) {
-  const date = parseYMD(id);
-  const weekday = date.getDay();
-  // 0 = Sunday, 6 = Saturday → block weekends
-  if (weekday === 0 || weekday === 6) return; 
+  function onDayClick(id, shift) {
+    const date = parseYMD(id);
+    const weekday = date.getDay();
+    // 0 = Sunday, 6 = Saturday → block weekends
+    if (weekday === 0 || weekday === 6) return;
 
-  if (shift && state.lastClicked) {
-    const a = parseYMD(state.lastClicked), b = parseYMD(id);
-    const [min, max] = a <= b ? [a, b] : [b, a];
-    const cur = new Date(min);
-    while (cur <= max) {
-      const wd = cur.getDay();
-      if (wd !== 0 && wd !== 6) state.selected.add(ymd(cur)); // only add weekdays
-      cur.setDate(cur.getDate() + 1);
+    if (shift && state.lastClicked) {
+      const a = parseYMD(state.lastClicked), b = parseYMD(id);
+      const [min, max] = a <= b ? [a, b] : [b, a];
+      const cur = new Date(min);
+      while (cur <= max) {
+        const wd = cur.getDay();
+        if (wd !== 0 && wd !== 6) state.selected.add(ymd(cur)); // only add weekdays
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      if (state.selected.has(id)) state.selected.delete(id);
+      else state.selected.add(id);
+      state.lastClicked = id;
     }
-  } else {
-    if (state.selected.has(id)) state.selected.delete(id);
-    else state.selected.add(id);
-    state.lastClicked = id;
+    state.focusDay = id;
+    render();
   }
-  state.focusDay = id;
-  render();
-}
-
 
   function renderSelection(){
     const items = Array.from(state.selected).sort();
@@ -406,7 +438,11 @@ function onDayClick(id, shift) {
   const deleteBtn = document.getElementById('deleteBtn');
   function applyType(val){
     const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
-    for(const d of targets){ state.data[d] = val; }
+    for(const d of targets){
+      const wd = parseYMD(d).getDay();
+      if (wd === 0 || wd === 6) continue; // skip weekends for safety
+      state.data[d] = val;
+    }
     saveStore(); state.selected.clear(); render();
   }
 
@@ -422,9 +458,7 @@ function onDayClick(id, shift) {
     saveStore(); render();
   };
 
-  // ======== GitHub Upload via Cloudflare Worker ========
-  const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
-
+  // ===== Save to GitHub via Cloudflare Worker =====
   async function uploadScheduleViaProxy(){
     const exportBtn = document.getElementById('exportBtn');
     const selName = document.getElementById('selName');
@@ -444,7 +478,6 @@ function onDayClick(id, shift) {
     const prevText = exportBtn.textContent;
     exportBtn.textContent = "Saving…";
 
-    // include metadata
     const payload = {
       name,
       data: {
@@ -486,7 +519,6 @@ function onDayClick(id, shift) {
       exportBtn.textContent = prevText;
     }
   }
-
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
   // ===== Init =====
@@ -494,6 +526,7 @@ function onDayClick(id, shift) {
     loadStore();
     await loadResponders();   // fetch Responders.json and populate the selects
     wireResponderEvents();    // hook up cascading dropdown behavior
+    setSaveEnabled(false);    // start disabled until a Name is chosen
     render();                 // draw the calendar
   })();
 </script>
