@@ -372,19 +372,30 @@ function populateRespondersUI(changed = null, init = false) {
     return cell;
   }
 
-  function onDayClick(id, shift){
-    if(shift && state.lastClicked){
-      const a = parseYMD(state.lastClicked), b = parseYMD(id);
-      const [min,max] = a<=b? [a,b] : [b,a];
-      const cur = new Date(min);
-      while(cur<=max){ state.selected.add(ymd(cur)); cur.setDate(cur.getDate()+1); }
-    } else {
-      if(state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
-      state.lastClicked = id;
+function onDayClick(id, shift) {
+  const date = parseYMD(id);
+  const weekday = date.getDay();
+  // 0 = Sunday, 6 = Saturday → block weekends
+  if (weekday === 0 || weekday === 6) return; 
+
+  if (shift && state.lastClicked) {
+    const a = parseYMD(state.lastClicked), b = parseYMD(id);
+    const [min, max] = a <= b ? [a, b] : [b, a];
+    const cur = new Date(min);
+    while (cur <= max) {
+      const wd = cur.getDay();
+      if (wd !== 0 && wd !== 6) state.selected.add(ymd(cur)); // only add weekdays
+      cur.setDate(cur.getDate() + 1);
     }
-    state.focusDay = id;
-    render();
+  } else {
+    if (state.selected.has(id)) state.selected.delete(id);
+    else state.selected.add(id);
+    state.lastClicked = id;
   }
+  state.focusDay = id;
+  render();
+}
+
 
   function renderSelection(){
     const items = Array.from(state.selected).sort();
