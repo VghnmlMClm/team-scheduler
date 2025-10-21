@@ -252,32 +252,53 @@
     document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
 
     // ======== GitHub Upload via Cloudflare Worker ========
-    const PROXY_URL = "frosty-water-9f6a.voughn-calma-086.workers.dev";
+    const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
 
     async function uploadScheduleViaProxy(){
-      const name = (document.getElementById('userName').value || 'Unnamed').trim();
-      if(!name){ alert("Enter your name first."); return; }
+    const nameInput = document.getElementById('userName');
+    const exportBtn = document.getElementById('exportBtn');
 
-      const payload = { name, data: state.data };
-      try{
-        const res = await fetch(PROXY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if(!res.ok){
-          const txt = await res.text();
-          alert("Upload failed:\n" + txt);
-          return;
-        }
-        const j = await res.json();
-        alert("Uploaded to GitHub ✅\n" + (j.url || ''));
-      }catch(e){
-        alert("Upload failed:\n" + e.message);
-      }
+    const name = (nameInput.value || '').trim();
+    if(!name){ alert("Enter your name first."); nameInput.focus(); return; }
+
+    if(Object.keys(state.data).length === 0){
+      if(!confirm("Your schedule is empty. Upload anyway?")) return;
     }
 
-    document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
+    exportBtn.disabled = true;
+    const prevText = exportBtn.textContent;
+    exportBtn.textContent = "Uploading…";
+
+    const payload = { name, data: state.data };
+    try{
+      const res = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if(!res.ok){
+        const txt = await res.text().catch(()=> "");
+        throw new Error(txt || `Upload failed with status ${res.status}`);
+      }
+
+      const j = await res.json();
+      // nicer UI than alert
+      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-600 underline">View on GitHub</a>` : '';
+      alert(`Uploaded to GitHub ✅\n${j.url || ''}`);
+      // also show link under "Selected:"
+      document.getElementById('selectedList').innerHTML =
+        link || '<span class="text-xs text-slate-500">Uploaded.</span>';
+
+    } catch(e){
+      alert("Upload failed:\n" + e.message);
+    } finally {
+      exportBtn.disabled = false;
+      exportBtn.textContent = prevText;
+    }
+  }
+
+  document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
     loadStore(); render();
   </script>
