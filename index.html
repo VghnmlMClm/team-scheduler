@@ -169,7 +169,9 @@
     );
   }
   function fillSelect(sel, values, selected) {
-    sel.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join("");
+    sel.innerHTML = values.length
+    ? values.map(v => `<option value="${v}">${v}</option>`).join("")
+    : `<option value="">— none —</option>`;
     if (selected && values.includes(selected)) sel.value = selected;
   }
 
@@ -288,7 +290,7 @@ function populateRespondersUI(changed = null, init = false) {
         document.getElementById("selName").value       = saved.NAME || "";
       }
 
-      populateRespondersUI(true);
+      populateRespondersUI(null, true);
     } catch (e) {
       console.error(e);
       // Fallback: keep controls disabled
