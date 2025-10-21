@@ -61,445 +61,391 @@
   </div>
 </header>
 
+<main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Calendar Card -->
+  <section class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200">
+    <div class="p-4 flex items-center justify-between gap-2 border-b">
+      <div class="flex items-center gap-2">
+        <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-100" title="Previous month">◀</button>
+        <button id="todayBtn" class="px-3 py-2 rounded-lg bg-slate-900 text-white hover:opacity-95">Today</button>
+        <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-100" title="Next month">▶</button>
+      </div>
+      <div class="text-center">
+        <h2 id="monthLabel" class="text-lg font-semibold"></h2>
+        <p id="selectedCount" class="text-xs text-slate-500"></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="clearSelectionBtn" class="px-3 py-2 rounded-lg border hover:bg-slate-50">Clear selection</button>
+      </div>
+    </div>
+    <div class="p-4">
+      <div class="grid grid-cols-7 text-xs font-medium text-slate-500 mb-2 select-none">
+        <div class="text-center">Sun</div>
+        <div class="text-center">Mon</div>
+        <div class="text-center">Tue</div>
+        <div class="text-center">Wed</div>
+        <div class="text-center">Thu</div>
+        <div class="text-center">Fri</div>
+        <div class="text-center">Sat</div>
+      </div>
+      <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
+    </div>
+  </section>
 
-  <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Calendar Card -->
-    <section class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200">
-      <div class="p-4 flex items-center justify-between gap-2 border-b">
-        <div class="flex items-center gap-2">
-          <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-100" title="Previous month">◀</button>
-          <button id="todayBtn" class="px-3 py-2 rounded-lg bg-slate-900 text-white hover:opacity-95">Today</button>
-          <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-100" title="Next month">▶</button>
-        </div>
-        <div class="text-center">
-          <h2 id="monthLabel" class="text-lg font-semibold"></h2>
-          <p id="selectedCount" class="text-xs text-slate-500"></p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="clearSelectionBtn" class="px-3 py-2 rounded-lg border hover:bg-slate-50">Clear selection</button>
+  <!-- Editor Card -->
+  <aside class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="p-4 border-b">
+      <h3 class="text-lg font-semibold">Set schedule for selected day(s)</h3>
+      <p class="text-xs text-slate-500">Only these types are allowed. Weekends auto-grey if no status.</p>
+    </div>
+    <form id="eventForm" class="p-4 space-y-4" onsubmit="return false;">
+      <div class="space-y-3">
+        <label class="text-xs text-slate-500">Quick set status</label>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <button id="btnVL" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#ed7d31">Vacation Leave</button>
+          <button id="btnWFH" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#92d050">Work From Home</button>
+          <button id="btnONSITE" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#548235">On-site</button>
         </div>
       </div>
-      <div class="p-4">
-        <div class="grid grid-cols-7 text-xs font-medium text-slate-500 mb-2 select-none">
-          <div class="text-center">Sun</div>
-          <div class="text-center">Mon</div>
-          <div class="text-center">Tue</div>
-          <div class="text-center">Wed</div>
-          <div class="text-center">Thu</div>
-          <div class="text-center">Fri</div>
-          <div class="text-center">Sat</div>
-        </div>
-        <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
+      <div class="flex items-center gap-3">
+        <button id="deleteBtn" class="px-4 py-2 rounded-xl border hover:bg-slate-50" type="button">Clear status on selected</button>
       </div>
-    </section>
-
-    <!-- Editor Card -->
-    <aside class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div class="p-4 border-b">
-        <h3 class="text-lg font-semibold">Set schedule for selected day(s)</h3>
-        <p class="text-xs text-slate-500">Only these types are allowed. Weekends auto-grey if no status.</p>
+    </form>
+    <div class="px-4 pb-4">
+      <h4 class="mt-2 mb-1 text-sm font-semibold">Selected:</h4>
+      <div id="selectedList" class="text-sm text-slate-700"></div>
+      <h4 class="mt-4 mb-1 text-sm font-semibold">Legend</h4>
+      <div class="text-sm space-y-1">
+        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
+        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
+        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
+        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend (no status)</div>
       </div>
-      <form id="eventForm" class="p-4 space-y-4" onsubmit="return false;">
-        <div class="space-y-3">
-          <label class="text-xs text-slate-500">Quick set status</label>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button id="btnVL" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#ed7d31">Vacation Leave</button>
-            <button id="btnWFH" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#92d050">Work From Home</button>
-            <button id="btnONSITE" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#548235">On-site</button>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <button id="deleteBtn" class="px-4 py-2 rounded-xl border hover:bg-slate-50" type="button">Clear status on selected</button>
-        </div>
-      </form>
-      <div class="px-4 pb-4">
-        <h4 class="mt-2 mb-1 text-sm font-semibold">Selected:</h4>
-        <div id="selectedList" class="text-sm text-slate-700"></div>
-        <h4 class="mt-4 mb-1 text-sm font-semibold">Legend</h4>
-        <div class="text-sm space-y-1">
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend (no status)</div>
-        </div>
-      </div>
-    </aside>
-  </main>
+    </div>
+  </aside>
+</main>
 
-  <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-500">
-    <p>Tip: Hold <kbd class="px-1 rounded bg-slate-200">Shift</kbd> and click to select a range. Click individual days to toggle.</p>
-  </footer>
+<footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-500">
+  <p>Tip: Hold <kbd class="px-1 rounded bg-slate-200">Shift</kbd> and click to select a range. Click individual days to toggle.</p>
+</footer>
 
-  <!-- ====== SCRIPT ====== -->
-  <script>
-    const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
-    const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
-    const pad = n => String(n).padStart(2,'0');
-    const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
+<!-- ====== SCRIPT ====== -->
+<script>
+  const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
+  const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
+  const pad = n => String(n).padStart(2,'0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
 
-    const state = {
-      viewYear: new Date().getFullYear(),
-      viewMonth: new Date().getMonth(),
-      selected: new Set(),
-      focusDay: ymd(new Date()),
-      lastClicked: null,
-      storeKey: 'calendar-scheduler-v2-status-only',
-      data: {}
+  const state = {
+    viewYear: new Date().getFullYear(),
+    viewMonth: new Date().getMonth(),
+    selected: new Set(),
+    focusDay: ymd(new Date()),
+    lastClicked: null,
+    storeKey: 'calendar-scheduler-v2-status-only',
+    data: {}
+  };
+
+  // ===== Responders (directory) =====
+  const RESPONDERS_URL = "Responders.json"; // path in your Pages repo
+
+  // Defaults
+  const DEFAULTS = {
+    DIVISION: "MDM",
+    DEPARTMENT: "GDS",
+    TEAM: "GDM"
+  };
+
+  // State for responders
+  let RESPONDERS = []; // array of { POSITION, DIVISION, DEPARTMENT, TEAM, NAME }
+
+  // Helpers
+  const normVal = v => String(v ?? "").trim();
+  const uniq = arr => [...new Set(arr)];
+  function byKeys(rows, filters) {
+    return rows.filter(r =>
+      Object.entries(filters).every(([k, v]) => !v || normVal(r[k]) === v)
+    );
+  }
+  function fillSelect(sel, values, selected) {
+    sel.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join("");
+    if (selected && values.includes(selected)) sel.value = selected;
+  }
+
+  // Main populate logic
+  function populateRespondersUI(init=false) {
+    const divSel  = document.getElementById("selDivision");
+    const depSel  = document.getElementById("selDepartment");
+    const teamSel = document.getElementById("selTeam");
+    const posSel  = document.getElementById("selPosition");
+    const nameSel = document.getElementById("selName");
+
+    // Current selections (persisted or defaults)
+    let cur = {
+      DIVISION: normVal(divSel.value) || (init ? DEFAULTS.DIVISION : ""),
+      DEPARTMENT: normVal(depSel.value) || (init ? DEFAULTS.DEPARTMENT : ""),
+      TEAM: normVal(teamSel.value) || (init ? DEFAULTS.TEAM : ""),
+      POSITION: normVal(posSel.value),
+      NAME: normVal(nameSel.value)
     };
 
-	// ===== Responders (directory) =====
-	const RESPONDERS_URL = "Responders.json"; // path in your Pages repo
+    // 1) DIVISION
+    const divisions = uniq(RESPONDERS.map(r => normVal(r.DIVISION))).sort();
+    if (init && !divisions.includes(DEFAULTS.DIVISION) && divisions.length) DEFAULTS.DIVISION = divisions[0];
+    fillSelect(divSel, divisions, cur.DIVISION);
+    cur.DIVISION = normVal(divSel.value);
 
-	// Defaults
-	const DEFAULTS = {
-	  DIVISION: "MDM",
-	  DEPARTMENT: "GDS",
-	  TEAM: "GDM"
-	};
+    // 2) DEPARTMENT limited by DIVISION
+    const rows1 = byKeys(RESPONDERS, { DIVISION: cur.DIVISION });
+    const departments = uniq(rows1.map(r => normVal(r.DEPARTMENT))).sort();
+    if (init && !departments.includes(DEFAULTS.DEPARTMENT) && departments.length) DEFAULTS.DEPARTMENT = departments[0];
+    fillSelect(depSel, departments, cur.DEPARTMENT || DEFAULTS.DEPARTMENT);
+    cur.DEPARTMENT = normVal(depSel.value);
 
-	// State for responders
-	let RESPONDERS = []; // array of { POSITION, DIVISION, DEPARTMENT, TEAM, NAME }
+    // 3) TEAM limited by DIVISION+DEPARTMENT
+    const rows2 = byKeys(rows1, { DEPARTMENT: cur.DEPARTMENT });
+    const teams = uniq(rows2.map(r => normVal(r.TEAM))).sort();
+    if (init && !teams.includes(DEFAULTS.TEAM) && teams.length) DEFAULTS.TEAM = teams[0];
+    fillSelect(teamSel, teams, cur.TEAM || DEFAULTS.TEAM);
+    cur.TEAM = normVal(teamSel.value);
 
-	// Helpers
-	const normKey = k => String(k).trim().toUpperCase();
-	const normVal = v => String(v ?? "").trim();
-	const uniq = arr => [...new Set(arr)];
-	function byKeys(rows, filters) {
-	  return rows.filter(r =>
-		Object.entries(filters).every(([k, v]) => !v || normVal(r[k]) === v)
-	  );
-	}
-	function fillSelect(sel, values, selected) {
-	  sel.innerHTML = values.map(v =>
-		`<option value="${v}">${v}</option>`).join("");
-	  if (selected && values.includes(selected)) sel.value = selected;
-	}
+    // 4) POSITION limited by DIVISION+DEPARTMENT+TEAM
+    const rows3 = byKeys(rows2, { TEAM: cur.TEAM });
+    const positions = uniq(rows3.map(r => normVal(r.POSITION))).sort();
+    fillSelect(posSel, positions, cur.POSITION);
+    cur.POSITION = normVal(posSel.value || positions[0] || "");
 
-	// Main populate logic
-	function populateRespondersUI(init=false) {
-	  const divSel  = document.getElementById("selDivision");
-	  const depSel  = document.getElementById("selDepartment");
-	  const teamSel = document.getElementById("selTeam");
-	  const posSel  = document.getElementById("selPosition");
-	  const nameSel = document.getElementById("selName");
+    // 5) NAME limited by DIVISION+DEPARTMENT+TEAM+POSITION
+    const rows4 = byKeys(rows3, { POSITION: cur.POSITION });
+    const names = uniq(rows4.map(r => normVal(r.NAME))).sort();
+    fillSelect(nameSel, names, cur.NAME || names[0]);
+    cur.NAME = normVal(nameSel.value || "");
 
-	  // Current selections (persisted or defaults)
-	  let cur = {
-		DIVISION: normVal(divSel.value) || (init ? DEFAULTS.DIVISION : ""),
-		DEPARTMENT: normVal(depSel.value) || (init ? DEFAULTS.DEPARTMENT : ""),
-		TEAM: normVal(teamSel.value) || (init ? DEFAULTS.TEAM : ""),
-		POSITION: normVal(posSel.value),
-		NAME: normVal(nameSel.value)
-	  };
+    // Persist minimal selections
+    localStorage.setItem("responders-filters", JSON.stringify(cur));
+  }
 
-	  // 1) DIVISION
-	  const divisions = uniq(RESPONDERS.map(r => normVal(r.DIVISION))).sort();
-	  if (init && !divisions.includes(DEFAULTS.DIVISION) && divisions.length) DEFAULTS.DIVISION = divisions[0];
-	  fillSelect(divSel, divisions, cur.DIVISION);
-	  cur.DIVISION = normVal(divSel.value);
+  async function loadResponders() {
+    try {
+      const res = await fetch(RESPONDERS_URL, { headers: { "Accept": "application/json" }});
+      if (!res.ok) throw new Error(`Failed to load Responders.json (${res.status})`);
+      const raw = await res.json();
 
-	  // 2) DEPARTMENT limited by DIVISION
-	  const rows1 = byKeys(RESPONDERS, { DIVISION: cur.DIVISION });
-	  const departments = uniq(rows1.map(r => normVal(r.DEPARTMENT))).sort();
-	  if (init && !departments.includes(DEFAULTS.DEPARTMENT) && departments.length) DEFAULTS.DEPARTMENT = departments[0];
-	  fillSelect(depSel, departments, cur.DEPARTMENT || DEFAULTS.DEPARTMENT);
-	  cur.DEPARTMENT = normVal(depSel.value);
+      // Accept either array of objects OR object with rows—normalize to array
+      const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
+      RESPONDERS = rows.map(r => ({
+        POSITION:   normVal(r.POSITION   ?? r.position),
+        DIVISION:   normVal(r.DIVISION   ?? r.division),
+        DEPARTMENT: normVal(r.DEPARTMENT ?? r.department),
+        TEAM:       normVal(r.TEAM       ?? r.team),
+        NAME:       normVal(r.NAME       ?? r.name)
+      })).filter(r => r.NAME);
 
-	  // 3) TEAM limited by DIVISION+DEPARTMENT
-	  const rows2 = byKeys(rows1, { DEPARTMENT: cur.DEPARTMENT });
-	  const teams = uniq(rows2.map(r => normVal(r.TEAM))).sort();
-	  if (init && !teams.includes(DEFAULTS.TEAM) && teams.length) DEFAULTS.TEAM = teams[0];
-	  fillSelect(teamSel, teams, cur.TEAM || DEFAULTS.TEAM);
-	  cur.TEAM = normVal(teamSel.value);
-
-	  // 4) POSITION limited by DIVISION+DEPARTMENT+TEAM
-	  const rows3 = byKeys(rows2, { TEAM: cur.TEAM });
-	  const positions = uniq(rows3.map(r => normVal(r.POSITION))).sort();
-	  fillSelect(posSel, positions, cur.POSITION);
-	  cur.POSITION = normVal(posSel.value || positions[0] || "");
-
-	  // 5) NAME limited by DIVISION+DEPARTMENT+TEAM+POSITION
-	  const rows4 = byKeys(rows3, { POSITION: cur.POSITION });
-	  const names = uniq(rows4.map(r => normVal(r.NAME))).sort();
-	  fillSelect(nameSel, names, cur.NAME || names[0]);
-	  cur.NAME = normVal(nameSel.value || "");
-
-	  // Persist minimal selections (optional)
-	  localStorage.setItem("responders-filters", JSON.stringify(cur));
-	}
-
-	async function loadResponders() {
-	  try {
-		const res = await fetch(RESPONDERS_URL, { headers: { "Accept": "application/json" }});
-		if (!res.ok) throw new Error(`Failed to load Responders.json (${res.status})`);
-		const raw = await res.json();
-
-		// Accept either array of objects OR object with rows—normalize to array
-		const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
-		RESPONDERS = rows.map(r => ({
-		  POSITION:   normVal(r.POSITION   ?? r.position),
-		  DIVISION:   normVal(r.DIVISION   ?? r.division),
-		  DEPARTMENT: normVal(r.DEPARTMENT ?? r.department),
-		  TEAM:       normVal(r.TEAM       ?? r.team),
-		  NAME:       normVal(r.NAME       ?? r.name)
-		})).filter(r => r.NAME);
-
-		// Restore previous filters if any
-		const saved = JSON.parse(localStorage.getItem("responders-filters") || "null");
-		if (saved) {
-		  const divSel  = document.getElementById("selDivision");
-		  const depSel  = document.getElementById("selDepartment");
-		  const teamSel = document.getElementById("selTeam");
-		  const posSel  = document.getElementById("selPosition");
-		  const nameSel = document.getElementById("selName");
-		  divSel.value  = saved.DIVISION || "";
-		  depSel.value  = saved.DEPARTMENT || "";
-		  teamSel.value = saved.TEAM || "";
-		  posSel.value  = saved.POSITION || "";
-		  nameSel.value = saved.NAME || "";
-		}
-
-		populateRespondersUI(true);
-	  } catch (e) {
-		console.error(e);
-		// Fallback: keep controls disabled
-		["selDivision","selDepartment","selTeam","selPosition","selName"].forEach(id=>{
-		  const el = document.getElementById(id);
-		  if (el) { el.innerHTML = `<option>Error loading</option>`; el.disabled = true; }
-		});
-	  }
-	}
-
-	// Event wiring for cascading filters
-	function wireResponderEvents() {
-	  const divSel  = document.getElementById("selDivision");
-	  const depSel  = document.getElementById("selDepartment");
-	  const teamSel = document.getElementById("selTeam");
-	  const posSel  = document.getElementById("selPosition");
-	  const nameSel = document.getElementById("selName");
-
-	  divSel.addEventListener("change", () => populateRespondersUI());
-	  depSel.addEventListener("change", () => populateRespondersUI());
-	  teamSel.addEventListener("change", () => populateRespondersUI());
-	  posSel.addEventListener("change", () => populateRespondersUI());
-	  nameSel.addEventListener("change", () => populateRespondersUI());
-	}
-	  // If user types a name manually, try to snap selects to that record
-	  nameInput.addEventListener("blur", () => {
-		const typed = normVal(nameInput.value);
-		if (!typed) return;
-		const match = RESPONDERS.find(r => normVal(r.NAME) === typed);
-		if (match) {
-		  document.getElementById("selDivision").value   = match.DIVISION;
-		  document.getElementById("selDepartment").value = match.DEPARTMENT;
-		  document.getElementById("selTeam").value       = match.TEAM;
-		  document.getElementById("selPosition").value   = match.POSITION;
-		  document.getElementById("selName").value       = match.NAME;
-		  populateRespondersUI();
-		}
-	  });
-	}
-
-
-    function loadStore(){
-      try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
-      catch(e){ state.data = {}; }
-    }
-    function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
-
-    const monthLabel = document.getElementById('monthLabel');
-    const selectedCount = document.getElementById('selectedCount');
-    const grid = document.getElementById('calendarGrid');
-    const selectedList = document.getElementById('selectedList');
-
-    function monthName(m){return new Date(2000,m,1).toLocaleString(undefined,{month:'long'})}
-
-    function render(){
-      const {viewYear, viewMonth} = state;
-      monthLabel.textContent = `${monthName(viewMonth)} ${viewYear}`;
-      renderGrid(viewYear, viewMonth);
-      renderSelection();
-    }
-
-    function renderGrid(year, month){
-      grid.innerHTML='';
-      const first = new Date(year, month, 1);
-      const last = new Date(year, month+1, 0);
-      const startWeekday = first.getDay();
-      const daysInMonth = last.getDate();
-      const prevLast = new Date(year, month, 0).getDate();
-      for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
-      for(let d=1; d<=daysInMonth; d++) grid.appendChild(dayCell(new Date(year, month, d), false));
-      const total = grid.children.length;
-      const remaining = (7 - (total % 7)) % 7;
-      for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
-    }
-
-    function dayCell(dateObj, muted=false){
-      const id = ymd(dateObj);
-      const isToday = id === ymd(new Date());
-      const isSelected = state.selected.has(id);
-      const weekday = dateObj.getDay();
-      const isWeekend = (weekday===0 || weekday===6);
-      const status = state.data[id] || '';
-      let bg = '';
-      if(status) bg = COLORS[status];
-      else if(isWeekend) bg = COLORS.WEEKEND;
-      const cell = document.createElement('button');
-      cell.type='button';
-      cell.className=`day-cell aspect-square rounded-xl border border-slate-200 p-2 text-left hover:border-blue-300 transition ${muted?'muted':''} ${isSelected?'selected-day':''}`;
-      cell.dataset.date=id;
-      cell.style.background=bg||'';
-      const badge = status? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${LABELS[status]}</span>` : '';
-      cell.innerHTML = `<div class="flex items-center justify-between"><span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span></div><div class="mt-1 overflow-hidden">${badge}</div>`;
-      cell.addEventListener('click', e => onDayClick(id, e.shiftKey));
-      return cell;
-    }
-
-    function onDayClick(id, shift){
-      if(shift && state.lastClicked){
-        const a = parseYMD(state.lastClicked), b = parseYMD(id);
-        const [min,max] = a<=b? [a,b] : [b,a];
-        const cur = new Date(min);
-        while(cur<=max){ state.selected.add(ymd(cur)); cur.setDate(cur.getDate()+1); }
-      } else {
-        if(state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
-        state.lastClicked = id;
+      // Restore previous filters if any
+      const saved = JSON.parse(localStorage.getItem("responders-filters") || "null");
+      if (saved) {
+        document.getElementById("selDivision").value   = saved.DIVISION || "";
+        document.getElementById("selDepartment").value = saved.DEPARTMENT || "";
+        document.getElementById("selTeam").value       = saved.TEAM || "";
+        document.getElementById("selPosition").value   = saved.POSITION || "";
+        document.getElementById("selName").value       = saved.NAME || "";
       }
-      state.focusDay = id;
-      render();
+
+      populateRespondersUI(true);
+    } catch (e) {
+      console.error(e);
+      // Fallback: keep controls disabled
+      ["selDivision","selDepartment","selTeam","selPosition","selName"].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = `<option>Error loading</option>`; el.disabled = true; }
+      });
+    }
+  }
+
+  // Event wiring for cascading filters
+  function wireResponderEvents() {
+    const divSel  = document.getElementById("selDivision");
+    const depSel  = document.getElementById("selDepartment");
+    const teamSel = document.getElementById("selTeam");
+    const posSel  = document.getElementById("selPosition");
+    const nameSel = document.getElementById("selName");
+
+    divSel.addEventListener("change", () => populateRespondersUI());
+    depSel.addEventListener("change", () => populateRespondersUI());
+    teamSel.addEventListener("change", () => populateRespondersUI());
+    posSel.addEventListener("change", () => populateRespondersUI());
+    nameSel.addEventListener("change", () => populateRespondersUI());
+  }
+
+  function loadStore(){
+    try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
+    catch(e){ state.data = {}; }
+  }
+  function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
+
+  const monthLabel = document.getElementById('monthLabel');
+  const selectedCount = document.getElementById('selectedCount');
+  const grid = document.getElementById('calendarGrid');
+  const selectedList = document.getElementById('selectedList');
+
+  function monthName(m){return new Date(2000,m,1).toLocaleString(undefined,{month:'long'})}
+
+  function render(){
+    const {viewYear, viewMonth} = state;
+    monthLabel.textContent = `${monthName(viewMonth)} ${viewYear}`;
+    renderGrid(viewYear, viewMonth);
+    renderSelection();
+  }
+
+  function renderGrid(year, month){
+    grid.innerHTML='';
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month+1, 0);
+    const startWeekday = first.getDay();
+    const daysInMonth = last.getDate();
+    const prevLast = new Date(year, month, 0).getDate();
+    for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
+    for(let d=1; d<=daysInMonth; d++) grid.appendChild(dayCell(new Date(year, month, d), false));
+    const total = grid.children.length;
+    const remaining = (7 - (total % 7)) % 7;
+    for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
+  }
+
+  function dayCell(dateObj, muted=false){
+    const id = ymd(dateObj);
+    const isToday = id === ymd(new Date());
+    const isSelected = state.selected.has(id);
+    const weekday = dateObj.getDay();
+    const isWeekend = (weekday===0 || weekday===6);
+    const status = state.data[id] || '';
+    let bg = '';
+    if(status) bg = COLORS[status];
+    else if(isWeekend) bg = COLORS.WEEKEND;
+    const cell = document.createElement('button');
+    cell.type='button';
+    cell.className=`day-cell aspect-square rounded-xl border border-slate-200 p-2 text-left hover:border-blue-300 transition ${muted?'muted':''} ${isSelected?'selected-day':''}`;
+    cell.dataset.date=id;
+    cell.style.background=bg||'';
+    const badge = status? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${LABELS[status]}</span>` : '';
+    cell.innerHTML = `<div class="flex items-center justify-between"><span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span></div><div class="mt-1 overflow-hidden">${badge}</div>`;
+    cell.addEventListener('click', e => onDayClick(id, e.shiftKey));
+    return cell;
+  }
+
+  function onDayClick(id, shift){
+    if(shift && state.lastClicked){
+      const a = parseYMD(state.lastClicked), b = parseYMD(id);
+      const [min,max] = a<=b? [a,b] : [b,a];
+      const cur = new Date(min);
+      while(cur<=max){ state.selected.add(ymd(cur)); cur.setDate(cur.getDate()+1); }
+    } else {
+      if(state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
+      state.lastClicked = id;
+    }
+    state.focusDay = id;
+    render();
+  }
+
+  function renderSelection(){
+    const items = Array.from(state.selected).sort();
+    selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
+    selectedList.innerHTML = items.length ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-100 border">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>` : '<p class="text-xs text-slate-500">Click dates to select them.</p>';
+  }
+
+  const deleteBtn = document.getElementById('deleteBtn');
+  function applyType(val){
+    const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
+    for(const d of targets){ state.data[d] = val; }
+    saveStore(); state.selected.clear(); render();
+  }
+
+  document.getElementById('btnVL').onclick = ()=> applyType('VL');
+  document.getElementById('btnWFH').onclick = ()=> applyType('WFH');
+  document.getElementById('btnONSITE').onclick = ()=> applyType('ONSITE');
+
+  deleteBtn.onclick = ()=>{
+    if(!(state.selected.size || state.focusDay)) return;
+    if(!confirm('Clear status from the selected day(s)?')) return;
+    const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
+    for(const d of targets){ delete state.data[d]; }
+    saveStore(); render();
+  };
+
+  // ======== GitHub Upload via Cloudflare Worker ========
+  const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
+
+  async function uploadScheduleViaProxy(){
+    const exportBtn = document.getElementById('exportBtn');
+    const selName = document.getElementById('selName');
+    const selDivision = document.getElementById('selDivision');
+    const selDepartment = document.getElementById('selDepartment');
+    const selTeam = document.getElementById('selTeam');
+    const selPosition = document.getElementById('selPosition');
+
+    const name = (selName.value || '').trim();
+    if(!name){ alert("Pick a Name first."); selName.focus(); return; }
+
+    if(Object.keys(state.data).length === 0){
+      if(!confirm("Your schedule is empty. Save anyway?")) return;
     }
 
-    function renderSelection(){
-      const items = Array.from(state.selected).sort();
-      selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
-      selectedList.innerHTML = items.length ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-100 border">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>` : '<p class="text-xs text-slate-500">Click dates to select them.</p>';
+    exportBtn.disabled = true;
+    const prevText = exportBtn.textContent;
+    exportBtn.textContent = "Saving…";
+
+    // include metadata
+    const payload = {
+      name,
+      data: {
+        ...state.data,
+        _meta: {
+          division: selDivision.value,
+          department: selDepartment.value,
+          team: selTeam.value,
+          position: selPosition.value,
+          name,
+          lastSaved: new Date().toISOString()
+        }
+      }
+    };
+
+    try{
+      console.log("Uploading to:", PROXY_URL);
+      const res = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if(!res.ok){
+        const txt = await res.text().catch(()=> "");
+        throw new Error(txt || `Save failed with status ${res.status}`);
+      }
+
+      const j = await res.json();
+      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-600 underline">View on GitHub</a>` : '';
+      alert(`Saved ✅\n${j.url || ''}`);
+      document.getElementById('selectedList').innerHTML =
+        link || '<span class="text-xs text-slate-500">Saved.</span>';
+
+    } catch(e){
+      alert("Save failed:\n" + e.message);
+    } finally {
+      exportBtn.disabled = false;
+      exportBtn.textContent = prevText;
     }
-
-    const deleteBtn = document.getElementById('deleteBtn');
-    function applyType(val){
-      const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
-      for(const d of targets){ state.data[d] = val; }
-      saveStore(); state.selected.clear(); render();
-    }
-
-    document.getElementById('btnVL').onclick = ()=> applyType('VL');
-    document.getElementById('btnWFH').onclick = ()=> applyType('WFH');
-    document.getElementById('btnONSITE').onclick = ()=> applyType('ONSITE');
-
-    deleteBtn.onclick = ()=>{
-      if(!(state.selected.size || state.focusDay)) return;
-      if(!confirm('Clear status from the selected day(s)?')) return;
-      const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
-      for(const d of targets){ delete state.data[d]; }
-      saveStore(); render();
-    };
-
-    document.getElementById('importInput').addEventListener('change', e=>{
-      const file = e.target.files[0]; if(!file) return;
-      const r = new FileReader();
-      r.onload=()=>{ try{ const d=JSON.parse(r.result); if(typeof d!=='object') throw 0; state.data=d; saveStore(); render(); }catch{alert('Import failed.')} };
-      r.readAsText(file);
-    });
-
-    document.getElementById('resetBtn').onclick = ()=>{
-      if(!confirm('Clear all saved statuses?')) return;
-      state.data={}; state.selected.clear(); saveStore(); render();
-    };
-
-    document.getElementById('prevBtn').onclick = ()=>{
-      const d=new Date(state.viewYear,state.viewMonth-1,1);
-      state.viewYear=d.getFullYear(); state.viewMonth=d.getMonth(); render();
-    };
-    document.getElementById('nextBtn').onclick = ()=>{
-      const d=new Date(state.viewYear,state.viewMonth+1,1);
-      state.viewYear=d.getFullYear(); state.viewMonth=d.getMonth(); render();
-    };
-    document.getElementById('todayBtn').onclick = ()=>{
-      const n=new Date();
-      state.viewYear=n.getFullYear(); state.viewMonth=n.getMonth();
-      state.focusDay=ymd(n); state.selected=new Set([state.focusDay]); render();
-    };
-    document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
-
-    // ======== GitHub Upload via Cloudflare Worker ========
-    const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
-
-	async function uploadScheduleViaProxy(){
-	  const exportBtn = document.getElementById('exportBtn');
-	  const selName = document.getElementById('selName');
-	  const selDivision = document.getElementById('selDivision');
-	  const selDepartment = document.getElementById('selDepartment');
-	  const selTeam = document.getElementById('selTeam');
-	  const selPosition = document.getElementById('selPosition');
-
-	  const name = (selName.value || '').trim();
-	  if(!name){ alert("Pick a Name first."); selName.focus(); return; }
-
-	  if(Object.keys(state.data).length === 0){
-		if(!confirm("Your schedule is empty. Save anyway?")) return;
-	  }
-
-	  exportBtn.disabled = true;
-	  const prevText = exportBtn.textContent;
-	  exportBtn.textContent = "Saving…";
-
-	  // include metadata
-	  const payload = {
-		name,
-		data: {
-		  ...state.data,
-		  _meta: {
-			division: selDivision.value,
-			department: selDepartment.value,
-			team: selTeam.value,
-			position: selPosition.value,
-			name,
-			lastSaved: new Date().toISOString()
-		  }
-		}
-	  };
-
-	  try{
-		console.log("Uploading to:", PROXY_URL);
-		const res = await fetch(PROXY_URL, {
-		  method: "POST",
-		  headers: { "Content-Type": "application/json" },
-		  body: JSON.stringify(payload),
-		});
-
-		if(!res.ok){
-		  const txt = await res.text().catch(()=> "");
-		  throw new Error(txt || `Save failed with status ${res.status}`);
-		}
-
-		const j = await res.json();
-		const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-600 underline">View on GitHub</a>` : '';
-		alert(`Saved ✅\n${j.url || ''}`);
-		document.getElementById('selectedList').innerHTML =
-		  link || '<span class="text-xs text-slate-500">Saved.</span>';
-
-	  } catch(e){
-		alert("Save failed:\n" + e.message);
-	  } finally {
-		exportBtn.disabled = false;
-		exportBtn.textContent = prevText;
-	  }
-	}
-
+  }
 
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
-	
-	// ===== Init =====
-	(async () => {
-	  loadStore();
-	  await loadResponders();   // fetch Responders.json and populate the selects
-	  wireResponderEvents();    // hook up cascading dropdown behavior
-	  render();                 // draw the calendar
-	})();
-
-  </script>
+  // ===== Init =====
+  (async () => {
+    loadStore();
+    await loadResponders();   // fetch Responders.json and populate the selects
+    wireResponderEvents();    // hook up cascading dropdown behavior
+    render();                 // draw the calendar
+  })();
+</script>
 </body>
 </html>
