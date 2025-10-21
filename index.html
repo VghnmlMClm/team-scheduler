@@ -271,11 +271,13 @@
 
     const payload = { name, data: state.data };
     try{
-      const res = await fetch(PROXY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+		console.log("Uploading to:", PROXY_URL);
+		const res = await fetch(PROXY_URL, {
+		  method: "POST",
+		  headers: { "Content-Type": "application/json" },
+		  body: JSON.stringify(payload),
+		});
+
 
       if(!res.ok){
         const txt = await res.text().catch(()=> "");
