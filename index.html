@@ -23,13 +23,14 @@
 <body class="bg-black text-slate-100">
 <header class="grad text-white">
   <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
-    <!-- Title + Save -->
+    <!-- Title + Actions -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center"><span class="text-lg">🗓️</span></div>
         <h1 class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
+        <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Load</button>
         <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Save</button>
       </div>
     </div>
@@ -62,25 +63,24 @@
 </header>
 
 <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- Calendar Card -->
+  <!-- Calendar -->
   <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
-
-    <div class="p-4 flex items-center justify-between gap-2 border-b">
+    <div class="p-4 flex items-center justify-between gap-2 border-b border-slate-700">
       <div class="flex items-center gap-2">
-        <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-100" title="Previous month">◀</button>
-        <button id="todayBtn" class="px-3 py-2 rounded-lg bg-slate-900 text-white hover:opacity-95">Today</button>
-        <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-100" title="Next month">▶</button>
+        <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
+        <button id="todayBtn" class="px-3 py-2 rounded-lg bg-blue-700 text-white hover:opacity-95">Today</button>
+        <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
       </div>
       <div class="text-center">
         <h2 id="monthLabel" class="text-lg font-semibold"></h2>
-        <p id="selectedCount" class="text-xs text-slate-500"></p>
+        <p id="selectedCount" class="text-xs text-slate-400"></p>
       </div>
       <div class="flex items-center gap-2">
-        <button id="clearSelectionBtn" class="px-3 py-2 rounded-lg border hover:bg-slate-50">Clear selection</button>
+        <button id="clearSelectionBtn" class="px-3 py-2 rounded-lg border border-slate-600 hover:bg-slate-800">Clear selection</button>
       </div>
     </div>
     <div class="p-4">
-      <div class="grid grid-cols-7 text-xs font-medium text-slate-500 mb-2 select-none">
+      <div class="grid grid-cols-7 text-xs font-medium text-slate-400 mb-2 select-none">
         <div class="text-center">Sun</div>
         <div class="text-center">Mon</div>
         <div class="text-center">Tue</div>
@@ -93,16 +93,15 @@
     </div>
   </section>
 
-  <!-- Editor Card -->
+  <!-- Sidebar -->
   <aside class="bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
-
-    <div class="p-4 border-b">
+    <div class="p-4 border-b border-slate-700">
       <h3 class="text-lg font-semibold">Set schedule for selected day(s)</h3>
-      <p class="text-xs text-slate-500">Only these types are allowed. Weekends auto-grey if no status.</p>
+      <p class="text-xs text-slate-400">Only these types are allowed. Weekends & holidays cannot be edited.</p>
     </div>
     <form id="eventForm" class="p-4 space-y-4" onsubmit="return false;">
       <div class="space-y-3">
-        <label class="text-xs text-slate-500">Quick set status</label>
+        <label class="text-xs text-slate-400">Quick set status</label>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button id="btnVL" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#ed7d31">Vacation Leave</button>
           <button id="btnWFH" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#92d050">Work From Home</button>
@@ -110,126 +109,113 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <button id="deleteBtn" class="px-4 py-2 rounded-xl border hover:bg-slate-50" type="button">Clear status on selected</button>
+        <button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
       </div>
     </form>
     <div class="px-4 pb-4">
       <h4 class="mt-2 mb-1 text-sm font-semibold">Selected:</h4>
-      <div id="selectedList" class="text-sm text-slate-700"></div>
+      <div id="selectedList" class="text-sm text-slate-400"></div>
       <h4 class="mt-4 mb-1 text-sm font-semibold">Legend</h4>
       <div class="text-sm space-y-1">
         <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
         <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
         <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
         <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend (no status)</div>
+        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#00b0f0"></span> Holiday</div>
       </div>
     </div>
   </aside>
 </main>
 
-<footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-400">
-
-  <p>Tip: Hold <kbd class="px-1 rounded bg-slate-200">Shift</kbd> and click to select a range. Click individual days to toggle.</p>
+<footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-500">
+  <p>Tip: Hold <kbd class="px-1 rounded bg-slate-700 text-white">Shift</kbd> and click to select a range.</p>
 </footer>
 
 <!-- ====== SCRIPT ====== -->
 <script>
-  // Where saved schedules live (public raw URL of your repo)
+  // URLs
   const SCHEDULE_BASE_URL = "https://raw.githubusercontent.com/VghnmlMClm/team-scheduler/main/schedules/";
-  // Proxy (Cloudflare Worker) for saving to GitHub
   const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
-  // turn "Juan Dela Cruz" → "Juan_Dela_Cruz"
-  const safeFileName = name => name.trim().replace(/\s+/g, "_");
-  // strip meta keys when loading a schedule file
-  const stripMeta = obj => Object.fromEntries(Object.entries(obj || {}).filter(([k]) => !k.startsWith("_")));
+  const RESPONDERS_URL = "Responders.json";
+  const CONFIG_URL = "config.json";
 
+  // Helpers
+  const safeFileName = name => name.trim().replace(/\s+/g, "_");
+  const stripMeta = obj => Object.fromEntries(Object.entries(obj || {}).filter(([k]) => !k.startsWith("_")));
   const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
   const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
   const pad = n => String(n).padStart(2,'0');
   const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
+  const normVal = v => String(v ?? "").trim();
+  const uniq = arr => [...new Set(arr)];
 
+  // State
   const state = {
     viewYear: new Date().getFullYear(),
     viewMonth: new Date().getMonth(),
     selected: new Set(),
     focusDay: ymd(new Date()),
     lastClicked: null,
-    storeKey: 'calendar-scheduler-v2-status-only',
+    storeKey: 'calendar-scheduler-v2',
     data: {}
   };
 
-  // ===== Responders (directory) =====
-  const RESPONDERS_URL = "Responders.json"; // path in your Pages repo
-  let RESPONDERS = []; // array of { POSITION, DIVISION, DEPARTMENT, TEAM, NAME }
+  // Config (window & holidays)
+  let CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
+  const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+  const dateInRange = d => {
+    if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
+    const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return dd >= CONFIG.START_DATE && dd <= CONFIG.END_DATE;
+  };
+  const isHoliday = d => CONFIG.HOLIDAYS_SET.has(ymd(d));
+  async function loadConfig(){
+    try{
+      const r = await fetch(CONFIG_URL, { headers: { "Accept":"application/json" } });
+      const j = await r.json();
+      CONFIG.START_DATE  = parseDateStr(j.START_DATE);
+      CONFIG.END_DATE    = parseDateStr(j.END_DATE);
+      CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
+    }catch{
+      CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
+    }
+  }
+  function clampView(year, month) {
+    if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
+    const monthLast  = new Date(year, month+1, 0);
+    if (monthLast < CONFIG.START_DATE) return { year: CONFIG.START_DATE.getFullYear(), month: CONFIG.START_DATE.getMonth() };
+    const monthFirst = new Date(year, month, 1);
+    if (monthFirst > CONFIG.END_DATE) return { year: CONFIG.END_DATE.getFullYear(), month: CONFIG.END_DATE.getMonth() };
+    return { year, month };
+  }
 
-  // Helpers
-  const normVal = v => String(v ?? "").trim();
-  const uniq = arr => [...new Set(arr)];
-
-  // Dropdown renderer (always includes a blank option first)
+  // Responders & dropdowns
+  let RESPONDERS = [];
   function fillSelect(sel, values, selected, blankLabel = "— select —") {
     sel.innerHTML =
       `<option value="">${blankLabel}</option>` +
       (values.length
         ? values.map(v => `<option value="${v}">${v}</option>`).join("")
         : `<option value="" disabled>— none —</option>`);
-    if (selected !== undefined) sel.value = selected; // selected can be ""
+    if (selected !== undefined) sel.value = selected;
   }
-
-  // Enable/disable Save button
   function setSaveEnabled(enabled) {
-    const btn = document.getElementById('exportBtn');
-    btn.disabled = !enabled;
-    btn.classList.toggle('opacity-60', !enabled);
-    btn.classList.toggle('cursor-not-allowed', !enabled);
+    ['loadBtn','exportBtn'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.disabled = !enabled;
+      btn.classList.toggle('opacity-60', !enabled);
+      btn.classList.toggle('cursor-not-allowed', !enabled);
+    });
   }
-
-	// --- Config (date window + holidays) --- //
-	const CONFIG_URL = "config.json";
-	let   CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
-
-	const parseDateStr = (s) => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
-	const dateInRange  = (d) => {
-	  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
-	  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate()); // strip time
-	  return dd >= CONFIG.START_DATE && dd <= CONFIG.END_DATE;
-	};
-	const isHoliday = (d) => CONFIG.HOLIDAYS_SET.has(ymd(d));
-
-	async function loadConfig(){
-	  try{
-		const res = await fetch(CONFIG_URL, { headers:{ "Accept":"application/json" }});
-		if(!res.ok) throw 0;
-		const j = await res.json();
-		CONFIG.START_DATE  = parseDateStr(j.START_DATE);
-		CONFIG.END_DATE    = parseDateStr(j.END_DATE);
-		CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
-	  }catch(e){
-		CONFIG = { START_DATE:null, END_DATE:null, HOLIDAYS_SET:new Set() };
-	  }
-	}
-
-	// Keep the calendar view inside the window
-	function clampView(year, month){
-	  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
-	  const monthLast  = new Date(year, month+1, 0);
-	  if (monthLast < CONFIG.START_DATE) return { year: CONFIG.START_DATE.getFullYear(), month: CONFIG.START_DATE.getMonth() };
-	  const monthFirst = new Date(year, month, 1);
-	  if (monthFirst > CONFIG.END_DATE) return { year: CONFIG.END_DATE.getFullYear(), month: CONFIG.END_DATE.getMonth() };
-	  return { year, month };
-	}
-
-
-  // Hierarchical populate with override + flexible position scope
-  function populateRespondersUI(changed = null, init = false) {
+  function populateRespondersUI(changed = null) {
     const divSel  = document.getElementById("selDivision");
     const depSel  = document.getElementById("selDepartment");
     const teamSel = document.getElementById("selTeam");
     const posSel  = document.getElementById("selPosition");
     const nameSel = document.getElementById("selName");
 
-    // current values (may be "")
     let cur = {
       DIVISION:  normVal(divSel.value),
       DEPARTMENT:normVal(depSel.value),
@@ -238,7 +224,6 @@
       NAME:      normVal(nameSel.value),
     };
 
-    // Reset to the right of what changed
     if (changed === "DIVISION")   { cur.DEPARTMENT = ""; cur.TEAM = ""; cur.POSITION = ""; cur.NAME = ""; }
     if (changed === "DEPARTMENT") { cur.TEAM = "";       cur.POSITION = ""; cur.NAME = ""; }
     if (changed === "TEAM")       {                      cur.POSITION = ""; cur.NAME = ""; }
@@ -246,98 +231,44 @@
 
     const all = RESPONDERS;
 
-    // DIVISION
     const divValues = uniq(all.map(r => normVal(r.DIVISION))).sort();
     if (cur.DIVISION && !divValues.includes(cur.DIVISION)) cur.DIVISION = "";
     fillSelect(divSel, divValues, cur.DIVISION, "— select division —");
     const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
 
-    // DEPARTMENT (limited by division)
     const depValues = uniq(scopeDiv.map(r => normVal(r.DEPARTMENT))).sort();
     if (cur.DEPARTMENT && !depValues.includes(cur.DEPARTMENT)) cur.DEPARTMENT = "";
     fillSelect(depSel, depValues, cur.DEPARTMENT, "— select department —");
     const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
 
-    // TEAM (limited by division+department) — allow blank as "All teams"
     const teamValues = uniq(scopeDep.map(r => normVal(r.TEAM))).sort();
     if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
     fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
 
-    // POSITIONS:
-    // If TEAM chosen, positions from that TEAM; else from department scope (so team-less roles still appear)
     const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
     const posValues = uniq(scopeTeam.map(r => normVal(r.POSITION))).sort();
     if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
     fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
 
-    // NAMES: from scopeTeam filtered by POSITION if set
     let scopeForNames = scopeTeam;
     if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
     const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
     if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
     fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
 
-    // If Name is cleared (or not yet selected), clear the calendar immediately
     if (!cur.NAME) {
       state.data = {};
       saveStore();
       render();
     }
 
-    // Persist
     localStorage.setItem("responders-filters", JSON.stringify(cur));
-
-    // Update Save button availability
     setSaveEnabled(!!cur.NAME);
   }
-
-  // Schedule loader (guarded against redundant loads)
-  let lastLoadedName = "";
-  async function loadScheduleForName(name) {
-    if (!name || name === lastLoadedName) {
-      setSaveEnabled(!!name);
-      return;
-    }
-    lastLoadedName = name;
-
-    // clear current schedule first
-    state.data = {};
-    saveStore();
-    render();
-
-    const url = SCHEDULE_BASE_URL + safeFileName(name) + "_TeamSched.json";
-    try {
-      const res = await fetch(url, { headers: { "Accept": "application/json" }});
-      if (!res.ok) {
-        console.warn("No schedule found for", name, res.status);
-        setSaveEnabled(true); // still allow saving a new blank schedule
-        return;
-      }
-      const json = await res.json();
-
-      // Strip meta and validate keys
-      const loaded = stripMeta(json);
-      const valid = {};
-      for (const [k, v] of Object.entries(loaded)) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
-      }
-      state.data = valid;
-      saveStore();
-      render();
-    } catch (e) {
-      console.error("Failed to load schedule:", e);
-    } finally {
-      setSaveEnabled(true);
-    }
-  }
-
   async function loadResponders() {
-    try {
-      const res = await fetch(RESPONDERS_URL, { headers: { "Accept": "application/json" }});
-      if (!res.ok) throw new Error(`Failed to load Responders.json (${res.status})`);
+    try{
+      const res = await fetch(RESPONDERS_URL, { headers: { "Accept":"application/json" }});
       const raw = await res.json();
-
-      // Accept either array of objects OR object with rows—normalize to array
       const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
       RESPONDERS = rows.map(r => ({
         POSITION:   normVal(r.POSITION   ?? r.position),
@@ -346,69 +277,46 @@
         TEAM:       normVal(r.TEAM       ?? r.team),
         NAME:       normVal(r.NAME       ?? r.name)
       })).filter(r => r.NAME);
-
-      // Restore previous filters if any
-      const saved = JSON.parse(localStorage.getItem("responders-filters") || "null");
-      if (saved) {
-        document.getElementById("selDivision").value   = saved.DIVISION || "";
-        document.getElementById("selDepartment").value = saved.DEPARTMENT || "";
-        document.getElementById("selTeam").value       = saved.TEAM || "";
-        document.getElementById("selPosition").value   = saved.POSITION || "";
-        document.getElementById("selName").value       = saved.NAME || "";
-      }
-
-      populateRespondersUI(null, true);
-    } catch (e) {
-      console.error(e);
-      // Fallback: keep controls disabled
+      populateRespondersUI();
+    }catch(e){
+      console.error("Failed to load responders:", e);
       ["selDivision","selDepartment","selTeam","selPosition","selName"].forEach(id=>{
         const el = document.getElementById(id);
         if (el) { el.innerHTML = `<option>Error loading</option>`; el.disabled = true; }
       });
     }
   }
-
-  // Wire events to respect hierarchy (left change overrides everything to the right)
   function wireResponderEvents() {
-    const divSel  = document.getElementById("selDivision");
-    const depSel  = document.getElementById("selDepartment");
-    const teamSel = document.getElementById("selTeam");
-    const posSel  = document.getElementById("selPosition");
-    const nameSel = document.getElementById("selName");
-
-    divSel.addEventListener("change", () => populateRespondersUI("DIVISION"));
-    depSel.addEventListener("change", () => populateRespondersUI("DEPARTMENT"));
-    teamSel.addEventListener("change", () => populateRespondersUI("TEAM"));
-    posSel.addEventListener("change", () => populateRespondersUI("POSITION"));
-
-    nameSel.addEventListener("change", async () => {
+    document.getElementById("selDivision").addEventListener("change", ()=> populateRespondersUI("DIVISION"));
+    document.getElementById("selDepartment").addEventListener("change", ()=> populateRespondersUI("DEPARTMENT"));
+    document.getElementById("selTeam").addEventListener("change", ()=> populateRespondersUI("TEAM"));
+    document.getElementById("selPosition").addEventListener("change", ()=> populateRespondersUI("POSITION"));
+    document.getElementById("selName").addEventListener("change", async (e) => {
       populateRespondersUI("NAME");
-      await loadScheduleForName(nameSel.value);
+      await loadScheduleForName(e.target.value);
     });
   }
 
-  // ===== Local store helpers =====
+  // Local store
   function loadStore(){
     try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
     catch(e){ state.data = {}; }
   }
   function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
 
-  // ===== Calendar =====
+  // Calendar render
+  const grid = document.getElementById('calendarGrid');
   const monthLabel = document.getElementById('monthLabel');
   const selectedCount = document.getElementById('selectedCount');
-  const grid = document.getElementById('calendarGrid');
   const selectedList = document.getElementById('selectedList');
 
   function monthName(m){return new Date(2000,m,1).toLocaleString(undefined,{month:'long'})}
-
   function render(){
     const {viewYear, viewMonth} = state;
     monthLabel.textContent = `${monthName(viewMonth)} ${viewYear}`;
     renderGrid(viewYear, viewMonth);
     renderSelection();
   }
-
   function renderGrid(year, month){
     grid.innerHTML='';
     const first = new Date(year, month, 1);
@@ -416,49 +324,40 @@
     const startWeekday = first.getDay();
     const prevLast = new Date(year, month, 0).getDate();
 
-    // leading days
     for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
-    // this month
     for(let d=1; d<=last.getDate(); d++) grid.appendChild(dayCell(new Date(year, month, d), false));
-    // trailing days
-    const total = grid.children.length;
-    const remaining = (7 - (total % 7)) % 7;
+    const remaining = (7 - (grid.children.length % 7)) % 7;
     for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
   }
-
   function dayCell(dateObj, muted=false){
     const id = ymd(dateObj);
     const isToday   = id === ymd(new Date());
-    const weekday   = dateObj.getDay();
-    const weekend   = (weekday===0 || weekday===6);
+    const wd        = dateObj.getDay();
+    const weekend   = (wd===0 || wd===6);
     const outRange  = !dateInRange(dateObj);
     const holiday   = isHoliday(dateObj);
     const isSelected= state.selected.has(id);
     const status    = state.data[id] || '';
 
-    // Background priority: saved status > holiday > weekend (grey) > default
     let bg = '';
     if (status)       bg = COLORS[status];
     else if (holiday) bg = '#00b0f0';
     else if (weekend) bg = COLORS.WEEKEND;
 
-    const disabled = outRange || holiday || weekend; // cannot select
+    const disabled = outRange || holiday || weekend;
 
     const cell = document.createElement('button');
     cell.type='button';
     cell.className = [
-      'day-cell aspect-square rounded-xl border p-2 text-left transition',
+      'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
       muted ? 'muted' : '',
       isSelected ? 'selected-day' : '',
-      disabled ? 'cursor-not-allowed' : 'hover:border-blue-300',
-      // dark-mode borders
-      'border-slate-700'
+      disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
     ].join(' ').trim();
 
     cell.dataset.date = id;
     if (bg) cell.style.background = bg;
 
-    // Small badge: show status or “HOL” for holidays
     const badgeText = status ? LABELS[status] : (holiday ? 'HOL' : '');
     const badge = badgeText
       ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${badgeText}</span>`
@@ -471,7 +370,6 @@
       <div class="mt-1 overflow-hidden">${badge}</div>
     `;
 
-    // Disable clicks if out of range / holiday / weekend
     cell.addEventListener('click', e => {
       if (disabled) return;
       onDayClick(id, e.shiftKey);
@@ -481,18 +379,18 @@
 
   function onDayClick(id, shift) {
     const date = parseYMD(id);
-    const weekday = date.getDay();
+    const wd = date.getDay();
     if (!dateInRange(date)) return;
     if (isHoliday(date))    return;
-    if (weekday === 0 || weekday === 6) return; // weekends blocked
+    if (wd === 0 || wd === 6) return;
 
     if (shift && state.lastClicked) {
       const a = parseYMD(state.lastClicked), b = parseYMD(id);
       const [min, max] = a <= b ? [a, b] : [b, a];
       const cur = new Date(min);
       while (cur <= max) {
-        const wd = cur.getDay();
-        if (dateInRange(cur) && !isHoliday(cur) && wd !== 0 && wd !== 6) {
+        const w = cur.getDay();
+        if (dateInRange(cur) && !isHoliday(cur) && w !== 0 && w !== 6) {
           state.selected.add(ymd(cur));
         }
         cur.setDate(cur.getDate() + 1);
@@ -506,13 +404,12 @@
     render();
   }
 
-
-
-
   function renderSelection(){
     const items = Array.from(state.selected).sort();
     selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
-    selectedList.innerHTML = items.length ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-100 border">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>` : '<p class="text-xs text-slate-500">Click dates to select them.</p>';
+    selectedList.innerHTML = items.length
+      ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-800 border border-slate-700">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>`
+      : '<p class="text-xs text-slate-500">Click dates to select them.</p>';
   }
 
   const deleteBtn = document.getElementById('deleteBtn');
@@ -528,8 +425,6 @@
     }
     saveStore(); state.selected.clear(); render();
   }
-
-
   document.getElementById('btnVL').onclick = ()=> applyType('VL');
   document.getElementById('btnWFH').onclick = ()=> applyType('WFH');
   document.getElementById('btnONSITE').onclick = ()=> applyType('ONSITE');
@@ -542,7 +437,7 @@
     saveStore(); render();
   };
 
-  // ===== Save to GitHub via Cloudflare Worker =====
+  // Save (via proxy to GitHub)
   async function uploadScheduleViaProxy(){
     const exportBtn = document.getElementById('exportBtn');
     const selName = document.getElementById('selName');
@@ -578,7 +473,6 @@
     };
 
     try{
-      console.log("Uploading to:", PROXY_URL);
       const res = await fetch(PROXY_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -591,7 +485,7 @@
       }
 
       const j = await res.json();
-      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-600 underline">View on GitHub</a>` : '';
+      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
       alert(`Saved ✅\n${j.url || ''}`);
       document.getElementById('selectedList').innerHTML =
         link || '<span class="text-xs text-slate-500">Saved.</span>';
@@ -605,57 +499,94 @@
   }
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
-	// Navigation limited by config window
-	document.getElementById('prevBtn').onclick = ()=>{
-	  const d = new Date(state.viewYear, state.viewMonth - 1, 1);
-	  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-	  render();
-	};
-	document.getElementById('nextBtn').onclick = ()=>{
-	  const d = new Date(state.viewYear, state.viewMonth + 1, 1);
-	  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-	  render();
-	};
-	document.getElementById('todayBtn').onclick = ()=>{
-	  let target = new Date();
+  // Load button (fetch saved schedule for chosen name)
+  async function loadScheduleForName(name) {
+    const loadBtn = document.getElementById('loadBtn');
+    const hasName = !!(name && name.trim());
+    setSaveEnabled(hasName);
+    if (!hasName) {
+      state.data = {};
+      saveStore();
+      render();
+      return;
+    }
 
-	  // Clamp target into the config window
-	  if (CONFIG.START_DATE && target < CONFIG.START_DATE) target = CONFIG.START_DATE;
-	  if (CONFIG.END_DATE && target > CONFIG.END_DATE)     target = CONFIG.END_DATE;
+    // Clear then try to load
+    state.data = {};
+    saveStore();
+    render();
 
-	  // Clamp view and set focus
-	  ({year: state.viewYear, month: state.viewMonth} =
-		clampView(target.getFullYear(), target.getMonth()));
-	  state.focusDay = ymd(target);
+    const url = SCHEDULE_BASE_URL + safeFileName(name) + "_TeamSched.json";
+    try {
+      loadBtn && (loadBtn.textContent = "Loading…", loadBtn.disabled = true);
+      const res = await fetch(url, { headers: { "Accept":"application/json" } });
+      if (!res.ok) {
+        console.warn("No schedule found for", name, res.status);
+        // Keep empty schedule but still enable Save for creating new file
+        return;
+      }
+      const json = await res.json();
+      const loaded = stripMeta(json);
+      const valid = {};
+      for (const [k, v] of Object.entries(loaded)) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
+      }
+      state.data = valid;
+      saveStore();
+      render();
+    } catch (e) {
+      console.error("Failed to load schedule:", e);
+    } finally {
+      if (loadBtn) {
+        loadBtn.textContent = "Load";
+        loadBtn.disabled = !hasName;
+      }
+    }
+  }
+  document.getElementById('loadBtn').onclick = async () => {
+    const selName = document.getElementById('selName');
+    const name = (selName.value || '').trim();
+    if (!name) { alert("Pick a Name first."); selName.focus(); return; }
+    await loadScheduleForName(name);
+  };
 
-	  // Only preselect if selectable (in range, not holiday, not weekend)
-	  const wd = target.getDay();
-	  state.selected.clear();
-	  if (dateInRange(target) && !isHoliday(target) && wd !== 0 && wd !== 6) {
-		state.selected.add(state.focusDay);
-	  }
+  // Navigation (clamped)
+  document.getElementById('prevBtn').onclick = ()=>{
+    const d = new Date(state.viewYear, state.viewMonth - 1, 1);
+    ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+    render();
+  };
+  document.getElementById('nextBtn').onclick = ()=>{
+    const d = new Date(state.viewYear, state.viewMonth + 1, 1);
+    ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+    render();
+  };
+  document.getElementById('todayBtn').onclick = ()=>{
+    let target = new Date();
+    if (CONFIG.START_DATE && target < CONFIG.START_DATE) target = CONFIG.START_DATE;
+    if (CONFIG.END_DATE && target > CONFIG.END_DATE)     target = CONFIG.END_DATE;
 
-	  render();
-	};
+    ({year: state.viewYear, month: state.viewMonth} = clampView(target.getFullYear(), target.getMonth()));
+    state.focusDay = ymd(target);
 
-	
-	
-	// (optional) Keep your existing clear button
-	document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
+    const wd = target.getDay();
+    state.selected.clear();
+    if (dateInRange(target) && !isHoliday(target) && wd !== 0 && wd !== 6) state.selected.add(state.focusDay);
 
+    render();
+  };
+  document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
 
-  // ===== Init =====
+  // Init
   (async () => {
     loadStore();
-    await loadConfig();      // <— NEW: must come first
+    await loadConfig();
     await loadResponders();
     wireResponderEvents();
     setSaveEnabled(false);
-    // Start view clamped to config window (e.g., START_DATE’s month if today is out of range)
     ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
     render();
   })();
-
 </script>
 </body>
 </html>
