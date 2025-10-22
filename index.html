@@ -35,50 +35,64 @@
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="grid grid-cols-1 gap-2">
-      <!-- Line 1 -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-        <select id="selDivision"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-          <option value="">Loading divisions…</option>
-        </select>
-        <select id="selDepartment" class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-          <option value="">Loading departments…</option>
-        </select>
-        <select id="selTeam"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-          <option value="">Loading teams…</option>
-        </select>
-      </div>
-      <!-- Line 2 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <select id="selPosition"   class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-          <option value="">Loading positions…</option>
-        </select>
-        <select id="selName"       class="px-3 py-1.5 rounded-lg text-sm bg-white/20 text-white outline-none focus:ring-2 focus:ring-white/40">
-          <option value="">Loading names…</option>
-        </select>
-      </div>
-    </div>
+	<!-- Filters -->
+	<div class="grid grid-cols-1 gap-3 text-sm">
+	  <!-- Line 1 -->
+	  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+		<div>
+		  <label for="selDivision" class="block text-xs text-slate-300 mb-1">DIVISION</label>
+		  <select id="selDivision" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+			<option value="">— select division —</option>
+		  </select>
+		</div>
+		<div>
+		  <label for="selDepartment" class="block text-xs text-slate-300 mb-1">DEPARTMENT</label>
+		  <select id="selDepartment" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+			<option value="">— select department —</option>
+		  </select>
+		</div>
+		<div>
+		  <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
+		  <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+			<option value="">— select team —</option>
+		  </select>
+		</div>
+	  </div>
+
+	  <!-- Line 2 -->
+	  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+		<div>
+		  <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
+		  <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+			<option value="">— select position —</option>
+		  </select>
+		</div>
+		<div>
+		  <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
+		  <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+			<option value="">— select name —</option>
+		  </select>
+		</div>
+	  </div>
+	</div>
   </div>
 </header>
 
 <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Calendar -->
-  <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
-    <div class="p-4 flex items-center justify-between gap-2 border-b border-slate-700">
-      <div class="flex items-center gap-2">
-        <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
-        <button id="todayBtn" class="px-3 py-2 rounded-lg bg-blue-700 text-white hover:opacity-95">Today</button>
-        <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
-      </div>
-      <div class="text-center">
-        <h2 id="monthLabel" class="text-lg font-semibold"></h2>
-        <p id="selectedCount" class="text-xs text-slate-400"></p>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="clearSelectionBtn" class="px-3 py-2 rounded-lg border border-slate-600 hover:bg-slate-800">Clear selection</button>
-      </div>
-    </div>
+  <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">	
+	<div class="p-4 border-b border-slate-700">
+	  <div class="flex justify-center items-center gap-4">
+		<button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
+		<div class="text-center">
+		  <h2 id="monthLabel" class="text-lg font-semibold"></h2>
+		  <p id="selectedCount" class="text-xs text-slate-400"></p>
+		</div>
+		<button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
+	  </div>
+	</div>
+
+
     <div class="p-4">
       <div class="grid grid-cols-7 text-xs font-medium text-slate-400 mb-2 select-none">
         <div class="text-center">Sun</div>
@@ -96,12 +110,10 @@
   <!-- Sidebar -->
   <aside class="bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
     <div class="p-4 border-b border-slate-700">
-      <h3 class="text-lg font-semibold">Set schedule for selected day(s)</h3>
-      <p class="text-xs text-slate-400">Only these types are allowed. Weekends & holidays cannot be edited.</p>
+      <h3 class="text-lg font-semibold">Set schedule for selected days</h3>
     </div>
     <form id="eventForm" class="p-4 space-y-4" onsubmit="return false;">
       <div class="space-y-3">
-        <label class="text-xs text-slate-400">Quick set status</label>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button id="btnVL" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#ed7d31">Vacation Leave</button>
           <button id="btnWFH" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#92d050">Work From Home</button>
@@ -112,18 +124,34 @@
         <button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
       </div>
     </form>
-    <div class="px-4 pb-4">
-      <h4 class="mt-2 mb-1 text-sm font-semibold">Selected:</h4>
-      <div id="selectedList" class="text-sm text-slate-400"></div>
-      <h4 class="mt-4 mb-1 text-sm font-semibold">Legend</h4>
-      <div class="text-sm space-y-1">
-        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
-        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
-        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
-        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend (no status)</div>
-        <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#00b0f0"></span> Holiday</div>
-      </div>
-    </div>
+	
+	<div class="px-4 pb-4 space-y-4">
+	  <!-- Legend first -->
+	  <div>
+		<div class="flex items-center justify-between mb-2">
+		  <h4 class="text-sm font-semibold">Legend</h4>
+		</div>
+		<div class="text-sm space-y-1">
+		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
+		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
+		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
+		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend (no status)</div>
+		</div>
+	  </div>
+
+	  <!-- Selected days + Clear Selection -->
+	  <div>
+		<div class="flex items-center justify-between mb-1">
+		  <h4 class="text-sm font-semibold">Selected:</h4>
+		  <button id="clearSelectionBtn" class="px-3 py-1.5 rounded-lg border border-slate-600 hover:bg-slate-800 text-xs">
+			Clear selection
+		  </button>
+		</div>
+		<div id="selectedList" class="text-sm text-slate-300"></div>
+	  </div>
+	</div>
+
+
   </aside>
 </main>
 
@@ -565,20 +593,6 @@
   document.getElementById('nextBtn').onclick = ()=>{
     const d = new Date(state.viewYear, state.viewMonth + 1, 1);
     ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-    render();
-  };
-  document.getElementById('todayBtn').onclick = ()=>{
-    let target = new Date();
-    if (CONFIG.START_DATE && target < CONFIG.START_DATE) target = CONFIG.START_DATE;
-    if (CONFIG.END_DATE && target > CONFIG.END_DATE)     target = CONFIG.END_DATE;
-
-    ({year: state.viewYear, month: state.viewMonth} = clampView(target.getFullYear(), target.getMonth()));
-    state.focusDay = ymd(target);
-
-    const wd = target.getDay();
-    state.selected.clear();
-    if (dateInRange(target) && !isHoliday(target) && wd !== 0 && wd !== 6) state.selected.add(state.focusDay);
-
     render();
   };
   document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
