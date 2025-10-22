@@ -3,8 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
- <!-- <title>Scheduler</title> -->
-  <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +26,7 @@
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center"><span class="text-lg">🗓️</span></div>
-        <h1 class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
+        <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
         <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Refresh</button>
@@ -164,7 +162,6 @@
 <!-- ====== SCRIPT ====== -->
 <script>
   // URLs
-  const SCHEDULE_BASE_URL = "https://raw.githubusercontent.com/VghnmlMClm/team-scheduler/main/schedules/";
   const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
   const RESPONDERS_URL = "Responders.json";
   const CONFIG_URL = "config.json";
@@ -604,7 +601,7 @@
 	  } catch (e) {
 		console.error("Worker load error:", e);
 	  } finally {
-		if (loadBtn) { loadBtn.textContent = prevText || "Load"; loadBtn.disabled = !hasName; }
+		if (loadBtn) { loadBtn.textContent = prevText || "Refresh"; loadBtn.disabled = !hasName; }
 	  }
 	}
 
