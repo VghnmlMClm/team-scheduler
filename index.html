@@ -539,7 +539,7 @@
 	  const hasName = !!(name && name.trim());
 	  setSaveEnabled(hasName);
 
-	  // Reset current view
+	  // Reset current view first
 	  state.data = {};
 	  saveStore();
 	  render();
@@ -551,12 +551,22 @@
 	  try {
 		const r = await fetch(PROXY_URL, {
 		  method: "POST",
-		  headers: { "Content-Type": "application/json" },
+		  headers: {
+			"Content-Type": "application/json",
+			"Accept": "application/json"
+		  },
 		  body: JSON.stringify({ op: "load", name })
 		});
 		const j = await r.json();
 
-		if (j?.ok && j?.data) {
+		if (!j?.ok) {
+		  console.warn("Worker responded with error:", j);
+		  // keep blank so user can save new
+		  render();
+		  return;
+		}
+
+		if (j.found && j.data) {
 		  const loaded = stripMeta(j.data);
 		  const valid = {};
 		  for (const [k, v] of Object.entries(loaded)) {
@@ -566,16 +576,18 @@
 		  saveStore();
 		  render();
 		} else {
-		  // not found is fine; leave blank so user can save a new one
-		  console.warn("No prior schedule found or load failed.", j);
+		  // Not found is fine; leave blank
+		  console.info("No prior schedule found.");
 		  render();
 		}
 	  } catch (e) {
 		console.error("Worker load error:", e);
+		// leave calendar blank on error
 	  } finally {
 		if (loadBtn) { loadBtn.textContent = prevText || "Load"; loadBtn.disabled = !hasName; }
 	  }
 	}
+
 
 	document.getElementById('loadBtn').onclick = async () => {
 	  const selName = document.getElementById('selName');
