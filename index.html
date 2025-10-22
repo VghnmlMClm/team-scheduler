@@ -19,6 +19,13 @@
     .muted{opacity:.35}
     .grad{background:linear-gradient(135deg,#1d4ed8 0%,#06b6d4 100%)}
     .hidden{display:none !important}
+
+    /* Dashboard toggle button: keep appearance unchanged when disabled (no hover/tooltip) */
+    #toggleDashboardBtn[disabled]:hover,
+    #toggleDashboardBtn[disabled]:focus {
+      background: inherit !important;
+      box-shadow: none !important;
+    }
   </style>
 </head>
 
@@ -37,14 +44,15 @@
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
-        <!-- Export menu -->
-        <div class="relative">
+        <!-- Export menu (shown only in Dashboard View) -->
+        <div id="exportGroup" class="relative hidden">
           <button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
           <div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
             <button id="exportVlBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">VL Summary (.txt)</button>
             <button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
           </div>
         </div>
+
         <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Refresh</button>
         <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Save</button>
       </div>
@@ -294,7 +302,7 @@
     if (changed === "POSITION")   {                                       cur.NAME = ""; }
 
     const all = RESPONDERS;
-    const uniqVals = (arr, field) => uniq(arr.map(r => normVal(r[field]))).sort();
+    const uniqVals = (arr, field) => [...new Set(arr.map(r => normVal(r[field])))].sort();
 
     const divValues = uniqVals(all, 'DIVISION');
     if (cur.DIVISION && !divValues.includes(cur.DIVISION)) cur.DIVISION = "";
@@ -317,7 +325,7 @@
 
     let scopeForNames = scopeTeam;
     if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
-    const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
+    const nameValues = [...new Set(scopeForNames.map(r => normVal(r.NAME)))].sort();
     if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
     fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
 
@@ -400,7 +408,7 @@
     const id = ymd(dateObj);
     const isToday   = id === ymd(new Date());
     const wd        = dateObj.getDay();
-	const weekend = (wd === 0 || wd === 6);
+    const weekend = (wd === 0 || wd === 6);
     const outRange  = !dateInRange(dateObj);
     const holiday   = isHoliday(dateObj);
     const isSelected= state.selected.has(id);
@@ -786,20 +794,16 @@
   function toggleMenu(show){
     exportMenu.classList.toggle('hidden', !show);
   }
-  exportFileBtn.addEventListener('click', (e)=>{
-    e.stopPropagation();
-    const isHidden = exportMenu.classList.contains('hidden');
-    toggleMenu(isHidden);
-  });
+  if (exportFileBtn) {
+    exportFileBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const isHidden = exportMenu.classList.contains('hidden');
+      toggleMenu(isHidden);
+    });
+  }
   document.addEventListener('click', ()=> toggleMenu(false));
-  exportVlBtn.addEventListener('click', async ()=>{
-    toggleMenu(false);
-    await exportVlSummary();
-  });
-  exportTableBtn.addEventListener('click', async ()=>{
-    toggleMenu(false);
-    await exportTableXlsx();
-  });
+  if (exportVlBtn)  exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportVlSummary(); });
+  if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportTableXlsx(); });
 
   // Navigation
   document.getElementById('prevBtn').onclick = ()=>{
@@ -821,52 +825,67 @@
   const $dashboardView = document.getElementById('dashboardView');
   const $loadBtn = document.getElementById('loadBtn');
   const $saveBtn = document.getElementById('exportBtn');
+  const $exportGroup = document.getElementById('exportGroup');
   let vlChart = null;
 
-	// Allowed positions to ENTER dashboard (Personnel view) — lowercased for case-insensitive match
-	const DASH_ALLOWED_POS = new Set([
-	  'senior gis specialist',
-	  'deputy manager',
-	  'manager'
-	]);
+  // Allowed positions to ENTER dashboard (Personnel view) — lowercased for case-insensitive match
+  const DASH_ALLOWED_POS = new Set([
+    'senior gis specialist',
+    'deputy manager',
+    'manager'
+  ]);
 
-	function getSelectedResponderPosition() {
-	  const nameSel = document.getElementById('selName');
-	  const name = (nameSel?.value || '').trim();
-	  if (!name) return null;
+  function getSelectedResponderPosition() {
+    const nameSel = document.getElementById('selName');
+    const name = (nameSel?.value || '').trim();
+    if (!name) return null;
 
-	  // Find responder by exact name
-	  const r = RESPONDERS.find(x => (x.NAME || '') === name);
-	  // Normalize: trim + lowercase for case-insensitive comparison
-	  const pos = (r?.POSITION ?? '').trim().toLowerCase();
-	  return pos || null;
-	}
+    // Find responder by exact name
+    const r = RESPONDERS.find(x => (x.NAME || '') === name);
+    // Normalize: trim + lowercase for case-insensitive comparison
+    const pos = (r?.POSITION ?? '').trim().toLowerCase();
+    return pos || null;
+  }
 
-	function isDashboardEligible() {
-	  const pos = getSelectedResponderPosition();  // already lowercased
-	  return !!pos && DASH_ALLOWED_POS.has(pos);
-	}
+  function isDashboardEligible() {
+    const pos = getSelectedResponderPosition();  // already lowercased
+    return !!pos && DASH_ALLOWED_POS.has(pos);
+  }
 
-	function setDashToggleDisabled(disabled, reason = '') {
-	  const btn = document.getElementById('toggleDashboardBtn');
-	  if (!btn) return;
-	  btn.disabled = disabled;
-	  btn.classList.toggle('opacity-50', disabled);
-	  btn.classList.toggle('cursor-not-allowed', disabled);
-	  btn.title = disabled
-		? (reason || 'Select a Manager / Deputy Manager / Senior GIS Specialist to open Dashboard')
-		: (state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View');
-	}
+  // NEW: keep the same appearance when disabled; no tooltip on hover
+  function setDashToggleDisabled(disabled) {
+    const btn = document.getElementById('toggleDashboardBtn');
+    if (!btn) return;
 
-	function updateDashToggleEligibility() {
-	  if (state.isDashboard) { setDashToggleDisabled(false); return; }
-	  const ok = isDashboardEligible();
-	  setDashToggleDisabled(!ok);
-	}
+    btn.disabled = disabled;
 
+    // Remove any visible "disabled" styles (keep consistent look)
+    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+    // Manage hover class: remove when disabled so hover doesn't change bg
+    const hoverClass = 'hover:bg-white/25';
+    if (disabled) btn.classList.remove(hoverClass);
+    else if (!btn.classList.contains(hoverClass)) btn.classList.add(hoverClass);
+
+    // No tooltip while disabled; restore contextual title when enabled
+    if (disabled) {
+      btn.removeAttribute('title');
+      btn.setAttribute('aria-disabled', 'true');
+    } else {
+      btn.removeAttribute('aria-disabled');
+      btn.title = state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View';
+    }
+  }
+
+  function updateDashToggleEligibility() {
+    // If we're already in Dashboard, always allow going back
+    if (state.isDashboard) { setDashToggleDisabled(false); return; }
+    const ok = isDashboardEligible();
+    setDashToggleDisabled(!ok);
+  }
 
   $toggleDash.addEventListener('click', async () => {
-    // If we’re in Personnel view, only allow if the selected Name has an allowed Position
+    // If in Personnel view, only allow if the selected Name has an allowed Position
     if (!state.isDashboard && !isDashboardEligible()) return;
 
     state.isDashboard = !state.isDashboard;
@@ -884,6 +903,9 @@
     $loadBtn.classList.add('hidden');
     $saveBtn.classList.add('hidden');
 
+    // Show Export group in Dashboard
+    $exportGroup.classList.remove('hidden');
+
     // Swap views
     $personnelView.classList.add('hidden');
     $dashboardView.classList.remove('hidden');
@@ -899,6 +921,9 @@
     $filtersWrap.classList.remove('hidden');
     $loadBtn.classList.remove('hidden');
     $saveBtn.classList.remove('hidden');
+
+    // Hide Export group in Personnel
+    $exportGroup.classList.add('hidden');
 
     // Swap views
     $dashboardView.classList.add('hidden');
