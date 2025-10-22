@@ -493,7 +493,7 @@
 	  exportBtn.textContent = "Saving…";
 
 	  const payload = {
-		op: "save",          // <-- IMPORTANT
+		op: "save",               // ← IMPORTANT
 		name,
 		data: {
 		  ...state.data,
@@ -521,8 +521,8 @@
 		let j = null;
 		try { j = await res.json(); } catch {}
 		if (!res.ok || !j?.ok) {
-		  const errMsg = (j && (j.error || j.message)) || `HTTP ${res.status}`;
-		  throw new Error(errMsg);
+		  const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
+		  throw new Error(err);
 		}
 
 		const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
