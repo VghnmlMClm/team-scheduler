@@ -473,65 +473,73 @@
   };
 
   // Save (via proxy to GitHub)
-  async function uploadScheduleViaProxy(){
-    const exportBtn = document.getElementById('exportBtn');
-    const selName = document.getElementById('selName');
-    const selDivision = document.getElementById('selDivision');
-    const selDepartment = document.getElementById('selDepartment');
-    const selTeam = document.getElementById('selTeam');
-    const selPosition = document.getElementById('selPosition');
+	async function uploadScheduleViaProxy(){
+	  const exportBtn = document.getElementById('exportBtn');
+	  const selName = document.getElementById('selName');
+	  const selDivision = document.getElementById('selDivision');
+	  const selDepartment = document.getElementById('selDepartment');
+	  const selTeam = document.getElementById('selTeam');
+	  const selPosition = document.getElementById('selPosition');
 
-    const name = (selName.value || '').trim();
-    if(!name){ alert("Pick a Name first."); selName.focus(); return; }
+	  const name = (selName.value || '').trim();
+	  if(!name){ alert("Pick a Name first."); selName.focus(); return; }
 
-    if(Object.keys(state.data).length === 0){
-      if(!confirm("Your schedule is empty. Save anyway?")) return;
-    }
+	  if(Object.keys(state.data).length === 0){
+		if(!confirm("Your schedule is empty. Save anyway?")) return;
+	  }
 
-    exportBtn.disabled = true;
-    const prevText = exportBtn.textContent;
-    exportBtn.textContent = "Saving…";
+	  exportBtn.disabled = true;
+	  const prevText = exportBtn.textContent;
+	  exportBtn.textContent = "Saving…";
 
-    const payload = {
-      name,
-      data: {
-        ...state.data,
-        _meta: {
-          division: selDivision.value,
-          department: selDepartment.value,
-          team: selTeam.value,
-          position: selPosition.value,
-          name,
-          lastSaved: new Date().toISOString()
-        }
-      }
-    };
+	  const payload = {
+		op: "save",          // <-- IMPORTANT
+		name,
+		data: {
+		  ...state.data,
+		  _meta: {
+			division: selDivision.value,
+			department: selDepartment.value,
+			team: selTeam.value,
+			position: selPosition.value,
+			name,
+			lastSaved: new Date().toISOString()
+		  }
+		}
+	  };
 
-    try{
-      const res = await fetch(PROXY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+	  try{
+		const res = await fetch(PROXY_URL, {
+		  method: "POST",
+		  headers: {
+			"Content-Type": "application/json",
+			"Accept": "application/json"
+		  },
+		  body: JSON.stringify(payload),
+		});
 
-      if(!res.ok){
-        const txt = await res.text().catch(()=> "");
-        throw new Error(txt || `Save failed with status ${res.status}`);
-      }
+		let j = null;
+		try { j = await res.json(); } catch {}
+		if (!res.ok || !j?.ok) {
+		  const errMsg = (j && (j.error || j.message)) || `HTTP ${res.status}`;
+		  throw new Error(errMsg);
+		}
 
-      const j = await res.json();
-      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
-      alert(`Saved ✅\n${j.url || ''}`);
-      document.getElementById('selectedList').innerHTML =
-        link || '<span class="text-xs text-slate-500">Saved.</span>';
+		const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
+		alert(`Saved ✅\n${j.url || ''}`);
+		document.getElementById('selectedList').innerHTML =
+		  link || '<span class="text-xs text-slate-500">Saved.</span>';
 
-    } catch(e){
-      alert("Save failed:\n" + e.message);
-    } finally {
-      exportBtn.disabled = false;
-      exportBtn.textContent = prevText;
-    }
-  }
+	  } catch(e){
+		alert("Save failed:\n" + (e?.message || e));
+	  } finally {
+		exportBtn.disabled = false;
+		exportBtn.textContent = prevText;
+	  }
+	}
+
+  
+  
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
 	async function loadScheduleForName(name) {
