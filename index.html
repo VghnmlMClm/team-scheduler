@@ -534,56 +534,56 @@
   }
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
-  // Load button (fetch saved schedule for chosen name)
-  async function loadScheduleForName(name) {
-    const loadBtn = document.getElementById('loadBtn');
-    const hasName = !!(name && name.trim());
-    setSaveEnabled(hasName);
-    if (!hasName) {
-      state.data = {};
-      saveStore();
-      render();
-      return;
-    }
+	async function loadScheduleForName(name) {
+	  const loadBtn = document.getElementById('loadBtn');
+	  const hasName = !!(name && name.trim());
+	  setSaveEnabled(hasName);
 
-    // Clear then try to load
-    state.data = {};
-    saveStore();
-    render();
+	  // Reset current view
+	  state.data = {};
+	  saveStore();
+	  render();
+	  if (!hasName) return;
 
-    const url = SCHEDULE_BASE_URL + safeFileName(name) + "_TeamSched.json";
-    try {
-      loadBtn && (loadBtn.textContent = "Loading…", loadBtn.disabled = true);
-      const res = await fetch(url, { headers: { "Accept":"application/json" } });
-      if (!res.ok) {
-        console.warn("No schedule found for", name, res.status);
-        // Keep empty schedule but still enable Save for creating new file
-        return;
-      }
-      const json = await res.json();
-      const loaded = stripMeta(json);
-      const valid = {};
-      for (const [k, v] of Object.entries(loaded)) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
-      }
-      state.data = valid;
-      saveStore();
-      render();
-    } catch (e) {
-      console.error("Failed to load schedule:", e);
-    } finally {
-      if (loadBtn) {
-        loadBtn.textContent = "Load";
-        loadBtn.disabled = !hasName;
-      }
-    }
-  }
-  document.getElementById('loadBtn').onclick = async () => {
-    const selName = document.getElementById('selName');
-    const name = (selName.value || '').trim();
-    if (!name) { alert("Pick a Name first."); selName.focus(); return; }
-    await loadScheduleForName(name);
-  };
+	  const prevText = loadBtn ? loadBtn.textContent : '';
+	  if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
+
+	  try {
+		const r = await fetch(PROXY_URL, {
+		  method: "POST",
+		  headers: { "Content-Type": "application/json" },
+		  body: JSON.stringify({ op: "load", name })
+		});
+		const j = await r.json();
+
+		if (j?.ok && j?.data) {
+		  const loaded = stripMeta(j.data);
+		  const valid = {};
+		  for (const [k, v] of Object.entries(loaded)) {
+			if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
+		  }
+		  state.data = valid;
+		  saveStore();
+		  render();
+		} else {
+		  // not found is fine; leave blank so user can save a new one
+		  console.warn("No prior schedule found or load failed.", j);
+		  render();
+		}
+	  } catch (e) {
+		console.error("Worker load error:", e);
+	  } finally {
+		if (loadBtn) { loadBtn.textContent = prevText || "Load"; loadBtn.disabled = !hasName; }
+	  }
+	}
+
+	document.getElementById('loadBtn').onclick = async () => {
+	  const selName = document.getElementById('selName');
+	  const name = (selName.value || '').trim();
+	  if (!name) { alert("Pick a Name first."); selName.focus(); return; }
+	  await loadScheduleForName(name);
+	};
+
 
   // Navigation (clamped)
   document.getElementById('prevBtn').onclick = ()=>{
