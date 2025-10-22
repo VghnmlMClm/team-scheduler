@@ -126,7 +126,7 @@
     </form>
 	
 	<div class="px-4 pb-4 space-y-4">
-	  <!-- Legend first -->
+	  <!-- Legend -->
 	  <div>
 		<div class="flex items-center justify-between mb-2">
 		  <h4 class="text-sm font-semibold">Legend</h4>
@@ -171,10 +171,10 @@
   // Helpers
   const safeFileName = (name) =>
     String(name || "")
-      .normalize("NFKD")                 // drop accents if any
-      .replace(/[\u0300-\u036f]/g, "")   // strip diacritics
-      .replace(/[^A-Za-z0-9]+/g, "_")    // non-alphanumerics -> "_"
-      .replace(/^_+|_+$/g, "");          // trim leading/trailing "_"
+      .normalize("NFKD")                 
+      .replace(/[\u0300-\u036f]/g, "")   
+      .replace(/[^A-Za-z0-9]+/g, "_")   
+      .replace(/^_+|_+$/g, ""); 
 
   const stripMeta = obj => Object.fromEntries(Object.entries(obj || {}).filter(([k]) => !k.startsWith("_")));
   const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
@@ -185,7 +185,7 @@
   const normVal = v => String(v ?? "").trim();
   const uniq = arr => [...new Set(arr)];
 
-  // State
+
   const state = {
     viewYear: new Date().getFullYear(),
     viewMonth: new Date().getMonth(),
@@ -196,7 +196,7 @@
     data: {}
   };
 
-  // Config (window & holidays)
+
   let CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
   const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
   const dateInRange = d => {
@@ -225,7 +225,7 @@
     return { year, month };
   }
 
-  // Responders & dropdowns
+  // Responders integration
   let RESPONDERS = [];
   function fillSelect(sel, values, selected, blankLabel = "— select —") {
     sel.innerHTML =
@@ -332,14 +332,13 @@
     });
   }
 
-  // Local store
   function loadStore(){
     try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
     catch(e){ state.data = {}; }
   }
   function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
 
-  // Calendar render
+  // Calendar 
   const grid = document.getElementById('calendarGrid');
   const monthLabel = document.getElementById('monthLabel');
   const selectedCount = document.getElementById('selectedCount');
@@ -472,7 +471,7 @@
     saveStore(); render();
   };
 
-  // Save (via proxy to GitHub)
+  // Save (proxy to GitHub)
 	async function uploadScheduleViaProxy(){
 	  const exportBtn = document.getElementById('exportBtn');
 	  const selName = document.getElementById('selName');
@@ -493,7 +492,7 @@
 	  exportBtn.textContent = "Saving…";
 
 	  const payload = {
-		op: "save",               // ← IMPORTANT
+		op: "save",              
 		name,
 		data: {
 		  ...state.data,
@@ -547,7 +546,7 @@
 	  const hasName = !!(name && name.trim());
 	  setSaveEnabled(hasName);
 
-	  // Reset current view first
+	  // Reset current view
 	  state.data = {};
 	  saveStore();
 	  render();
@@ -569,7 +568,6 @@
 
 		if (!j?.ok) {
 		  console.warn("Worker responded with error:", j);
-		  // keep blank so user can save new
 		  render();
 		  return;
 		}
@@ -584,13 +582,11 @@
 		  saveStore();
 		  render();
 		} else {
-		  // Not found is fine; leave blank
 		  console.info("No prior schedule found.");
 		  render();
 		}
 	  } catch (e) {
 		console.error("Worker load error:", e);
-		// leave calendar blank on error
 	  } finally {
 		if (loadBtn) { loadBtn.textContent = prevText || "Load"; loadBtn.disabled = !hasName; }
 	  }
@@ -605,7 +601,7 @@
 	};
 
 
-  // Navigation (clamped)
+  // Navigation
   document.getElementById('prevBtn').onclick = ()=>{
     const d = new Date(state.viewYear, state.viewMonth - 1, 1);
     ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
