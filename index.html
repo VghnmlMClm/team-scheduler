@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scheduler</title>
+ <!-- <title>Scheduler</title> -->
+  <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -196,6 +197,21 @@
     data: {}
   };
 
+	function fmtMMMDDYYYY(d){
+	  const MMM = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+	  if (!d) return null;
+	  return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+	}
+	function updateTitleFromConfig(){
+	  const el = document.getElementById('appTitle');
+	  if (!el) return;
+	  const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
+	  if (s && e){
+		el.textContent = `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})`;
+	  } else {
+		el.textContent = "Scheduler";
+	  }
+	}
 
   let CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
   const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
@@ -618,6 +634,7 @@
   (async () => {
     loadStore();
     await loadConfig();
+	updateTitleFromConfig();  
     await loadResponders();
     wireResponderEvents();
     setSaveEnabled(false);
