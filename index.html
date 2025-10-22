@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -29,68 +30,75 @@
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
+        <!-- Export menu -->
+        <div class="relative">
+          <button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
+          <div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
+            <button id="exportVlBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">VL Summary (.txt)</button>
+            <button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
+          </div>
+        </div>
         <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Refresh</button>
         <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Save</button>
       </div>
     </div>
 
-	<!-- Filters -->
-	<div class="grid grid-cols-1 gap-3 text-sm">
-	  <!-- Line 1 -->
-	  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-		<div>
-		  <label for="selDivision" class="block text-xs text-slate-300 mb-1">DIVISION</label>
-		  <select id="selDivision" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
-			<option value="">— select division —</option>
-		  </select>
-		</div>
-		<div>
-		  <label for="selDepartment" class="block text-xs text-slate-300 mb-1">DEPARTMENT</label>
-		  <select id="selDepartment" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
-			<option value="">— select department —</option>
-		  </select>
-		</div>
-		<div>
-		  <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
-		  <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
-			<option value="">— select team —</option>
-		  </select>
-		</div>
-	  </div>
+    <!-- Filters -->
+    <div class="grid grid-cols-1 gap-3 text-sm">
+      <!-- Line 1 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label for="selDivision" class="block text-xs text-slate-300 mb-1">DIVISION</label>
+          <select id="selDivision" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">— select division —</option>
+          </select>
+        </div>
+        <div>
+          <label for="selDepartment" class="block text-xs text-slate-300 mb-1">DEPARTMENT</label>
+          <select id="selDepartment" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">— select department —</option>
+          </select>
+        </div>
+        <div>
+          <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
+          <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">— select team —</option>
+          </select>
+        </div>
+      </div>
 
-	  <!-- Line 2 -->
-	  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-		<div>
-		  <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
-		  <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
-			<option value="">— select position —</option>
-		  </select>
-		</div>
-		<div>
-		  <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
-		  <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
-			<option value="">— select name —</option>
-		  </select>
-		</div>
-	  </div>
-	</div>
+      <!-- Line 2 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
+          <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">— select position —</option>
+          </select>
+        </div>
+        <div>
+          <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
+          <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">— select name —</option>
+          </select>
+        </div>
+      </div>
+    </div>
   </div>
 </header>
 
 <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Calendar -->
-  <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">	
-	<div class="p-4 border-b border-slate-700">
-	  <div class="flex justify-center items-center gap-4">
-		<button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
-		<div class="text-center">
-		  <h2 id="monthLabel" class="text-lg font-semibold"></h2>
-		  <p id="selectedCount" class="text-xs text-slate-400"></p>
-		</div>
-		<button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
-	  </div>
-	</div>
-
+  <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
+    <div class="p-4 border-b border-slate-700">
+      <div class="flex justify-center items-center gap-4">
+        <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
+        <div class="text-center">
+          <h2 id="monthLabel" class="text-lg font-semibold"></h2>
+          <p id="selectedCount" class="text-xs text-slate-400"></p>
+        </div>
+        <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
+      </div>
+    </div>
 
     <div class="p-4">
       <div class="grid grid-cols-7 text-xs font-medium text-slate-400 mb-2 select-none">
@@ -123,35 +131,33 @@
         <button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
       </div>
     </form>
-	
-	<div class="px-4 pb-4 space-y-4">
-	  <!-- Legend -->
-	  <div>
-		<div class="flex items-center justify-between mb-2">
-		  <h4 class="text-sm font-semibold">Legend</h4>
-		</div>
-		<div class="text-sm space-y-1">
-		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
-		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
-		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
-		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#00b0f0"></span> Holiday</div>
-		  <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend</div>
-		</div>
-	  </div>
 
-	  <!-- Selected days + Clear Selection -->
-	  <div>
-		<div class="flex items-center justify-between mb-1">
-		  <h4 class="text-sm font-semibold">Selected:</h4>
-		  <button id="clearSelectionBtn" class="px-3 py-1.5 rounded-lg border border-slate-600 hover:bg-slate-800 text-xs">
-			Clear selection
-		  </button>
-		</div>
-		<div id="selectedList" class="text-sm text-slate-300"></div>
-	  </div>
-	</div>
+    <div class="px-4 pb-4 space-y-4">
+      <!-- Legend -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-sm font-semibold">Legend</h4>
+        </div>
+        <div class="text-sm space-y-1">
+          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
+          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
+          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
+          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#00b0f0"></span> Holiday</div>
+          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend</div>
+        </div>
+      </div>
 
-
+      <!-- Selected days + Clear Selection -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <h4 class="text-sm font-semibold">Selected:</h4>
+          <button id="clearSelectionBtn" class="px-3 py-1.5 rounded-lg border border-slate-600 hover:bg-slate-800 text-xs">
+            Clear selection
+          </button>
+        </div>
+        <div id="selectedList" class="text-sm text-slate-300"></div>
+      </div>
+    </div>
   </aside>
 </main>
 
@@ -162,18 +168,11 @@
 <!-- ====== SCRIPT ====== -->
 <script>
   // URLs
-  const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
+  const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/"; // worker handles load/save
   const RESPONDERS_URL = "Responders.json";
   const CONFIG_URL = "config.json";
 
   // Helpers
-  const safeFileName = (name) =>
-    String(name || "")
-      .normalize("NFKD")                 
-      .replace(/[\u0300-\u036f]/g, "")   
-      .replace(/[^A-Za-z0-9]+/g, "_")   
-      .replace(/^_+|_+$/g, ""); 
-
   const stripMeta = obj => Object.fromEntries(Object.entries(obj || {}).filter(([k]) => !k.startsWith("_")));
   const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
   const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
@@ -182,7 +181,6 @@
   const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
   const normVal = v => String(v ?? "").trim();
   const uniq = arr => [...new Set(arr)];
-
 
   const state = {
     viewYear: new Date().getFullYear(),
@@ -194,22 +192,21 @@
     data: {}
   };
 
-	function fmtMMMDDYYYY(d){
-	  const MMM = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-	  if (!d) return null;
-	  return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-	}
-	function updateTitleFromConfig(){
-	  const el = document.getElementById('appTitle');
-	  if (!el) return;
-	  const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
-	  if (s && e){
-		el.textContent = `Schedule (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})`;
-	  } else {
-		el.textContent = "Schedule";
-	  }
-	}
+  // Title helpers
+  function fmtMMMDDYYYY(d){
+    const MMM = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+    if (!d) return null;
+    return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  }
+  function updateTitleFromConfig(){
+    const el = document.getElementById('appTitle');
+    if (!el) return;
+    const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
+    if (s && e){ el.textContent = `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})`; }
+    else { el.textContent = "Scheduler"; }
+  }
 
+  // Config
   let CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
   const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
   const dateInRange = d => {
@@ -238,7 +235,7 @@
     return { year, month };
   }
 
-  // Responders integration
+  // Responders
   let RESPONDERS = [];
   function fillSelect(sel, values, selected, blankLabel = "— select —") {
     sel.innerHTML =
@@ -278,23 +275,24 @@
     if (changed === "POSITION")   {                                       cur.NAME = ""; }
 
     const all = RESPONDERS;
+    const uniqVals = (arr, field) => uniq(arr.map(r => normVal(r[field]))).sort();
 
-    const divValues = uniq(all.map(r => normVal(r.DIVISION))).sort();
+    const divValues = uniqVals(all, 'DIVISION');
     if (cur.DIVISION && !divValues.includes(cur.DIVISION)) cur.DIVISION = "";
     fillSelect(divSel, divValues, cur.DIVISION, "— select division —");
     const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
 
-    const depValues = uniq(scopeDiv.map(r => normVal(r.DEPARTMENT))).sort();
+    const depValues = uniqVals(scopeDiv, 'DEPARTMENT');
     if (cur.DEPARTMENT && !depValues.includes(cur.DEPARTMENT)) cur.DEPARTMENT = "";
     fillSelect(depSel, depValues, cur.DEPARTMENT, "— select department —");
     const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
 
-    const teamValues = uniq(scopeDep.map(r => normVal(r.TEAM))).sort();
+    const teamValues = uniqVals(scopeDep, 'TEAM');
     if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
     fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
 
     const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
-    const posValues = uniq(scopeTeam.map(r => normVal(r.POSITION))).sort();
+    const posValues = uniqVals(scopeTeam, 'POSITION');
     if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
     fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
 
@@ -345,13 +343,14 @@
     });
   }
 
+  // Local store
   function loadStore(){
     try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
     catch(e){ state.data = {}; }
   }
   function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
 
-  // Calendar 
+  // Calendar
   const grid = document.getElementById('calendarGrid');
   const monthLabel = document.getElementById('monthLabel');
   const selectedCount = document.getElementById('selectedCount');
@@ -484,135 +483,281 @@
     saveStore(); render();
   };
 
-  // Save (proxy to GitHub)
-	async function uploadScheduleViaProxy(){
-	  const exportBtn = document.getElementById('exportBtn');
-	  const selName = document.getElementById('selName');
-	  const selDivision = document.getElementById('selDivision');
-	  const selDepartment = document.getElementById('selDepartment');
-	  const selTeam = document.getElementById('selTeam');
-	  const selPosition = document.getElementById('selPosition');
+  // Save via Worker
+  async function uploadScheduleViaProxy(){
+    const exportBtn = document.getElementById('exportBtn');
+    const selName = document.getElementById('selName');
+    const selDivision = document.getElementById('selDivision');
+    const selDepartment = document.getElementById('selDepartment');
+    const selTeam = document.getElementById('selTeam');
+    const selPosition = document.getElementById('selPosition');
 
-	  const name = (selName.value || '').trim();
-	  if(!name){ alert("Pick a Name first."); selName.focus(); return; }
+    const name = (selName.value || '').trim();
+    if(!name){ alert("Pick a Name first."); selName.focus(); return; }
 
-	  if(Object.keys(state.data).length === 0){
-		if(!confirm("Your schedule is empty. Save anyway?")) return;
-	  }
+    if(Object.keys(state.data).length === 0){
+      if(!confirm("Your schedule is empty. Save anyway?")) return;
+    }
 
-	  exportBtn.disabled = true;
-	  const prevText = exportBtn.textContent;
-	  exportBtn.textContent = "Saving…";
+    exportBtn.disabled = true;
+    const prevText = exportBtn.textContent;
+    exportBtn.textContent = "Saving…";
 
-	  const payload = {
-		op: "save",              
-		name,
-		data: {
-		  ...state.data,
-		  _meta: {
-			division: selDivision.value,
-			department: selDepartment.value,
-			team: selTeam.value,
-			position: selPosition.value,
-			name,
-			lastSaved: new Date().toISOString()
-		  }
-		}
-	  };
+    const payload = {
+      op: "save",
+      name,
+      data: {
+        ...state.data,
+        _meta: {
+          division: selDivision.value,
+          department: selDepartment.value,
+          team: selTeam.value,
+          position: selPosition.value,
+          name,
+          lastSaved: new Date().toISOString()
+        }
+      }
+    };
 
-	  try{
-		const res = await fetch(PROXY_URL, {
-		  method: "POST",
-		  headers: {
-			"Content-Type": "application/json",
-			"Accept": "application/json"
-		  },
-		  body: JSON.stringify(payload),
-		});
+    try{
+      const res = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(payload),
+      });
 
-		let j = null;
-		try { j = await res.json(); } catch {}
-		if (!res.ok || !j?.ok) {
-		  const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
-		  throw new Error(err);
-		}
+      let j = null;
+      try { j = await res.json(); } catch {}
+      if (!res.ok || !j?.ok) {
+        const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
+        throw new Error(err);
+      }
 
-		const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
-		alert(`Saved ✅\n${j.url || ''}`);
-		document.getElementById('selectedList').innerHTML =
-		  link || '<span class="text-xs text-slate-500">Saved.</span>';
+      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
+      alert(`Saved ✅\n${j.url || ''}`);
+      document.getElementById('selectedList').innerHTML =
+        link || '<span class="text-xs text-slate-500">Saved.</span>';
 
-	  } catch(e){
-		alert("Save failed:\n" + (e?.message || e));
-	  } finally {
-		exportBtn.disabled = false;
-		exportBtn.textContent = prevText;
-	  }
-	}
-
-  
-  
+    } catch(e){
+      alert("Save failed:\n" + (e?.message || e));
+    } finally {
+      exportBtn.disabled = false;
+      exportBtn.textContent = prevText;
+    }
+  }
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
-	async function loadScheduleForName(name) {
-	  const loadBtn = document.getElementById('loadBtn');
-	  const hasName = !!(name && name.trim());
-	  setSaveEnabled(hasName);
+  // Load selected user's schedule (for calendar preview)
+  async function loadScheduleForName(name) {
+    const loadBtn = document.getElementById('loadBtn');
+    const hasName = !!(name && name.trim());
+    setSaveEnabled(hasName);
 
-	  // Reset current view
-	  state.data = {};
-	  saveStore();
-	  render();
-	  if (!hasName) return;
+    // Reset current view
+    state.data = {};
+    saveStore();
+    render();
+    if (!hasName) return;
 
-	  const prevText = loadBtn ? loadBtn.textContent : '';
-	  if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
+    const prevText = loadBtn ? loadBtn.textContent : '';
+    if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
 
-	  try {
-		const r = await fetch(PROXY_URL, {
-		  method: "POST",
-		  headers: {
-			"Content-Type": "application/json",
-			"Accept": "application/json"
-		  },
-		  body: JSON.stringify({ op: "load", name })
-		});
-		const j = await r.json();
+    try {
+      const r = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ op: "load", name })
+      });
+      const j = await r.json();
 
-		if (!j?.ok) {
-		  console.warn("Worker responded with error:", j);
-		  render();
-		  return;
-		}
+      if (!j?.ok) {
+        console.warn("Worker responded with error:", j);
+        render();
+        return;
+      }
 
-		if (j.found && j.data) {
-		  const loaded = stripMeta(j.data);
-		  const valid = {};
-		  for (const [k, v] of Object.entries(loaded)) {
-			if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
-		  }
-		  state.data = valid;
-		  saveStore();
-		  render();
-		} else {
-		  console.info("No prior schedule found.");
-		  render();
-		}
-	  } catch (e) {
-		console.error("Worker load error:", e);
-	  } finally {
-		if (loadBtn) { loadBtn.textContent = prevText || "Refresh"; loadBtn.disabled = !hasName; }
-	  }
-	}
+      if (j.found && j.data) {
+        const loaded = stripMeta(j.data);
+        const valid = {};
+        for (const [k, v] of Object.entries(loaded)) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
+        }
+        state.data = valid;
+        saveStore();
+        render();
+      } else {
+        console.info("No prior schedule found.");
+        render();
+      }
+    } catch (e) {
+      console.error("Worker load error:", e);
+    } finally {
+      if (loadBtn) { loadBtn.textContent = prevText || "Refresh"; loadBtn.disabled = !hasName; }
+    }
+  }
+  document.getElementById('loadBtn').onclick = async () => {
+    const selName = document.getElementById('selName');
+    const name = (selName.value || '').trim();
+    if (!name) { alert("Pick a Name first."); selName.focus(); return; }
+    await loadScheduleForName(name);
+  };
 
+  // ---------- EXPORT (all people) ----------
+  function getAllNames() {
+    return uniq(RESPONDERS.map(r => r.NAME).filter(Boolean));
+  }
+  function dateRangeList() {
+    const out = [];
+    if (!CONFIG.START_DATE || !CONFIG.END_DATE) return out;
+    const d = new Date(CONFIG.START_DATE);
+    while (d <= CONFIG.END_DATE) {
+      out.push(ymd(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  }
+  async function fetchScheduleData(name){
+    try{
+      const r = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify({ op: "load", name })
+      });
+      const j = await r.json();
+      if (j?.ok && j.found && j.data) {
+        return stripMeta(j.data);
+      }
+    }catch(e){
+      console.warn("Fetch schedule failed for", name, e);
+    }
+    return {}; // not found or error
+  }
+  function downloadBlob(content, filename, type){
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+  }
 
-	document.getElementById('loadBtn').onclick = async () => {
-	  const selName = document.getElementById('selName');
-	  const name = (selName.value || '').trim();
-	  if (!name) { alert("Pick a Name first."); selName.focus(); return; }
-	  await loadScheduleForName(name);
-	};
+  // Export: VL Summary (.txt)
+  async function exportVlSummary(){
+    const names = getAllNames();
+    if (!names.length) { alert("No names found in Responders.json."); return; }
 
+    // Load all schedules in parallel
+    const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+
+    // Build summary text
+    function monthLabel(d){
+      const opts = { month:'long' };
+      return d.toLocaleString(undefined, opts);
+    }
+    function monthYearLabel(d){
+      return d.toLocaleString(undefined, { month:'long', year:'numeric' });
+    }
+
+    const lines = [];
+    for (const [name, data] of pairs) {
+      lines.push(name);
+      const vlDates = Object.entries(data || {})
+        .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
+        .map(([k]) => parseYMD(k))
+        .sort((a,b)=>a-b);
+
+      if (!vlDates.length) {
+        lines.push("(no VL)");
+        lines.push(""); // blank line after name
+        continue;
+      }
+
+      // Group by month+year
+      const groups = {};
+      for (const d of vlDates) {
+        const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+        (groups[key] ||= []).push(d);
+      }
+      // Emit in chronological order
+      const keys = Object.keys(groups).sort();
+      for (const key of keys) {
+        const arr = groups[key];
+        const label = monthYearLabel(arr[0]);
+        const days = arr.map(d => d.getDate()).join(", ");
+        lines.push(`${label}`);
+        lines.push(`${days}`);
+      }
+      lines.push(""); // blank line between people
+    }
+
+    const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
+    downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
+  }
+
+  // Export: Table (.xlsx)
+  async function exportTableXlsx(){
+    const names = getAllNames();
+    if (!names.length) { alert("No names found in Responders.json."); return; }
+    const dates = dateRangeList();
+    if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
+
+    // Load all schedules
+    const map = new Map();
+    const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+    for (const [n, data] of pairs) map.set(n, data || {});
+
+    // Build AOA: first row header
+    const header = ["Name", ...dates]; // DATES from START to END
+    const rows = [header];
+
+    for (const name of names) {
+      const sched = map.get(name) || {};
+      const row = [name];
+      for (const d of dates) {
+        const v = sched[d] || "";
+        // write short labels (VL/SITE/WFH)
+        row.push(v ? (LABELS[v] || v) : "");
+      }
+      rows.push(row);
+    }
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, "Schedule");
+
+    const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
+    const fname = `TeamSchedule_Table_${ts}.xlsx`;
+    XLSX.writeFile(wb, fname);
+  }
+
+  // Export menu wiring
+  const exportFileBtn = document.getElementById('exportFileBtn');
+  const exportMenu    = document.getElementById('exportMenu');
+  const exportVlBtn   = document.getElementById('exportVlBtn');
+  const exportTableBtn= document.getElementById('exportTableBtn');
+
+  function toggleMenu(show){
+    exportMenu.classList.toggle('hidden', !show);
+  }
+  exportFileBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const isHidden = exportMenu.classList.contains('hidden');
+    toggleMenu(isHidden);
+  });
+  document.addEventListener('click', ()=> toggleMenu(false));
+  exportVlBtn.addEventListener('click', async ()=>{
+    toggleMenu(false);
+    await exportVlSummary();
+  });
+  exportTableBtn.addEventListener('click', async ()=>{
+    toggleMenu(false);
+    await exportTableXlsx();
+  });
 
   // Navigation
   document.getElementById('prevBtn').onclick = ()=>{
@@ -631,7 +776,7 @@
   (async () => {
     loadStore();
     await loadConfig();
-	updateTitleFromConfig();  
+    updateTitleFromConfig();
     await loadResponders();
     wireResponderEvents();
     setSaveEnabled(false);
