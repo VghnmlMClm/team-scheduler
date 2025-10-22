@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,6 +18,7 @@
     .today-ring{box-shadow:inset 0 0 0 2px var(--brand)}
     .muted{opacity:.35}
     .grad{background:linear-gradient(135deg,#1d4ed8 0%,#06b6d4 100%)}
+    .hidden{display:none !important}
   </style>
 </head>
 
@@ -26,7 +28,12 @@
     <!-- Title + Actions -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center"><span class="text-lg">🗓️</span></div>
+        <!-- The SAME button toggles Personnel <-> Dashboard -->
+        <button id="toggleDashboardBtn" type="button" title="Switch to Dashboard View"
+          class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center hover:bg-white/25 transition cursor-pointer">
+          <span id="dashIcon" class="text-lg">🗓️</span>
+          <span class="sr-only">Toggle Dashboard</span>
+        </button>
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
@@ -44,7 +51,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="grid grid-cols-1 gap-3 text-sm">
+    <div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
       <!-- Line 1 -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
@@ -86,7 +93,8 @@
   </div>
 </header>
 
-<main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- PERSONNEL VIEW -->
+<main id="personnelView" class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Calendar -->
   <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
     <div class="p-4 border-b border-slate-700">
@@ -161,6 +169,17 @@
   </aside>
 </main>
 
+<!-- DASHBOARD VIEW -->
+<section id="dashboardView" class="hidden max-w-6xl mx-auto px-4 py-6">
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+    <h2 class="text-lg font-semibold mb-3 text-slate-200">Vacation Leave (VL) Count by Date and Position</h2>
+    <div class="w-full h-[620px]">
+      <canvas id="vlByDateChart"></canvas>
+    </div>
+    <p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
+  </div>
+</section>
+
 <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-500">
   <p>Tip: Hold <kbd class="px-1 rounded bg-slate-700 text-white">Shift</kbd> and click to select a range.</p>
 </footer>
@@ -189,7 +208,8 @@
     focusDay: ymd(new Date()),
     lastClicked: null,
     storeKey: 'calendar-scheduler-v2',
-    data: {}
+    data: {},
+    isDashboard: false
   };
 
   // Title helpers
@@ -202,8 +222,7 @@
     const el = document.getElementById('appTitle');
     if (!el) return;
     const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
-    if (s && e){ el.textContent = `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})`; }
-    else { el.textContent = "Scheduler"; }
+    el.textContent = (s && e) ? `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})` : "Scheduler";
   }
 
   // Config
@@ -310,6 +329,7 @@
 
     localStorage.setItem("responders-filters", JSON.stringify(cur));
     setSaveEnabled(!!cur.NAME);
+    updateDashToggleEligibility(); // ensure toggle reflects current selection eligibility
   }
   async function loadResponders() {
     try{
@@ -339,6 +359,7 @@
     document.getElementById("selPosition").addEventListener("change", ()=> populateRespondersUI("POSITION"));
     document.getElementById("selName").addEventListener("change", async (e) => {
       populateRespondersUI("NAME");
+      updateDashToggleEligibility();
       await loadScheduleForName(e.target.value);
     });
   }
@@ -379,7 +400,8 @@
     const id = ymd(dateObj);
     const isToday   = id === ymd(new Date());
     const wd        = dateObj.getDay();
-    const weekend   = (wd===0 || wd===6);
+    theWeekend = (wd===0 || wd===6);
+    const weekend = theWeekend;
     const outRange  = !dateInRange(dateObj);
     const holiday   = isHoliday(dateObj);
     const isSelected= state.selected.has(id);
@@ -646,48 +668,40 @@
   }
 
   // Wait for xlsx
-	async function ensureXLSX() {
-	  if (window.XLSX) return;
+  async function ensureXLSX() {
+    if (window.XLSX) return;
 
-	  const urls = [
-		"https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
-		"https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
-		"https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
-	  ];
+    const urls = [
+      "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
+      "https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
+      "https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
+    ];
 
-	  for (const url of urls) {
-		try {
-		  await new Promise((resolve, reject) => {
-			const s = document.createElement("script");
-			s.src = url;
-			s.async = true;
-			s.onload = () => resolve();
-			s.onerror = () => reject(new Error("failed"));
-			document.head.appendChild(s);
-		  });
-		  if (window.XLSX) return;
-		} catch (_) {
-		  // try next CDN
-		}
-	  }
-	  throw new Error("Failed to load SheetJS (XLSX). Check your network/CSP.");
-	}
-
-
+    for (const url of urls) {
+      try {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = url;
+          s.async = true;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error("failed"));
+          document.head.appendChild(s);
+        });
+        if (window.XLSX) return;
+      } catch (_) {
+        // try next CDN
+      }
+    }
+    throw new Error("Failed to load SheetJS (XLSX). Check your network/CSP.");
+  }
 
   // Export: VL Summary (.txt)
   async function exportVlSummary(){
     const names = getAllNames();
     if (!names.length) { alert("No names found in Responders.json."); return; }
 
-    // Load all schedules in parallel
     const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
 
-    // Build summary text
-    function monthLabel(d){
-      const opts = { month:'long' };
-      return d.toLocaleString(undefined, opts);
-    }
     function monthYearLabel(d){
       return d.toLocaleString(undefined, { month:'long', year:'numeric' });
     }
@@ -702,17 +716,15 @@
 
       if (!vlDates.length) {
         lines.push("(no VL)");
-        lines.push(""); // blank line after name
+        lines.push("");
         continue;
       }
 
-      // Group by month+year
       const groups = {};
       for (const d of vlDates) {
         const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
         (groups[key] ||= []).push(d);
       }
-      // Emit in chronological order
       const keys = Object.keys(groups).sort();
       for (const key of keys) {
         const arr = groups[key];
@@ -721,7 +733,7 @@
         lines.push(`${label}`);
         lines.push(`${days}`);
       }
-      lines.push(""); // blank line between people
+      lines.push("");
     }
 
     const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
@@ -729,57 +741,42 @@
   }
 
   // Export: Table (.xlsx)
-	async function exportTableXlsx(){
-	  await ensureXLSX(); // make sure SheetJS is available
+  async function exportTableXlsx(){
+    await ensureXLSX();
 
-	  const names = getAllNames().sort();
-	  if (!names.length) { alert("No names found in Responders.json."); return; }
+    const names = getAllNames().sort();
+    if (!names.length) { alert("No names found in Responders.json."); return; }
 
-	  const dates = dateRangeList(); // YYYY-MM-DD for START_DATE..END_DATE
-	  if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
+    const dates = dateRangeList();
+    if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
 
-	  // Fetch every person's schedule (in parallel)
-	  const schedules = await Promise.all(
-		names.map(async (n) => [n, await fetchScheduleData(n)])
-	  );
+    const schedules = await Promise.all(
+      names.map(async (n) => [n, await fetchScheduleData(n)])
+    );
 
-	  // Build header and rows
-	  const header = ["Name", ...dates];
-	  const rows = [header];
+    const header = ["Name", ...dates];
+    const rows = [header];
 
-	  const statusToCell = (code) => {
-		// Use your short labels (VL / SITE / WFH), blank if none
-		if (!code) return "";
-		return (LABELS[code] ?? code);
-	  };
+    const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
 
-	  for (const [name, data] of schedules) {
-		const row = [name];
-		for (const d of dates) {
-		  const code = data?.[d] || "";
-		  row.push(statusToCell(code));
-		}
-		rows.push(row);
-	  }
+    for (const [name, data] of schedules) {
+      const row = [name];
+      for (const d of dates) {
+        const code = data?.[d] || "";
+        row.push(statusToCell(code));
+      }
+      rows.push(row);
+    }
 
-	  // Create workbook
-	  const wb = XLSX.utils.book_new();
-	  const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!freeze"] = { xSplit: 1, ySplit: 1 };
+    ws["!cols"] = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
+    XLSX.utils.book_append_sheet(wb, ws, "Schedule");
 
-	  // Freeze header row & first column for readability
-	  ws["!freeze"] = { xSplit: 1, ySplit: 1 };
-
-	  // Optional: set column widths (Name wider, dates narrower)
-	  const colWidths = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
-	  ws["!cols"] = colWidths;
-
-	  XLSX.utils.book_append_sheet(wb, ws, "Schedule");
-
-	  const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
-	  XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
-	}
-	
-
+    const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
+    XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
+  }
 
   // Export menu wiring
   const exportFileBtn = document.getElementById('exportFileBtn');
@@ -818,6 +815,197 @@
   };
   document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
 
+  // ===================== DASHBOARD VIEW + ELIGIBILITY =====================
+  const $toggleDash = document.getElementById('toggleDashboardBtn');
+  const $filtersWrap = document.getElementById('filtersWrap');
+  const $personnelView = document.getElementById('personnelView');
+  const $dashboardView = document.getElementById('dashboardView');
+  const $loadBtn = document.getElementById('loadBtn');
+  const $saveBtn = document.getElementById('exportBtn');
+  let vlChart = null;
+
+  // Allowed positions to ENTER dashboard (when currently in Personnel view)
+  const DASH_ALLOWED_POS = new Set([
+    'Senior GIS Specialist',
+    'Deputy Manager',
+    'Manager'
+  ]);
+
+  function getSelectedResponderPosition() {
+    const nameSel = document.getElementById('selName');
+    const name = (nameSel?.value || '').trim();
+    if (!name) return null;
+    const r = RESPONDERS.find(x => (x.NAME || '') === name);
+    return r?.POSITION || null;
+  }
+
+  function isDashboardEligible() {
+    const pos = getSelectedResponderPosition();
+    return !!pos && DASH_ALLOWED_POS.has(pos);
+  }
+
+  function setDashToggleDisabled(disabled, reason = '') {
+    const btn = document.getElementById('toggleDashboardBtn');
+    if (!btn) return;
+    btn.disabled = disabled;
+    btn.classList.toggle('opacity-50', disabled);
+    btn.classList.toggle('cursor-not-allowed', disabled);
+    btn.title = disabled
+      ? (reason || 'Select a Manager / Deputy Manager / Senior GIS Specialist to open Dashboard')
+      : (state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View');
+  }
+
+  function updateDashToggleEligibility() {
+    if (state.isDashboard) { setDashToggleDisabled(false); return; }
+    const ok = isDashboardEligible();
+    setDashToggleDisabled(!ok);
+  }
+
+  $toggleDash.addEventListener('click', async () => {
+    // If we’re in Personnel view, only allow if the selected Name has an allowed Position
+    if (!state.isDashboard && !isDashboardEligible()) return;
+
+    state.isDashboard = !state.isDashboard;
+    if (state.isDashboard) {
+      enterDashboard();
+      await buildAndRenderDashboard();
+    } else {
+      exitDashboard();
+    }
+  });
+
+  function enterDashboard(){
+    // Hide dropdown selection, Refresh, Save
+    $filtersWrap.classList.add('hidden');
+    $loadBtn.classList.add('hidden');
+    $saveBtn.classList.add('hidden');
+
+    // Swap views
+    $personnelView.classList.add('hidden');
+    $dashboardView.classList.remove('hidden');
+
+    // change icon and tooltip
+    document.getElementById('dashIcon').textContent = '👥';
+    $toggleDash.title = 'Switch to Personnel View';
+    setDashToggleDisabled(false); // always allow going back
+  }
+
+  function exitDashboard(){
+    // Show dropdown selection, Refresh, Save
+    $filtersWrap.classList.remove('hidden');
+    $loadBtn.classList.remove('hidden');
+    $saveBtn.classList.remove('hidden');
+
+    // Swap views
+    $dashboardView.classList.add('hidden');
+    $personnelView.classList.remove('hidden');
+
+    if (vlChart) { vlChart.destroy(); vlChart = null; }
+
+    // revert icon and tooltip
+    document.getElementById('dashIcon').textContent = '🗓️';
+    $toggleDash.title = 'Switch to Dashboard View';
+
+    // Re-apply eligibility rule when back in Personnel view
+    updateDashToggleEligibility();
+  }
+
+  // Build dashboard data from ALL names
+  async function buildAndRenderDashboard(){
+    const hint = document.getElementById('dashboardHint');
+    hint.textContent = 'Loading VL counts from all personnel…';
+
+    const labels = dateRangeList(); // YYYY-MM-DD
+    if (!labels.length) {
+      hint.textContent = 'Set START_DATE and END_DATE in config.json to show dashboard.';
+      return;
+    }
+
+    // Map name -> position
+    const nameToPos = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
+
+    const names = getAllNames();
+    if (!names.length) {
+      hint.textContent = 'No personnel found in Responders.json.';
+      return;
+    }
+
+    // Fetch all schedules
+    const schedulePairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+
+    // Positions set
+    const positions = [...new Set(RESPONDERS.map(r => r.POSITION || 'Unspecified'))].sort();
+    const labelIndex = new Map(labels.map((d, i) => [d, i]));
+    const countsByPos = new Map(positions.map(p => [p, new Array(labels.length).fill(0)]));
+
+    // Tally VL per day per position
+    for (const [name, sched] of schedulePairs) {
+      const pos = nameToPos.get(name) || 'Unspecified';
+      const arr = countsByPos.get(pos);
+      if (!arr) continue;
+
+      for (const [dateStr, status] of Object.entries(sched)) {
+        if (status !== 'VL') continue;
+        if (!labelIndex.has(dateStr)) continue;
+        const dObj = parseYMD(dateStr);
+        if (!dateInRange(dObj)) continue;
+        arr[labelIndex.get(dateStr)]++;
+      }
+    }
+
+    const datasets = positions.map(p => ({
+      label: p,
+      data: countsByPos.get(p),
+      stack: 'vl'
+    }));
+
+    renderVLChart(labels, datasets);
+    hint.textContent = 'Tip: Hover a bar to see per-position counts and total.';
+  }
+
+  function renderVLChart(labels, datasets){
+    const ctx = document.getElementById('vlByDateChart').getContext('2d');
+    if (vlChart) { vlChart.destroy(); }
+
+    vlChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        scales: {
+          x: {
+            stacked: true,
+            title: { display: true, text: 'No. of people who filed VL' },
+            ticks: { precision: 0 }
+          },
+          y: {
+            stacked: true,
+            title: { display: true, text: 'Dates' },
+            ticks: { autoSkip: true, maxTicksLimit: 20 }
+          }
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 14 } },
+          tooltip: {
+            callbacks: {
+              footer: (items) => {
+                const total = items.reduce((s, it) => s + (Number(it.raw) || 0), 0);
+                return `Total: ${total}`;
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Vacation Leave (VL) filings per day — grouped by Position'
+          }
+        },
+        animation: false
+      }
+    });
+  }
+
   // Init
   (async () => {
     loadStore();
@@ -828,6 +1016,9 @@
     setSaveEnabled(false);
     ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
     render();
+
+    // Initial eligibility (no name yet)
+    updateDashToggleEligibility();
   })();
 </script>
 </body>
