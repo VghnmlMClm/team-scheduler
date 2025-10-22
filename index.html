@@ -20,7 +20,7 @@
   </style>
 </head>
 
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-black text-slate-100">
 <header class="grad text-white">
   <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
     <!-- Title + Save -->
@@ -63,7 +63,8 @@
 
 <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Calendar Card -->
-  <section class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200">
+  <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
+
     <div class="p-4 flex items-center justify-between gap-2 border-b">
       <div class="flex items-center gap-2">
         <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-100" title="Previous month">◀</button>
@@ -93,7 +94,8 @@
   </section>
 
   <!-- Editor Card -->
-  <aside class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+  <aside class="bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
+
     <div class="p-4 border-b">
       <h3 class="text-lg font-semibold">Set schedule for selected day(s)</h3>
       <p class="text-xs text-slate-500">Only these types are allowed. Weekends auto-grey if no status.</p>
@@ -125,7 +127,8 @@
   </aside>
 </main>
 
-<footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-500">
+<footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-400">
+
   <p>Tip: Hold <kbd class="px-1 rounded bg-slate-200">Shift</kbd> and click to select a range. Click individual days to toggle.</p>
 </footer>
 
@@ -181,6 +184,42 @@
     btn.classList.toggle('opacity-60', !enabled);
     btn.classList.toggle('cursor-not-allowed', !enabled);
   }
+
+	// --- Config (date window + holidays) --- //
+	const CONFIG_URL = "config.json";
+	let   CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
+
+	const parseDateStr = (s) => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
+	const dateInRange  = (d) => {
+	  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
+	  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate()); // strip time
+	  return dd >= CONFIG.START_DATE && dd <= CONFIG.END_DATE;
+	};
+	const isHoliday = (d) => CONFIG.HOLIDAYS_SET.has(ymd(d));
+
+	async function loadConfig(){
+	  try{
+		const res = await fetch(CONFIG_URL, { headers:{ "Accept":"application/json" }});
+		if(!res.ok) throw 0;
+		const j = await res.json();
+		CONFIG.START_DATE  = parseDateStr(j.START_DATE);
+		CONFIG.END_DATE    = parseDateStr(j.END_DATE);
+		CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
+	  }catch(e){
+		CONFIG = { START_DATE:null, END_DATE:null, HOLIDAYS_SET:new Set() };
+	  }
+	}
+
+	// Keep the calendar view inside the window
+	function clampView(year, month){
+	  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
+	  const monthLast  = new Date(year, month+1, 0);
+	  if (monthLast < CONFIG.START_DATE) return { year: CONFIG.START_DATE.getFullYear(), month: CONFIG.START_DATE.getMonth() };
+	  const monthFirst = new Date(year, month, 1);
+	  if (monthFirst > CONFIG.END_DATE) return { year: CONFIG.END_DATE.getFullYear(), month: CONFIG.END_DATE.getMonth() };
+	  return { year, month };
+	}
+
 
   // Hierarchical populate with override + flexible position scope
   function populateRespondersUI(changed = null, init = false) {
@@ -373,12 +412,15 @@
   function renderGrid(year, month){
     grid.innerHTML='';
     const first = new Date(year, month, 1);
-    const last = new Date(year, month+1, 0);
+    const last  = new Date(year, month+1, 0);
     const startWeekday = first.getDay();
-    const daysInMonth = last.getDate();
     const prevLast = new Date(year, month, 0).getDate();
+
+    // leading days
     for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
-    for(let d=1; d<=daysInMonth; d++) grid.appendChild(dayCell(new Date(year, month, d), false));
+    // this month
+    for(let d=1; d<=last.getDate(); d++) grid.appendChild(dayCell(new Date(year, month, d), false));
+    // trailing days
     const total = grid.children.length;
     const remaining = (7 - (total % 7)) % 7;
     for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
@@ -386,30 +428,63 @@
 
   function dayCell(dateObj, muted=false){
     const id = ymd(dateObj);
-    const isToday = id === ymd(new Date());
-    const isSelected = state.selected.has(id);
-    const weekday = dateObj.getDay();
-    const isWeekend = (weekday===0 || weekday===6);
-    const status = state.data[id] || '';
+    const isToday   = id === ymd(new Date());
+    const weekday   = dateObj.getDay();
+    const weekend   = (weekday===0 || weekday===6);
+    const outRange  = !dateInRange(dateObj);
+    const holiday   = isHoliday(dateObj);
+    const isSelected= state.selected.has(id);
+    const status    = state.data[id] || '';
+
+    // Background priority: saved status > holiday > weekend (grey) > default
     let bg = '';
-    if(status) bg = COLORS[status];
-    else if(isWeekend) bg = COLORS.WEEKEND;
+    if (status)       bg = COLORS[status];
+    else if (holiday) bg = '#00b0f0';
+    else if (weekend) bg = COLORS.WEEKEND;
+
+    const disabled = outRange || holiday || weekend; // cannot select
+
     const cell = document.createElement('button');
     cell.type='button';
-    cell.className=`day-cell aspect-square rounded-xl border border-slate-200 p-2 text-left hover:border-blue-300 transition ${muted?'muted':''} ${isSelected?'selected-day':''}`;
-    cell.dataset.date=id;
-    cell.style.background=bg||'';
-    const badge = status? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${LABELS[status]}</span>` : '';
-    cell.innerHTML = `<div class="flex items-center justify-between"><span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span></div><div class="mt-1 overflow-hidden">${badge}</div>`;
-    cell.addEventListener('click', e => onDayClick(id, e.shiftKey));
+    cell.className = [
+      'day-cell aspect-square rounded-xl border p-2 text-left transition',
+      muted ? 'muted' : '',
+      isSelected ? 'selected-day' : '',
+      disabled ? 'cursor-not-allowed' : 'hover:border-blue-300',
+      // dark-mode borders
+      'border-slate-700'
+    ].join(' ').trim();
+
+    cell.dataset.date = id;
+    if (bg) cell.style.background = bg;
+
+    // Small badge: show status or “HOL” for holidays
+    const badgeText = status ? LABELS[status] : (holiday ? 'HOL' : '');
+    const badge = badgeText
+      ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${badgeText}</span>`
+      : '';
+
+    cell.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span>
+      </div>
+      <div class="mt-1 overflow-hidden">${badge}</div>
+    `;
+
+    // Disable clicks if out of range / holiday / weekend
+    cell.addEventListener('click', e => {
+      if (disabled) return;
+      onDayClick(id, e.shiftKey);
+    });
     return cell;
   }
 
   function onDayClick(id, shift) {
     const date = parseYMD(id);
     const weekday = date.getDay();
-    // 0 = Sunday, 6 = Saturday → block weekends
-    if (weekday === 0 || weekday === 6) return;
+    if (!dateInRange(date)) return;
+    if (isHoliday(date))    return;
+    if (weekday === 0 || weekday === 6) return; // weekends blocked
 
     if (shift && state.lastClicked) {
       const a = parseYMD(state.lastClicked), b = parseYMD(id);
@@ -417,7 +492,9 @@
       const cur = new Date(min);
       while (cur <= max) {
         const wd = cur.getDay();
-        if (wd !== 0 && wd !== 6) state.selected.add(ymd(cur)); // only add weekdays
+        if (dateInRange(cur) && !isHoliday(cur) && wd !== 0 && wd !== 6) {
+          state.selected.add(ymd(cur));
+        }
         cur.setDate(cur.getDate() + 1);
       }
     } else {
@@ -429,6 +506,9 @@
     render();
   }
 
+
+
+
   function renderSelection(){
     const items = Array.from(state.selected).sort();
     selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
@@ -439,12 +519,16 @@
   function applyType(val){
     const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
     for(const d of targets){
-      const wd = parseYMD(d).getDay();
-      if (wd === 0 || wd === 6) continue; // skip weekends for safety
+      const dt = parseYMD(d);
+      const wd = dt.getDay();
+      if (!dateInRange(dt)) continue;
+      if (isHoliday(dt))    continue;
+      if (wd === 0 || wd === 6) continue;
       state.data[d] = val;
     }
     saveStore(); state.selected.clear(); render();
   }
+
 
   document.getElementById('btnVL').onclick = ()=> applyType('VL');
   document.getElementById('btnWFH').onclick = ()=> applyType('WFH');
@@ -521,14 +605,57 @@
   }
   document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
+	// Navigation limited by config window
+	document.getElementById('prevBtn').onclick = ()=>{
+	  const d = new Date(state.viewYear, state.viewMonth - 1, 1);
+	  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+	  render();
+	};
+	document.getElementById('nextBtn').onclick = ()=>{
+	  const d = new Date(state.viewYear, state.viewMonth + 1, 1);
+	  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+	  render();
+	};
+	document.getElementById('todayBtn').onclick = ()=>{
+	  let target = new Date();
+
+	  // Clamp target into the config window
+	  if (CONFIG.START_DATE && target < CONFIG.START_DATE) target = CONFIG.START_DATE;
+	  if (CONFIG.END_DATE && target > CONFIG.END_DATE)     target = CONFIG.END_DATE;
+
+	  // Clamp view and set focus
+	  ({year: state.viewYear, month: state.viewMonth} =
+		clampView(target.getFullYear(), target.getMonth()));
+	  state.focusDay = ymd(target);
+
+	  // Only preselect if selectable (in range, not holiday, not weekend)
+	  const wd = target.getDay();
+	  state.selected.clear();
+	  if (dateInRange(target) && !isHoliday(target) && wd !== 0 && wd !== 6) {
+		state.selected.add(state.focusDay);
+	  }
+
+	  render();
+	};
+
+	
+	
+	// (optional) Keep your existing clear button
+	document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
+
+
   // ===== Init =====
   (async () => {
     loadStore();
-    await loadResponders();   // fetch Responders.json and populate the selects
-    wireResponderEvents();    // hook up cascading dropdown behavior
-    setSaveEnabled(false);    // start disabled until a Name is chosen
-    render();                 // draw the calendar
+    await loadConfig();      // <— NEW: must come first
+    await loadResponders();
+    wireResponderEvents();
+    setSaveEnabled(false);
+    // Start view clamped to config window (e.g., START_DATE’s month if today is out of range)
+    ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
+    render();
   })();
+
 </script>
 </body>
 </html>
