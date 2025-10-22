@@ -400,8 +400,7 @@
     const id = ymd(dateObj);
     const isToday   = id === ymd(new Date());
     const wd        = dateObj.getDay();
-    theWeekend = (wd===0 || wd===6);
-    const weekend = theWeekend;
+	const weekend = (wd === 0 || wd === 6);
     const outRange  = !dateInRange(dateObj);
     const holiday   = isHoliday(dateObj);
     const isSelected= state.selected.has(id);
@@ -824,42 +823,47 @@
   const $saveBtn = document.getElementById('exportBtn');
   let vlChart = null;
 
-  // Allowed positions to ENTER dashboard (when currently in Personnel view)
-  const DASH_ALLOWED_POS = new Set([
-    'Senior GIS Specialist',
-    'Deputy Manager',
-    'Manager'
-  ]);
+	// Allowed positions to ENTER dashboard (Personnel view) — lowercased for case-insensitive match
+	const DASH_ALLOWED_POS = new Set([
+	  'senior gis specialist',
+	  'deputy manager',
+	  'manager'
+	]);
 
-  function getSelectedResponderPosition() {
-    const nameSel = document.getElementById('selName');
-    const name = (nameSel?.value || '').trim();
-    if (!name) return null;
-    const r = RESPONDERS.find(x => (x.NAME || '') === name);
-    return r?.POSITION || null;
-  }
+	function getSelectedResponderPosition() {
+	  const nameSel = document.getElementById('selName');
+	  const name = (nameSel?.value || '').trim();
+	  if (!name) return null;
 
-  function isDashboardEligible() {
-    const pos = getSelectedResponderPosition();
-    return !!pos && DASH_ALLOWED_POS.has(pos);
-  }
+	  // Find responder by exact name
+	  const r = RESPONDERS.find(x => (x.NAME || '') === name);
+	  // Normalize: trim + lowercase for case-insensitive comparison
+	  const pos = (r?.POSITION ?? '').trim().toLowerCase();
+	  return pos || null;
+	}
 
-  function setDashToggleDisabled(disabled, reason = '') {
-    const btn = document.getElementById('toggleDashboardBtn');
-    if (!btn) return;
-    btn.disabled = disabled;
-    btn.classList.toggle('opacity-50', disabled);
-    btn.classList.toggle('cursor-not-allowed', disabled);
-    btn.title = disabled
-      ? (reason || 'Select a Manager / Deputy Manager / Senior GIS Specialist to open Dashboard')
-      : (state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View');
-  }
+	function isDashboardEligible() {
+	  const pos = getSelectedResponderPosition();  // already lowercased
+	  return !!pos && DASH_ALLOWED_POS.has(pos);
+	}
 
-  function updateDashToggleEligibility() {
-    if (state.isDashboard) { setDashToggleDisabled(false); return; }
-    const ok = isDashboardEligible();
-    setDashToggleDisabled(!ok);
-  }
+	function setDashToggleDisabled(disabled, reason = '') {
+	  const btn = document.getElementById('toggleDashboardBtn');
+	  if (!btn) return;
+	  btn.disabled = disabled;
+	  btn.classList.toggle('opacity-50', disabled);
+	  btn.classList.toggle('cursor-not-allowed', disabled);
+	  btn.title = disabled
+		? (reason || 'Select a Manager / Deputy Manager / Senior GIS Specialist to open Dashboard')
+		: (state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View');
+	}
+
+	function updateDashToggleEligibility() {
+	  if (state.isDashboard) { setDashToggleDisabled(false); return; }
+	  const ok = isDashboardEligible();
+	  setDashToggleDisabled(!ok);
+	}
+
 
   $toggleDash.addEventListener('click', async () => {
     // If we’re in Personnel view, only allow if the selected Name has an allowed Position
