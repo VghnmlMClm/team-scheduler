@@ -645,6 +645,36 @@
     setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
   }
 
+  // Wait for xlsx
+	async function ensureXLSX() {
+	  if (window.XLSX) return;
+
+	  const urls = [
+		"https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
+		"https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
+		"https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
+	  ];
+
+	  for (const url of urls) {
+		try {
+		  await new Promise((resolve, reject) => {
+			const s = document.createElement("script");
+			s.src = url;
+			s.async = true;
+			s.onload = () => resolve();
+			s.onerror = () => reject(new Error("failed"));
+			document.head.appendChild(s);
+		  });
+		  if (window.XLSX) return;
+		} catch (_) {
+		  // try next CDN
+		}
+	  }
+	  throw new Error("Failed to load SheetJS (XLSX). Check your network/CSP.");
+	}
+
+
+
   // Export: VL Summary (.txt)
   async function exportVlSummary(){
     const names = getAllNames();
@@ -699,41 +729,57 @@
   }
 
   // Export: Table (.xlsx)
-  async function exportTableXlsx(){
-    const names = getAllNames();
-    if (!names.length) { alert("No names found in Responders.json."); return; }
-    const dates = dateRangeList();
-    if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
+	async function exportTableXlsx(){
+	  await ensureXLSX(); // make sure SheetJS is available
 
-    // Load all schedules
-    const map = new Map();
-    const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
-    for (const [n, data] of pairs) map.set(n, data || {});
+	  const names = getAllNames().sort();
+	  if (!names.length) { alert("No names found in Responders.json."); return; }
 
-    // Build AOA: first row header
-    const header = ["Name", ...dates]; // DATES from START to END
-    const rows = [header];
+	  const dates = dateRangeList(); // YYYY-MM-DD for START_DATE..END_DATE
+	  if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
 
-    for (const name of names) {
-      const sched = map.get(name) || {};
-      const row = [name];
-      for (const d of dates) {
-        const v = sched[d] || "";
-        // write short labels (VL/SITE/WFH)
-        row.push(v ? (LABELS[v] || v) : "");
-      }
-      rows.push(row);
-    }
+	  // Fetch every person's schedule (in parallel)
+	  const schedules = await Promise.all(
+		names.map(async (n) => [n, await fetchScheduleData(n)])
+	  );
 
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, "Schedule");
+	  // Build header and rows
+	  const header = ["Name", ...dates];
+	  const rows = [header];
 
-    const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
-    const fname = `TeamSchedule_Table_${ts}.xlsx`;
-    XLSX.writeFile(wb, fname);
-  }
+	  const statusToCell = (code) => {
+		// Use your short labels (VL / SITE / WFH), blank if none
+		if (!code) return "";
+		return (LABELS[code] ?? code);
+	  };
+
+	  for (const [name, data] of schedules) {
+		const row = [name];
+		for (const d of dates) {
+		  const code = data?.[d] || "";
+		  row.push(statusToCell(code));
+		}
+		rows.push(row);
+	  }
+
+	  // Create workbook
+	  const wb = XLSX.utils.book_new();
+	  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+	  // Freeze header row & first column for readability
+	  ws["!freeze"] = { xSplit: 1, ySplit: 1 };
+
+	  // Optional: set column widths (Name wider, dates narrower)
+	  const colWidths = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
+	  ws["!cols"] = colWidths;
+
+	  XLSX.utils.book_append_sheet(wb, ws, "Schedule");
+
+	  const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
+	  XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
+	}
+	
+
 
   // Export menu wiring
   const exportFileBtn = document.getElementById('exportFileBtn');
