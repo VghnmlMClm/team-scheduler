@@ -50,15 +50,15 @@
   "2026-01-06": "ONSITE",
   "2026-01-07": "ONSITE",
   "2026-01-08": "ONSITE",
-  "2025-10-22": "VL",
-  "2025-10-21": "VL",
-  "2025-10-20": "VL",
+  "2025-10-22": "ONSITE",
+  "2025-10-21": "ONSITE",
+  "2025-10-20": "ONSITE",
   "_meta": {
-    "division": "",
-    "department": "",
-    "team": "",
-    "position": "",
+    "division": "MDM",
+    "department": "GDS",
+    "team": "GDM",
+    "position": "SENIOR GIS SPECIALIST",
     "name": "Calma, Voughn Emil",
-    "lastSaved": "2025-10-22T07:11:02.835Z"
+    "lastSaved": "2025-10-23T09:59:25.744Z"
   }
 }
