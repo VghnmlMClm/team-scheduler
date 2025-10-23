@@ -31,7 +31,10 @@
   <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <button id="toggleDashboardBtn" class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center hover:bg-white/25 transition" title="Switch to Dashboard View">
+        <!-- Single toggle button (no hover when disabled) -->
+        <button id="toggleDashboardBtn"
+          class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center transition"
+          aria-label="Toggle view">
           <span id="dashIcon" class="text-lg">🗓️</span>
         </button>
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
@@ -274,26 +277,43 @@ function updateTitleFromConfig(){
 
 /* ===== Organization (hierarchy) ===== */
 let ORG_ROOT = null, ORG_INDEX = new Map();
+let ORG_SUPERVISORS = []; // names that have TEAM (immediate supervisors)
+
 async function loadOrganization(){
   try{
     const r = await fetch(ORG_URL);
-    ORG_ROOT = await r.json();
+    const data = await r.json();
+
+    ORG_ROOT = data;
     ORG_INDEX.clear();
-    indexOrg(ORG_ROOT);
+    ORG_SUPERVISORS = [];
+
+    if (Array.isArray(data)) {
+      data.forEach(indexOrg);
+    } else {
+      indexOrg(data);
+    }
+
+    ORG_SUPERVISORS = Array.from(new Set(ORG_SUPERVISORS));
   }catch(e){
-    ORG_ROOT = null; ORG_INDEX.clear();
+    ORG_ROOT = null; ORG_INDEX.clear(); ORG_SUPERVISORS = [];
   }
 }
+
 function indexOrg(n){
-  if(!n||!n.NAME) return;
+  if(!n || !n.NAME) return;
   ORG_INDEX.set(n.NAME, n);
-  (n.TEAM||[]).forEach(indexOrg);
+  if (Array.isArray(n.TEAM) && n.TEAM.length > 0) {
+    ORG_SUPERVISORS.push(n.NAME);
+  }
+  (n.TEAM || []).forEach(indexOrg);
 }
+
 /* Returns all names under each selected supervisor (including the supervisor) */
 function getSubtreeNames(supervisors){
   const out = new Set();
   function walk(node){
-    if(!node||!node.NAME||out.has(node.NAME)) return;
+    if(!node || !node.NAME || out.has(node.NAME)) return;
     out.add(node.NAME);
     (node.TEAM||[]).forEach(walk);
   }
@@ -655,7 +675,6 @@ async function loadScheduleForName(name) {
       saveStore();
       render();
     } else {
-      // none found: keep blank
       render();
     }
   } catch (e) {
@@ -741,17 +760,21 @@ document.addEventListener('click', ()=> toggleMenu(false));
 
 /* VL Summary (.txt) */
 async function exportVlSummary(){
-  const names = getAllNames();
-  if (!names.length) { alert("No names found in Responders.json."); return; }
+  const names = getFilteredNamesForDashboard();
+  if (!names.length) { alert("No names match the current filters."); return; }
+
   const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
   const lines = [];
+
   for (const [name, data] of pairs) {
     lines.push(name);
     const vlDates = Object.entries(data || {})
       .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
       .map(([k]) => parseYMD(k))
       .sort((a,b)=>a-b);
+
     if (!vlDates.length) { lines.push("(no VL)"); lines.push(""); continue; }
+
     const groups = {};
     for (const d of vlDates) {
       const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
@@ -767,6 +790,7 @@ async function exportVlSummary(){
     }
     lines.push("");
   }
+
   const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
   downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
 }
@@ -775,10 +799,12 @@ if (exportVlBtn) exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(fa
 /* Table (.xlsx) */
 async function exportTableXlsx(){
   await ensureXLSX();
-  const names = getAllNames().sort();
-  if (!names.length) { alert("No names found in Responders.json."); return; }
+  const names = getFilteredNamesForDashboard();
+  if (!names.length) { alert("No names match the current filters."); return; }
+
   const dates = dateRangeList();
   if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
+
   const schedules = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
 
   const header = ["Name", ...dates];
@@ -787,9 +813,7 @@ async function exportTableXlsx(){
 
   for (const [name, data] of schedules) {
     const row = [name];
-    for (const d of dates) {
-      row.push(statusToCell(data?.[d] || ""));
-    }
+    for (const d of dates) row.push(statusToCell(data?.[d] || ""));
     rows.push(row);
   }
 
@@ -816,7 +840,7 @@ document.getElementById('nextBtn').onclick = ()=>{
   render();
 };
 
-/* ===== Dashboard ===== */
+/* ===== Dashboard view & filters ===== */
 const $toggleDash = document.getElementById('toggleDashboardBtn');
 const $filtersWrap = document.getElementById('filtersWrap');
 const $personnelView = document.getElementById('personnelView');
@@ -834,22 +858,79 @@ const $hint         = document.getElementById('dashboardHint');
 
 let top5Chart = null;
 
-/* Enable/disable Dashboard entry based on Name position (your earlier rule); 
-   here we always allow entry (since Dashboard now controlled by org filters).
-   If you still want to restrict, add your position logic here. */
-function updateDashToggleEligibility(){
-  // Always enabled now
-  $toggleDash.disabled = false;
-  $toggleDash.title = state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View';
+/* ---------- Eligibility: allow entry only for certain positions (no hover when not eligible) ---------- */
+const DASH_ALLOWED_POS = new Set([
+  'senior gis specialist',
+  'deputy manager',
+  'manager'
+]);
+
+function getSelectedResponderPositionLower() {
+  const nameSel = document.getElementById('selName');
+  const name = (nameSel?.value || '').trim();
+  if (!name) return null;
+  const r = RESPONDERS.find(x => (x.NAME || '') === name);
+  return (r?.POSITION ?? '').trim().toLowerCase() || null;
 }
 
+function isDashboardEligible() {
+  const pos = getSelectedResponderPositionLower();
+  return !!pos && DASH_ALLOWED_POS.has(pos);
+}
+
+function setDashToggleDisabled(disabled) {
+  const btn = document.getElementById('toggleDashboardBtn');
+  if (!btn) return;
+
+  if (disabled) {
+    btn.disabled = true;
+    btn.removeAttribute('title');
+    btn.setAttribute('aria-disabled', 'true');
+    btn.setAttribute('tabindex', '-1');
+    btn.classList.remove('hover:bg-white/25','cursor-pointer','focus:outline-none','focus:ring');
+    btn.classList.add('cursor-default','select-none','pointer-events-none');
+  } else {
+    btn.disabled = false;
+    btn.removeAttribute('aria-disabled');
+    btn.removeAttribute('tabindex');
+    btn.classList.add('hover:bg-white/25','cursor-pointer','focus:outline-none');
+    btn.classList.remove('cursor-default','select-none','pointer-events-none');
+    btn.title = state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View';
+  }
+}
+
+function updateDashToggleEligibility(){
+  if (state.isDashboard) { setDashToggleDisabled(false); return; }
+  setDashToggleDisabled(!isDashboardEligible());
+}
+
+/* Build filtered names list for dashboard exports/reports */
+function getFilteredNamesForDashboard() {
+  if (!state.isDashboard) return getAllNames().sort();
+
+  const supervisors = Array.from(($fSupervisors?.selectedOptions || [])).map(o => o.value);
+  const selectedPositions = new Set(Array.from(($fPositions?.selectedOptions || [])).map(o => o.value));
+
+  let names = supervisors.length ? getSubtreeNames(supervisors) : getAllNames();
+
+  if (selectedPositions.size) {
+    const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
+    names = names.filter(n => selectedPositions.has(posMap.get(n) || 'Unspecified'));
+  }
+  return names.sort();
+}
+
+/* Toggle handler */
 $toggleDash.addEventListener('click', async () => {
+  // Guard entry when in Personnel view
+  if (!state.isDashboard && !isDashboardEligible()) return;
+
   state.isDashboard = !state.isDashboard;
   if (state.isDashboard) {
     enterDashboard();
-    await prepareDashboardFilters();       // fill filters
-    await autoApplySupervisorFromName();   // auto-apply selected Name
-    await buildDashboard();                // build everything
+    await prepareDashboardFilters();     // fill filters (supervisors & positions)
+    await autoApplySupervisorFromName(); // select current Name if supervisor
+    await buildDashboard();              // render data
   } else {
     exitDashboard();
   }
@@ -863,7 +944,7 @@ function enterDashboard(){
   $personnelView.classList.add('hidden');
   $dashboardView.classList.remove('hidden');
   document.getElementById('dashIcon').textContent = '👥';
-  updateDashToggleEligibility();
+  setDashToggleDisabled(false); // always allow going back
 }
 function exitDashboard(){
   $filtersWrap.classList.remove('hidden');
@@ -874,38 +955,35 @@ function exitDashboard(){
   $personnelView.classList.remove('hidden');
   if (top5Chart) { top5Chart.destroy(); top5Chart = null; }
   document.getElementById('dashIcon').textContent = '🗓️';
-  updateDashToggleEligibility();
+  updateDashToggleEligibility(); // re-apply invisibility if not eligible
 }
 
-/* Fill filter lists */
+/* Fill filter lists (supervisors = only names with TEAM) */
 async function prepareDashboardFilters(){
-  // Supervisors list = all names in org.json (keys of ORG_INDEX)
-  const allOrgNames = Array.from(ORG_INDEX.keys()).sort();
-  $fSupervisors.innerHTML = allOrgNames.map(n => `<option>${n}</option>`).join('');
+  const supList = ORG_SUPERVISORS.slice().sort();
+  $fSupervisors.innerHTML = supList.map(n => `<option>${n}</option>`).join('');
 
-  // Positions = from Responders
   const allPos = getAllPositions();
   $fPositions.innerHTML = allPos.map(p => `<option>${p}</option>`).join('');
 
-  // Set date range label
   $metricRange.textContent = fmtRange();
 
-  // Wire change handlers
   $fSupervisors.onchange = buildDashboard;
-  $fPositions.onchange = buildDashboard;
+  $fPositions.onchange   = buildDashboard;
 }
 
-/* Auto-apply the selected Name (from personnel) as a supervisor */
+/* Auto-apply the selected Name (from Personnel) as the supervisor on entry (but user can change later) */
 async function autoApplySupervisorFromName(){
   const nameSel = document.getElementById('selName');
   const chosen = (nameSel?.value || '').trim();
-  if (!chosen) return;
+  if (!chosen || !$fSupervisors) return;
 
-  // If this name exists in org.json, select it in supervisors filter
-  const idx = Array.from($fSupervisors.options).findIndex(o => o.value === chosen);
+  const opts = Array.from($fSupervisors.options);
+  const idx = opts.findIndex(o => (o.value || o.textContent).trim() === chosen);
   if (idx >= 0) {
-    $fSupervisors.selectedIndex = -1; // clear previous selection
-    $fSupervisors.options[idx].selected = true;
+    $fSupervisors.selectedIndex = -1;
+    opts.forEach(o => (o.selected = false));
+    opts[idx].selected = true;
   }
 }
 
@@ -915,77 +993,60 @@ async function buildDashboard(){
   $matrixTable.innerHTML = '';
   if (top5Chart) { top5Chart.destroy(); top5Chart = null; }
 
-  // Collect filters
   const selectedSupervisors = Array.from($fSupervisors.selectedOptions).map(o => o.value);
   const selectedPositions   = Array.from($fPositions.selectedOptions).map(o => o.value);
 
-  // Names allowed by supervisors (subtree)
-  let allowedNames = [];
-  if (selectedSupervisors.length) {
-    allowedNames = getSubtreeNames(selectedSupervisors);
-  } else {
-    // If no supervisor chosen, consider everyone in Responders
-    allowedNames = getAllNames();
-  }
+  let allowedNames = selectedSupervisors.length ? getSubtreeNames(selectedSupervisors) : getAllNames();
 
-  // Optionally filter by positions (only keep names whose position matches selection)
   const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
   if (selectedPositions.length) {
     const set = new Set(selectedPositions);
     allowedNames = allowedNames.filter(n => set.has(posMap.get(n) || 'Unspecified'));
   }
 
-  // Fetch schedules for allowed names
   const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
 
-  // Build: totals, per-date counts per position, and date->names matrix
   const dateCountsByPos = new Map(); // date -> position -> count
   const vlTotal = { count:0 };
   const dateToNames = new Map();     // date -> [names]
 
   const labelsDates = dateRangeList();
-  const dateSet = new Set(labelsDates); // within range
+  const dateSet = new Set(labelsDates);
 
   for (const [name, sched] of pairs) {
     const pos = posMap.get(name) || 'Unspecified';
     for (const [d, code] of Object.entries(sched || {})) {
       if (code !== 'VL') continue;
       if (!dateSet.has(d)) continue;
-      // total
+
       vlTotal.count++;
-      // date->position count
+
       if (!dateCountsByPos.has(d)) dateCountsByPos.set(d, new Map());
       const m = dateCountsByPos.get(d);
       m.set(pos, (m.get(pos) || 0) + 1);
-      // date->names list
+
       if (!dateToNames.has(d)) dateToNames.set(d, []);
       dateToNames.get(d).push(name);
     }
   }
 
-  // Metric
   $metricTotal.textContent = String(vlTotal.count);
 
-  // Top 5 days (by total VL)
   const byTotal = Array.from(dateCountsByPos.entries()).map(([d, mp]) => {
     const total = Array.from(mp.values()).reduce((a,b)=>a+b,0);
     return { date:d, total, byPos: mp };
   }).sort((a,b)=>b.total - a.total).slice(0,5);
 
-  // Build grouped (NOT stacked) bar datasets: positions as datasets, x-axis = top-5 dates
-  const positions = getAllPositions(); // fixed order
+  const positions = getAllPositions();
   const topDates = byTotal.map(x => x.date);
 
   const datasets = positions.map(p => ({
     label: p,
     data: topDates.map(d => (dateCountsByPos.get(d)?.get(p) || 0)),
-    // default colors (Chart.js will auto-assign)
     borderWidth: 1
   }));
 
   renderTop5Chart(topDates, datasets);
-
-  // Matrix (date → names who filed)
   renderMatrix(dateToNames);
 
   $hint.textContent = byTotal.length ? 'Hover bars to see counts per position.' : 'No VL found for the selected filters/date range.';
@@ -1019,13 +1080,11 @@ function renderTop5Chart(dateLabels, datasets){
 
 /* Render date → names matrix */
 function renderMatrix(dateToNames){
-  // Only show dates with at least one VL; sort ascending
   const rows = Array.from(dateToNames.entries())
     .map(([d, names]) => [d, names.slice().sort()])
     .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
 
   const hasAny = rows.length > 0;
-
   const maxCols = hasAny ? Math.max(...rows.map(([,names]) => names.length)) : 0;
 
   let html = '<thead><tr>';
@@ -1061,7 +1120,7 @@ function renderMatrix(dateToNames){
   ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
   render();
 
-  // Export menu visibility only in Dashboard, handled on toggle
+  // Initial eligibility (hide hover/tooltip if not eligible)
   updateDashToggleEligibility();
 })();
 </script>
