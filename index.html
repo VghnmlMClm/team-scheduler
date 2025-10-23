@@ -19,32 +19,25 @@
     .muted{opacity:.35}
     .grad{background:linear-gradient(135deg,#1d4ed8 0%,#06b6d4 100%)}
     .hidden{display:none !important}
-
-    /* Dashboard toggle button: keep appearance unchanged when disabled (no hover/tooltip) */
-    #toggleDashboardBtn[disabled]:hover,
-    #toggleDashboardBtn[disabled]:focus {
-      background: inherit !important;
-      box-shadow: none !important;
-    }
+    select[multiple] option{padding:4px}
+    #matrixTable th,#matrixTable td{padding:6px 8px; border-bottom:1px solid #1f2937}
+    #matrixTable th{position:sticky; top:0; background:#0f172a}
   </style>
 </head>
 
 <body class="bg-black text-slate-100">
+
 <header class="grad text-white">
   <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
-    <!-- Title + Actions -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <!-- The SAME button toggles Personnel <-> Dashboard -->
-        <button id="toggleDashboardBtn" type="button" title="Switch to Dashboard View"
-          class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center hover:bg-white/25 transition cursor-pointer">
+        <button id="toggleDashboardBtn" class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center hover:bg-white/25 transition" title="Switch to Dashboard View">
           <span id="dashIcon" class="text-lg">🗓️</span>
-          <span class="sr-only">Toggle Dashboard</span>
         </button>
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
-        <!-- Export menu (shown only in Dashboard View) -->
+        <!-- Dashboard-only Export menu -->
         <div id="exportGroup" class="relative hidden">
           <button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
           <div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
@@ -52,47 +45,43 @@
             <button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
           </div>
         </div>
-
         <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Refresh</button>
         <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Save</button>
       </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Personnel filters -->
     <div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
-      <!-- Line 1 -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label for="selDivision" class="block text-xs text-slate-300 mb-1">DIVISION</label>
-          <select id="selDivision" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+          <select id="selDivision" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
             <option value="">— select division —</option>
           </select>
         </div>
         <div>
           <label for="selDepartment" class="block text-xs text-slate-300 mb-1">DEPARTMENT</label>
-          <select id="selDepartment" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+          <select id="selDepartment" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
             <option value="">— select department —</option>
           </select>
         </div>
         <div>
           <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
-          <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+          <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
             <option value="">— select team —</option>
           </select>
         </div>
       </div>
-
-      <!-- Line 2 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
-          <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+          <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
             <option value="">— select position —</option>
           </select>
         </div>
         <div>
           <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
-          <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white outline-none focus:ring-2 focus:ring-blue-500">
+          <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
             <option value="">— select name —</option>
           </select>
         </div>
@@ -115,16 +104,10 @@
         <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
       </div>
     </div>
-
     <div class="p-4">
       <div class="grid grid-cols-7 text-xs font-medium text-slate-400 mb-2 select-none">
-        <div class="text-center">Sun</div>
-        <div class="text-center">Mon</div>
-        <div class="text-center">Tue</div>
-        <div class="text-center">Wed</div>
-        <div class="text-center">Thu</div>
-        <div class="text-center">Fri</div>
-        <div class="text-center">Sat</div>
+        <div class="text-center">Sun</div><div class="text-center">Mon</div><div class="text-center">Tue</div>
+        <div class="text-center">Wed</div><div class="text-center">Thu</div><div class="text-center">Fri</div><div class="text-center">Sat</div>
       </div>
       <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
     </div>
@@ -132,28 +115,20 @@
 
   <!-- Sidebar -->
   <aside class="bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
-    <div class="p-4 border-b border-slate-700">
-      <h3 class="text-lg font-semibold">Set schedule for selected days</h3>
-    </div>
+    <div class="p-4 border-b border-slate-700"><h3 class="text-lg font-semibold">Set schedule for selected days</h3></div>
     <form id="eventForm" class="p-4 space-y-4" onsubmit="return false;">
-      <div class="space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <button id="btnVL" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#ed7d31">Vacation Leave</button>
-          <button id="btnWFH" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#92d050">Work From Home</button>
-          <button id="btnONSITE" type="button" class="px-3 py-2 rounded-xl text-white font-medium shadow-sm hover:opacity-95" style="background:#548235">On-site</button>
-        </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button id="btnVL" type="button" class="px-3 py-2 rounded-xl text-white font-medium" style="background:#ed7d31">Vacation Leave</button>
+        <button id="btnWFH" type="button" class="px-3 py-2 rounded-xl text-white font-medium" style="background:#92d050">Work From Home</button>
+        <button id="btnONSITE" type="button" class="px-3 py-2 rounded-xl text-white font-medium" style="background:#548235">On-site</button>
       </div>
       <div class="flex items-center gap-3">
         <button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
       </div>
     </form>
-
     <div class="px-4 pb-4 space-y-4">
-      <!-- Legend -->
       <div>
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="text-sm font-semibold">Legend</h4>
-        </div>
+        <div class="flex items-center justify-between mb-2"><h4 class="text-sm font-semibold">Legend</h4></div>
         <div class="text-sm space-y-1">
           <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
           <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
@@ -162,14 +137,10 @@
           <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend</div>
         </div>
       </div>
-
-      <!-- Selected days + Clear Selection -->
       <div>
         <div class="flex items-center justify-between mb-1">
           <h4 class="text-sm font-semibold">Selected:</h4>
-          <button id="clearSelectionBtn" class="px-3 py-1.5 rounded-lg border border-slate-600 hover:bg-slate-800 text-xs">
-            Clear selection
-          </button>
+          <button id="clearSelectionBtn" class="px-3 py-1.5 rounded-lg border border-slate-600 hover:bg-slate-800 text-xs">Clear selection</button>
         </div>
         <div id="selectedList" class="text-sm text-slate-300"></div>
       </div>
@@ -179,12 +150,51 @@
 
 <!-- DASHBOARD VIEW -->
 <section id="dashboardView" class="hidden max-w-6xl mx-auto px-4 py-6">
-  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-    <h2 class="text-lg font-semibold mb-3 text-slate-200">Vacation Leave (VL) Count by Date and Position</h2>
-    <div class="w-full h-[620px]">
-      <canvas id="vlByDateChart"></canvas>
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <!-- LEFT EDGE FILTERS -->
+    <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <h3 class="text-sm font-semibold mb-3 text-slate-200">Filters</h3>
+      <div class="mb-4">
+        <label class="block text-xs mb-1 text-slate-400">IMMEDIATE SUPERVISOR(S)</label>
+        <select id="fSupervisors" multiple class="w-full h-40 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
+        <p class="text-[11px] mt-1 text-slate-500">Hold Ctrl/Cmd or Shift to select multiple</p>
+      </div>
+      <div>
+        <label class="block text-xs mb-1 text-slate-400">SUBORDINATE POSITIONS</label>
+        <select id="fPositions" multiple class="w-full h-32 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
+      </div>
+    </aside>
+
+    <!-- CENTER -->
+    <div class="lg:col-span-6 space-y-4">
+      <!-- TOP METRICS -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <div class="text-xs text-slate-400">TOTAL NO OF LEAVES</div>
+          <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <div class="text-xs text-slate-400">DATE RANGE</div>
+          <div id="metricRange" class="text-base mt-1">—</div>
+        </div>
+      </div>
+
+      <!-- TOP 5 DAYS CHART -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <h2 class="text-sm font-semibold mb-2 text-slate-200">Top 5 Days with Max No. of Leaves</h2>
+        <div class="w-full h-[420px]"><canvas id="top5Chart"></canvas></div>
+        <p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
+      </div>
     </div>
-    <p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
+
+    <!-- RIGHT MATRIX -->
+    <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-auto">
+      <h3 class="text-sm font-semibold mb-3 text-slate-200">ALL DATES WITH FILED LEAVES → NAMES</h3>
+      <div class="text-[11px] text-slate-500 mb-2">Column 1 = Date; Columns 2+ = Names who filed VL.</div>
+      <div id="matrixWrap" class="overflow-auto max-h-[620px]">
+        <table id="matrixTable" class="min-w-full text-xs border-separate border-spacing-y-1"></table>
+      </div>
+    </aside>
   </div>
 </section>
 
@@ -192,863 +202,868 @@
   <p>Tip: Hold <kbd class="px-1 rounded bg-slate-700 text-white">Shift</kbd> and click to select a range.</p>
 </footer>
 
-<!-- ====== SCRIPT ====== -->
 <script>
-  // URLs
-  const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/"; // worker handles load/save
-  const RESPONDERS_URL = "Responders.json";
-  const CONFIG_URL = "config.json";
+/* ===== Constants (URLs) ===== */
+const PROXY_URL = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
+const RESPONDERS_URL = "Responders.json";
+const CONFIG_URL = "config.json";
+const ORG_URL = "organization.json";
 
-  // Helpers
-  const stripMeta = obj => Object.fromEntries(Object.entries(obj || {}).filter(([k]) => !k.startsWith("_")));
-  const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
-  const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
-  const pad = n => String(n).padStart(2,'0');
-  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
-  const normVal = v => String(v ?? "").trim();
-  const uniq = arr => [...new Set(arr)];
+/* ===== Helpers ===== */
+const stripMeta = o => Object.fromEntries(Object.entries(o||{}).filter(([k]) => !k.startsWith("_")));
+const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
+const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
+const normVal = v => String(v ?? "").trim();
+const uniq = arr => [...new Set(arr)];
+function fmtMMMDDYYYY(d){const MMM=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;}
+function fmtRange(){
+  const s=CONFIG.START_DATE, e=CONFIG.END_DATE;
+  if(!s||!e) return "—";
+  return `${s.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})} – ${e.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+}
 
-  const state = {
-    viewYear: new Date().getFullYear(),
-    viewMonth: new Date().getMonth(),
-    selected: new Set(),
-    focusDay: ymd(new Date()),
-    lastClicked: null,
-    storeKey: 'calendar-scheduler-v2',
-    data: {},
-    isDashboard: false
+/* ===== State ===== */
+const state = {
+  viewYear: new Date().getFullYear(),
+  viewMonth: new Date().getMonth(),
+  selected: new Set(),
+  focusDay: ymd(new Date()),
+  lastClicked: null,
+  storeKey: 'calendar-scheduler-v2',
+  data: {},
+  isDashboard: false
+};
+
+/* ===== Config & Holidays ===== */
+let CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
+const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const dateInRange = d => {
+  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return dd >= CONFIG.START_DATE && dd <= CONFIG.END_DATE;
+};
+const isHoliday = d => CONFIG.HOLIDAYS_SET.has(ymd(d));
+async function loadConfig(){
+  try{
+    const r = await fetch(CONFIG_URL);
+    const j = await r.json();
+    CONFIG.START_DATE  = parseDateStr(j.START_DATE);
+    CONFIG.END_DATE    = parseDateStr(j.END_DATE);
+    CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
+  }catch{
+    CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
+  }
+}
+function clampView(year, month) {
+  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
+  const monthLast  = new Date(year, month+1, 0);
+  if (monthLast < CONFIG.START_DATE) return { year: CONFIG.START_DATE.getFullYear(), month: CONFIG.START_DATE.getMonth() };
+  const monthFirst = new Date(year, month, 1);
+  if (monthFirst > CONFIG.END_DATE) return { year: CONFIG.END_DATE.getFullYear(), month: CONFIG.END_DATE.getMonth() };
+  return { year, month };
+}
+function updateTitleFromConfig(){
+  const el = document.getElementById('appTitle');
+  if (!el) return;
+  const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
+  el.textContent = (s && e) ? `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})` : "Scheduler";
+}
+
+/* ===== Organization (hierarchy) ===== */
+let ORG_ROOT = null, ORG_INDEX = new Map();
+async function loadOrganization(){
+  try{
+    const r = await fetch(ORG_URL);
+    ORG_ROOT = await r.json();
+    ORG_INDEX.clear();
+    indexOrg(ORG_ROOT);
+  }catch(e){
+    ORG_ROOT = null; ORG_INDEX.clear();
+  }
+}
+function indexOrg(n){
+  if(!n||!n.NAME) return;
+  ORG_INDEX.set(n.NAME, n);
+  (n.TEAM||[]).forEach(indexOrg);
+}
+/* Returns all names under each selected supervisor (including the supervisor) */
+function getSubtreeNames(supervisors){
+  const out = new Set();
+  function walk(node){
+    if(!node||!node.NAME||out.has(node.NAME)) return;
+    out.add(node.NAME);
+    (node.TEAM||[]).forEach(walk);
+  }
+  supervisors.forEach(name=>{
+    const node = ORG_INDEX.get(name);
+    if (node) walk(node);
+  });
+  return [...out];
+}
+
+/* ===== Responders ===== */
+let RESPONDERS = [];
+async function loadResponders(){
+  try{
+    const res = await fetch(RESPONDERS_URL);
+    const raw = await res.json();
+    const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
+    RESPONDERS = rows.map(r => ({
+      POSITION:   normVal(r.POSITION   ?? r.position),
+      DIVISION:   normVal(r.DIVISION   ?? r.division),
+      DEPARTMENT: normVal(r.DEPARTMENT ?? r.department),
+      TEAM:       normVal(r.TEAM       ?? r.team),
+      NAME:       normVal(r.NAME       ?? r.name)
+    })).filter(r => r.NAME);
+  }catch(e){
+    console.error("Failed to load responders:", e);
+  }
+}
+function getAllNames(){ return uniq(RESPONDERS.map(r => r.NAME).filter(Boolean)); }
+function getAllPositions(){ return uniq(RESPONDERS.map(r => r.POSITION || 'Unspecified')).sort(); }
+
+/* ===== Local store ===== */
+function loadStore(){
+  try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
+  catch(e){ state.data = {}; }
+}
+function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
+
+/* ===== Calendar UI ===== */
+const grid = document.getElementById('calendarGrid');
+const monthLabel = document.getElementById('monthLabel');
+const selectedCount = document.getElementById('selectedCount');
+const selectedList = document.getElementById('selectedList');
+
+function monthName(m){return new Date(2000,m,1).toLocaleString(undefined,{month:'long'})}
+function render(){
+  const {viewYear, viewMonth} = state;
+  monthLabel.textContent = `${monthName(viewMonth)} ${viewYear}`;
+  renderGrid(viewYear, viewMonth);
+  renderSelection();
+}
+function renderGrid(year, month){
+  grid.innerHTML='';
+  const first = new Date(year, month, 1);
+  const last  = new Date(year, month+1, 0);
+  const startWeekday = first.getDay();
+  const prevLast = new Date(year, month, 0).getDate();
+
+  for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
+  for(let d=1; d<=last.getDate(); d++) grid.appendChild(dayCell(new Date(year, month, d), false));
+  const remaining = (7 - (grid.children.length % 7)) % 7;
+  for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
+}
+function dayCell(dateObj, muted=false){
+  const id = ymd(dateObj);
+  const isToday   = id === ymd(new Date());
+  const wd        = dateObj.getDay();
+  const weekend   = (wd===0 || wd===6);
+  const outRange  = !dateInRange(dateObj);
+  const holiday   = isHoliday(dateObj);
+  const isSelected= state.selected.has(id);
+  const status    = state.data[id] || '';
+
+  let bg = '';
+  if (status)       bg = COLORS[status];
+  else if (holiday) bg = '#00b0f0';
+  else if (weekend) bg = COLORS.WEEKEND;
+
+  const disabled = outRange || holiday || weekend;
+
+  const cell = document.createElement('button');
+  cell.type='button';
+  cell.className = [
+    'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
+    muted ? 'muted' : '',
+    isSelected ? 'selected-day' : '',
+    disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
+  ].join(' ').trim();
+
+  cell.dataset.date = id;
+  if (bg) cell.style.background = bg;
+
+  const badgeText = status ? LABELS[status] : (holiday ? 'HOL' : '');
+  const badge = badgeText
+    ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${badgeText}</span>`
+    : '';
+
+  cell.innerHTML = `
+    <div class="flex items-center justify-between">
+      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span>
+    </div>
+    <div class="mt-1 overflow-hidden">${badge}</div>
+  `;
+
+  cell.addEventListener('click', e => {
+    if (disabled) return;
+    onDayClick(id, e.shiftKey);
+  });
+  return cell;
+}
+function onDayClick(id, shift) {
+  const date = parseYMD(id);
+  const wd = date.getDay();
+  if (!dateInRange(date)) return;
+  if (isHoliday(date))    return;
+  if (wd === 0 || wd === 6) return;
+
+  if (shift && state.lastClicked) {
+    const a = parseYMD(state.lastClicked), b = parseYMD(id);
+    const [min, max] = a <= b ? [a, b] : [b, a];
+    const cur = new Date(min);
+    while (cur <= max) {
+      const w = cur.getDay();
+      if (dateInRange(cur) && !isHoliday(cur) && w !== 0 && w !== 6) {
+        state.selected.add(ymd(cur));
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  } else {
+    if (state.selected.has(id)) state.selected.delete(id);
+    else state.selected.add(id);
+    state.lastClicked = id;
+  }
+  state.focusDay = id;
+  render();
+}
+function renderSelection(){
+  const items = Array.from(state.selected).sort();
+  selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
+  selectedList.innerHTML = items.length
+    ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-800 border border-slate-700">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>`
+    : '<p class="text-xs text-slate-500">Click dates to select them.</p>';
+}
+
+/* ===== Apply types / Save / Load for Personnel ===== */
+document.getElementById('btnVL').onclick = ()=> applyType('VL');
+document.getElementById('btnWFH').onclick = ()=> applyType('WFH');
+document.getElementById('btnONSITE').onclick = ()=> applyType('ONSITE');
+document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
+const deleteBtn = document.getElementById('deleteBtn');
+deleteBtn.onclick = ()=>{
+  if(!(state.selected.size || state.focusDay)) return;
+  if(!confirm('Clear status from the selected day(s)?')) return;
+  const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
+  for(const d of targets){ delete state.data[d]; }
+  saveStore(); render();
+};
+function applyType(val){
+  const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
+  for(const d of targets){
+    const dt = parseYMD(d);
+    const wd = dt.getDay();
+    if (!dateInRange(dt)) continue;
+    if (isHoliday(dt))    continue;
+    if (wd === 0 || wd === 6) continue;
+    state.data[d] = val;
+  }
+  saveStore(); state.selected.clear(); render();
+}
+
+/* ===== Responders dropdowns ===== */
+function fillSelect(sel, values, selected, blankLabel = "— select —") {
+  sel.innerHTML =
+    `<option value="">${blankLabel}</option>` +
+    (values.length
+      ? values.map(v => `<option value="${v}">${v}</option>`).join("")
+      : `<option value="" disabled>— none —</option>`);
+  if (selected !== undefined) sel.value = selected;
+}
+function setSaveEnabled(enabled) {
+  ['loadBtn','exportBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.classList.toggle('opacity-60', !enabled);
+    btn.classList.toggle('cursor-not-allowed', !enabled);
+  });
+}
+function populateRespondersUI(changed = null) {
+  const divSel  = document.getElementById("selDivision");
+  const depSel  = document.getElementById("selDepartment");
+  const teamSel = document.getElementById("selTeam");
+  const posSel  = document.getElementById("selPosition");
+  const nameSel = document.getElementById("selName");
+
+  let cur = {
+    DIVISION:  normVal(divSel.value),
+    DEPARTMENT:normVal(depSel.value),
+    TEAM:      normVal(teamSel.value),
+    POSITION:  normVal(posSel.value),
+    NAME:      normVal(nameSel.value),
   };
 
-  // Title helpers
-  function fmtMMMDDYYYY(d){
-    const MMM = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-    if (!d) return null;
-    return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-  }
-  function updateTitleFromConfig(){
-    const el = document.getElementById('appTitle');
-    if (!el) return;
-    const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
-    el.textContent = (s && e) ? `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})` : "Scheduler";
-  }
+  if (changed === "DIVISION")   { cur.DEPARTMENT = ""; cur.TEAM = ""; cur.POSITION = ""; cur.NAME = ""; }
+  if (changed === "DEPARTMENT") { cur.TEAM = "";       cur.POSITION = ""; cur.NAME = ""; }
+  if (changed === "TEAM")       {                      cur.POSITION = ""; cur.NAME = ""; }
+  if (changed === "POSITION")   {                                       cur.NAME = ""; }
 
-  // Config
-  let CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
-  const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-  const dateInRange = d => {
-    if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
-    const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    return dd >= CONFIG.START_DATE && dd <= CONFIG.END_DATE;
-  };
-  const isHoliday = d => CONFIG.HOLIDAYS_SET.has(ymd(d));
-  async function loadConfig(){
-    try{
-      const r = await fetch(CONFIG_URL, { headers: { "Accept":"application/json" } });
-      const j = await r.json();
-      CONFIG.START_DATE  = parseDateStr(j.START_DATE);
-      CONFIG.END_DATE    = parseDateStr(j.END_DATE);
-      CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
-    }catch{
-      CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
-    }
-  }
-  function clampView(year, month) {
-    if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
-    const monthLast  = new Date(year, month+1, 0);
-    if (monthLast < CONFIG.START_DATE) return { year: CONFIG.START_DATE.getFullYear(), month: CONFIG.START_DATE.getMonth() };
-    const monthFirst = new Date(year, month, 1);
-    if (monthFirst > CONFIG.END_DATE) return { year: CONFIG.END_DATE.getFullYear(), month: CONFIG.END_DATE.getMonth() };
-    return { year, month };
-  }
+  const all = RESPONDERS;
+  const uniqVals = (arr, field) => uniq(arr.map(r => normVal(r[field]))).sort();
 
-  // Responders
-  let RESPONDERS = [];
-  function fillSelect(sel, values, selected, blankLabel = "— select —") {
-    sel.innerHTML =
-      `<option value="">${blankLabel}</option>` +
-      (values.length
-        ? values.map(v => `<option value="${v}">${v}</option>`).join("")
-        : `<option value="" disabled>— none —</option>`);
-    if (selected !== undefined) sel.value = selected;
-  }
-  function setSaveEnabled(enabled) {
-    ['loadBtn','exportBtn'].forEach(id => {
-      const btn = document.getElementById(id);
-      if (!btn) return;
-      btn.disabled = !enabled;
-      btn.classList.toggle('opacity-60', !enabled);
-      btn.classList.toggle('cursor-not-allowed', !enabled);
-    });
-  }
-  function populateRespondersUI(changed = null) {
-    const divSel  = document.getElementById("selDivision");
-    const depSel  = document.getElementById("selDepartment");
-    const teamSel = document.getElementById("selTeam");
-    const posSel  = document.getElementById("selPosition");
-    const nameSel = document.getElementById("selName");
+  const divValues = uniqVals(all, 'DIVISION');
+  if (cur.DIVISION && !divValues.includes(cur.DIVISION)) cur.DIVISION = "";
+  fillSelect(divSel, divValues, cur.DIVISION, "— select division —");
+  const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
 
-    let cur = {
-      DIVISION:  normVal(divSel.value),
-      DEPARTMENT:normVal(depSel.value),
-      TEAM:      normVal(teamSel.value),
-      POSITION:  normVal(posSel.value),
-      NAME:      normVal(nameSel.value),
-    };
+  const depValues = uniqVals(scopeDiv, 'DEPARTMENT');
+  if (cur.DEPARTMENT && !depValues.includes(cur.DEPARTMENT)) cur.DEPARTMENT = "";
+  fillSelect(depSel, depValues, cur.DEPARTMENT, "— select department —");
+  const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
 
-    if (changed === "DIVISION")   { cur.DEPARTMENT = ""; cur.TEAM = ""; cur.POSITION = ""; cur.NAME = ""; }
-    if (changed === "DEPARTMENT") { cur.TEAM = "";       cur.POSITION = ""; cur.NAME = ""; }
-    if (changed === "TEAM")       {                      cur.POSITION = ""; cur.NAME = ""; }
-    if (changed === "POSITION")   {                                       cur.NAME = ""; }
+  const teamValues = uniqVals(scopeDep, 'TEAM');
+  if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
+  fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
 
-    const all = RESPONDERS;
-    const uniqVals = (arr, field) => [...new Set(arr.map(r => normVal(r[field])))].sort();
+  const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
+  const posValues = uniqVals(scopeTeam, 'POSITION');
+  if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
+  fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
 
-    const divValues = uniqVals(all, 'DIVISION');
-    if (cur.DIVISION && !divValues.includes(cur.DIVISION)) cur.DIVISION = "";
-    fillSelect(divSel, divValues, cur.DIVISION, "— select division —");
-    const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
+  let scopeForNames = scopeTeam;
+  if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
+  const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
+  if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
+  fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
 
-    const depValues = uniqVals(scopeDiv, 'DEPARTMENT');
-    if (cur.DEPARTMENT && !depValues.includes(cur.DEPARTMENT)) cur.DEPARTMENT = "";
-    fillSelect(depSel, depValues, cur.DEPARTMENT, "— select department —");
-    const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
-
-    const teamValues = uniqVals(scopeDep, 'TEAM');
-    if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
-    fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
-
-    const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
-    const posValues = uniqVals(scopeTeam, 'POSITION');
-    if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
-    fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
-
-    let scopeForNames = scopeTeam;
-    if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
-    const nameValues = [...new Set(scopeForNames.map(r => normVal(r.NAME)))].sort();
-    if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
-    fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
-
-    if (!cur.NAME) {
-      state.data = {};
-      saveStore();
-      render();
-    }
-
-    localStorage.setItem("responders-filters", JSON.stringify(cur));
-    setSaveEnabled(!!cur.NAME);
-    updateDashToggleEligibility(); // ensure toggle reflects current selection eligibility
-  }
-  async function loadResponders() {
-    try{
-      const res = await fetch(RESPONDERS_URL, { headers: { "Accept":"application/json" }});
-      const raw = await res.json();
-      const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
-      RESPONDERS = rows.map(r => ({
-        POSITION:   normVal(r.POSITION   ?? r.position),
-        DIVISION:   normVal(r.DIVISION   ?? r.division),
-        DEPARTMENT: normVal(r.DEPARTMENT ?? r.department),
-        TEAM:       normVal(r.TEAM       ?? r.team),
-        NAME:       normVal(r.NAME       ?? r.name)
-      })).filter(r => r.NAME);
-      populateRespondersUI();
-    }catch(e){
-      console.error("Failed to load responders:", e);
-      ["selDivision","selDepartment","selTeam","selPosition","selName"].forEach(id=>{
-        const el = document.getElementById(id);
-        if (el) { el.innerHTML = `<option>Error loading</option>`; el.disabled = true; }
-      });
-    }
-  }
-  function wireResponderEvents() {
-    document.getElementById("selDivision").addEventListener("change", ()=> populateRespondersUI("DIVISION"));
-    document.getElementById("selDepartment").addEventListener("change", ()=> populateRespondersUI("DEPARTMENT"));
-    document.getElementById("selTeam").addEventListener("change", ()=> populateRespondersUI("TEAM"));
-    document.getElementById("selPosition").addEventListener("change", ()=> populateRespondersUI("POSITION"));
-    document.getElementById("selName").addEventListener("change", async (e) => {
-      populateRespondersUI("NAME");
-      updateDashToggleEligibility();
-      await loadScheduleForName(e.target.value);
-    });
-  }
-
-  // Local store
-  function loadStore(){
-    try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
-    catch(e){ state.data = {}; }
-  }
-  function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
-
-  // Calendar
-  const grid = document.getElementById('calendarGrid');
-  const monthLabel = document.getElementById('monthLabel');
-  const selectedCount = document.getElementById('selectedCount');
-  const selectedList = document.getElementById('selectedList');
-
-  function monthName(m){return new Date(2000,m,1).toLocaleString(undefined,{month:'long'})}
-  function render(){
-    const {viewYear, viewMonth} = state;
-    monthLabel.textContent = `${monthName(viewMonth)} ${viewYear}`;
-    renderGrid(viewYear, viewMonth);
-    renderSelection();
-  }
-  function renderGrid(year, month){
-    grid.innerHTML='';
-    const first = new Date(year, month, 1);
-    const last  = new Date(year, month+1, 0);
-    const startWeekday = first.getDay();
-    const prevLast = new Date(year, month, 0).getDate();
-
-    for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
-    for(let d=1; d<=last.getDate(); d++) grid.appendChild(dayCell(new Date(year, month, d), false));
-    const remaining = (7 - (grid.children.length % 7)) % 7;
-    for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
-  }
-  function dayCell(dateObj, muted=false){
-    const id = ymd(dateObj);
-    const isToday   = id === ymd(new Date());
-    const wd        = dateObj.getDay();
-    const weekend = (wd === 0 || wd === 6);
-    const outRange  = !dateInRange(dateObj);
-    const holiday   = isHoliday(dateObj);
-    const isSelected= state.selected.has(id);
-    const status    = state.data[id] || '';
-
-    let bg = '';
-    if (status)       bg = COLORS[status];
-    else if (holiday) bg = '#00b0f0';
-    else if (weekend) bg = COLORS.WEEKEND;
-
-    const disabled = outRange || holiday || weekend;
-
-    const cell = document.createElement('button');
-    cell.type='button';
-    cell.className = [
-      'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
-      muted ? 'muted' : '',
-      isSelected ? 'selected-day' : '',
-      disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
-    ].join(' ').trim();
-
-    cell.dataset.date = id;
-    if (bg) cell.style.background = bg;
-
-    const badgeText = status ? LABELS[status] : (holiday ? 'HOL' : '');
-    const badge = badgeText
-      ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${badgeText}</span>`
-      : '';
-
-    cell.innerHTML = `
-      <div class="flex items-center justify-between">
-        <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span>
-      </div>
-      <div class="mt-1 overflow-hidden">${badge}</div>
-    `;
-
-    cell.addEventListener('click', e => {
-      if (disabled) return;
-      onDayClick(id, e.shiftKey);
-    });
-    return cell;
-  }
-
-  function onDayClick(id, shift) {
-    const date = parseYMD(id);
-    const wd = date.getDay();
-    if (!dateInRange(date)) return;
-    if (isHoliday(date))    return;
-    if (wd === 0 || wd === 6) return;
-
-    if (shift && state.lastClicked) {
-      const a = parseYMD(state.lastClicked), b = parseYMD(id);
-      const [min, max] = a <= b ? [a, b] : [b, a];
-      const cur = new Date(min);
-      while (cur <= max) {
-        const w = cur.getDay();
-        if (dateInRange(cur) && !isHoliday(cur) && w !== 0 && w !== 6) {
-          state.selected.add(ymd(cur));
-        }
-        cur.setDate(cur.getDate() + 1);
-      }
-    } else {
-      if (state.selected.has(id)) state.selected.delete(id);
-      else state.selected.add(id);
-      state.lastClicked = id;
-    }
-    state.focusDay = id;
-    render();
-  }
-
-  function renderSelection(){
-    const items = Array.from(state.selected).sort();
-    selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
-    selectedList.innerHTML = items.length
-      ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-800 border border-slate-700">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>`
-      : '<p class="text-xs text-slate-500">Click dates to select them.</p>';
-  }
-
-  const deleteBtn = document.getElementById('deleteBtn');
-  function applyType(val){
-    const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
-    for(const d of targets){
-      const dt = parseYMD(d);
-      const wd = dt.getDay();
-      if (!dateInRange(dt)) continue;
-      if (isHoliday(dt))    continue;
-      if (wd === 0 || wd === 6) continue;
-      state.data[d] = val;
-    }
-    saveStore(); state.selected.clear(); render();
-  }
-  document.getElementById('btnVL').onclick = ()=> applyType('VL');
-  document.getElementById('btnWFH').onclick = ()=> applyType('WFH');
-  document.getElementById('btnONSITE').onclick = ()=> applyType('ONSITE');
-
-  deleteBtn.onclick = ()=>{
-    if(!(state.selected.size || state.focusDay)) return;
-    if(!confirm('Clear status from the selected day(s)?')) return;
-    const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
-    for(const d of targets){ delete state.data[d]; }
-    saveStore(); render();
-  };
-
-  // Save via Worker
-  async function uploadScheduleViaProxy(){
-    const exportBtn = document.getElementById('exportBtn');
-    const selName = document.getElementById('selName');
-    const selDivision = document.getElementById('selDivision');
-    const selDepartment = document.getElementById('selDepartment');
-    const selTeam = document.getElementById('selTeam');
-    const selPosition = document.getElementById('selPosition');
-
-    const name = (selName.value || '').trim();
-    if(!name){ alert("Pick a Name first."); selName.focus(); return; }
-
-    if(Object.keys(state.data).length === 0){
-      if(!confirm("Your schedule is empty. Save anyway?")) return;
-    }
-
-    exportBtn.disabled = true;
-    const prevText = exportBtn.textContent;
-    exportBtn.textContent = "Saving…";
-
-    const payload = {
-      op: "save",
-      name,
-      data: {
-        ...state.data,
-        _meta: {
-          division: selDivision.value,
-          department: selDepartment.value,
-          team: selTeam.value,
-          position: selPosition.value,
-          name,
-          lastSaved: new Date().toISOString()
-        }
-      }
-    };
-
-    try{
-      const res = await fetch(PROXY_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify(payload),
-      });
-
-      let j = null;
-      try { j = await res.json(); } catch {}
-      if (!res.ok || !j?.ok) {
-        const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
-        throw new Error(err);
-      }
-
-      const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
-      alert(`Saved ✅\n${j.url || ''}`);
-      document.getElementById('selectedList').innerHTML =
-        link || '<span class="text-xs text-slate-500">Saved.</span>';
-
-    } catch(e){
-      alert("Save failed:\n" + (e?.message || e));
-    } finally {
-      exportBtn.disabled = false;
-      exportBtn.textContent = prevText;
-    }
-  }
-  document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
-
-  // Load selected user's schedule (for calendar preview)
-  async function loadScheduleForName(name) {
-    const loadBtn = document.getElementById('loadBtn');
-    const hasName = !!(name && name.trim());
-    setSaveEnabled(hasName);
-
-    // Reset current view
+  if (!cur.NAME) {
     state.data = {};
     saveStore();
     render();
-    if (!hasName) return;
-
-    const prevText = loadBtn ? loadBtn.textContent : '';
-    if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
-
-    try {
-      const r = await fetch(PROXY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ op: "load", name })
-      });
-      const j = await r.json();
-
-      if (!j?.ok) {
-        console.warn("Worker responded with error:", j);
-        render();
-        return;
-      }
-
-      if (j.found && j.data) {
-        const loaded = stripMeta(j.data);
-        const valid = {};
-        for (const [k, v] of Object.entries(loaded)) {
-          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
-        }
-        state.data = valid;
-        saveStore();
-        render();
-      } else {
-        console.info("No prior schedule found.");
-        render();
-      }
-    } catch (e) {
-      console.error("Worker load error:", e);
-    } finally {
-      if (loadBtn) { loadBtn.textContent = prevText || "Refresh"; loadBtn.disabled = !hasName; }
-    }
   }
-  document.getElementById('loadBtn').onclick = async () => {
-    const selName = document.getElementById('selName');
-    const name = (selName.value || '').trim();
-    if (!name) { alert("Pick a Name first."); selName.focus(); return; }
-    await loadScheduleForName(name);
+
+  localStorage.setItem("responders-filters", JSON.stringify(cur));
+  setSaveEnabled(!!cur.NAME);
+  updateDashToggleEligibility();
+}
+function wireResponderEvents() {
+  document.getElementById("selDivision").addEventListener("change", ()=> populateRespondersUI("DIVISION"));
+  document.getElementById("selDepartment").addEventListener("change", ()=> populateRespondersUI("DEPARTMENT"));
+  document.getElementById("selTeam").addEventListener("change", ()=> populateRespondersUI("TEAM"));
+  document.getElementById("selPosition").addEventListener("change", ()=> populateRespondersUI("POSITION"));
+  document.getElementById("selName").addEventListener("change", async (e) => {
+    populateRespondersUI("NAME");
+    updateDashToggleEligibility();
+    await loadScheduleForName(e.target.value);
+  });
+}
+
+/* ===== Save via Worker ===== */
+async function uploadScheduleViaProxy(){
+  const exportBtn = document.getElementById('exportBtn');
+  const selName = document.getElementById('selName');
+  const selDivision = document.getElementById('selDivision');
+  const selDepartment = document.getElementById('selDepartment');
+  const selTeam = document.getElementById('selTeam');
+  const selPosition = document.getElementById('selPosition');
+
+  const name = (selName.value || '').trim();
+  if(!name){ alert("Pick a Name first."); selName.focus(); return; }
+
+  if(Object.keys(state.data).length === 0){
+    if(!confirm("Your schedule is empty. Save anyway?")) return;
+  }
+
+  exportBtn.disabled = true;
+  const prevText = exportBtn.textContent;
+  exportBtn.textContent = "Saving…";
+
+  const payload = {
+    op: "save",
+    name,
+    data: {
+      ...state.data,
+      _meta: {
+        division: selDivision.value,
+        department: selDepartment.value,
+        team: selTeam.value,
+        position: selPosition.value,
+        name,
+        lastSaved: new Date().toISOString()
+      }
+    }
   };
 
-  // ---------- EXPORT (all people) ----------
-  function getAllNames() {
-    return uniq(RESPONDERS.map(r => r.NAME).filter(Boolean));
-  }
-  function dateRangeList() {
-    const out = [];
-    if (!CONFIG.START_DATE || !CONFIG.END_DATE) return out;
-    const d = new Date(CONFIG.START_DATE);
-    while (d <= CONFIG.END_DATE) {
-      out.push(ymd(d));
-      d.setDate(d.getDate() + 1);
-    }
-    return out;
-  }
-  async function fetchScheduleData(name){
-    try{
-      const r = await fetch(PROXY_URL, {
-        method: "POST",
-        headers: { "Content-Type":"application/json", "Accept":"application/json" },
-        body: JSON.stringify({ op: "load", name })
-      });
-      const j = await r.json();
-      if (j?.ok && j.found && j.data) {
-        return stripMeta(j.data);
-      }
-    }catch(e){
-      console.warn("Fetch schedule failed for", name, e);
-    }
-    return {}; // not found or error
-  }
-  function downloadBlob(content, filename, type){
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
-  }
-
-  // Wait for xlsx
-  async function ensureXLSX() {
-    if (window.XLSX) return;
-
-    const urls = [
-      "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
-      "https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
-      "https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
-    ];
-
-    for (const url of urls) {
-      try {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement("script");
-          s.src = url;
-          s.async = true;
-          s.onload = () => resolve();
-          s.onerror = () => reject(new Error("failed"));
-          document.head.appendChild(s);
-        });
-        if (window.XLSX) return;
-      } catch (_) {
-        // try next CDN
-      }
-    }
-    throw new Error("Failed to load SheetJS (XLSX). Check your network/CSP.");
-  }
-
-  // Export: VL Summary (.txt)
-  async function exportVlSummary(){
-    const names = getAllNames();
-    if (!names.length) { alert("No names found in Responders.json."); return; }
-
-    const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
-
-    function monthYearLabel(d){
-      return d.toLocaleString(undefined, { month:'long', year:'numeric' });
-    }
-
-    const lines = [];
-    for (const [name, data] of pairs) {
-      lines.push(name);
-      const vlDates = Object.entries(data || {})
-        .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
-        .map(([k]) => parseYMD(k))
-        .sort((a,b)=>a-b);
-
-      if (!vlDates.length) {
-        lines.push("(no VL)");
-        lines.push("");
-        continue;
-      }
-
-      const groups = {};
-      for (const d of vlDates) {
-        const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
-        (groups[key] ||= []).push(d);
-      }
-      const keys = Object.keys(groups).sort();
-      for (const key of keys) {
-        const arr = groups[key];
-        const label = monthYearLabel(arr[0]);
-        const days = arr.map(d => d.getDate()).join(", ");
-        lines.push(`${label}`);
-        lines.push(`${days}`);
-      }
-      lines.push("");
-    }
-
-    const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
-    downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
-  }
-
-  // Export: Table (.xlsx)
-  async function exportTableXlsx(){
-    await ensureXLSX();
-
-    const names = getAllNames().sort();
-    if (!names.length) { alert("No names found in Responders.json."); return; }
-
-    const dates = dateRangeList();
-    if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
-
-    const schedules = await Promise.all(
-      names.map(async (n) => [n, await fetchScheduleData(n)])
-    );
-
-    const header = ["Name", ...dates];
-    const rows = [header];
-
-    const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
-
-    for (const [name, data] of schedules) {
-      const row = [name];
-      for (const d of dates) {
-        const code = data?.[d] || "";
-        row.push(statusToCell(code));
-      }
-      rows.push(row);
-    }
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!freeze"] = { xSplit: 1, ySplit: 1 };
-    ws["!cols"] = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
-    XLSX.utils.book_append_sheet(wb, ws, "Schedule");
-
-    const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
-    XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
-  }
-
-  // Export menu wiring
-  const exportFileBtn = document.getElementById('exportFileBtn');
-  const exportMenu    = document.getElementById('exportMenu');
-  const exportVlBtn   = document.getElementById('exportVlBtn');
-  const exportTableBtn= document.getElementById('exportTableBtn');
-
-  function toggleMenu(show){
-    exportMenu.classList.toggle('hidden', !show);
-  }
-  if (exportFileBtn) {
-    exportFileBtn.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      const isHidden = exportMenu.classList.contains('hidden');
-      toggleMenu(isHidden);
+  try{
+    const res = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload),
     });
+
+    let j = null;
+    try { j = await res.json(); } catch {}
+    if (!res.ok || !j?.ok) {
+      const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
+      throw new Error(err);
+    }
+
+    const link = j.url ? `<a href="${j.url}" target="_blank" rel="noopener" class="text-blue-300 underline">View on GitHub</a>` : '';
+    alert(`Saved ✅\n${j.url || ''}`);
+    document.getElementById('selectedList').innerHTML =
+      link || '<span class="text-xs text-slate-500">Saved.</span>';
+
+  } catch(e){
+    alert("Save failed:\n" + (e?.message || e));
+  } finally {
+    exportBtn.disabled = false;
+    exportBtn.textContent = prevText;
   }
-  document.addEventListener('click', ()=> toggleMenu(false));
-  if (exportVlBtn)  exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportVlSummary(); });
-  if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportTableXlsx(); });
+}
+document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
-  // Navigation
-  document.getElementById('prevBtn').onclick = ()=>{
-    const d = new Date(state.viewYear, state.viewMonth - 1, 1);
-    ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-    render();
-  };
-  document.getElementById('nextBtn').onclick = ()=>{
-    const d = new Date(state.viewYear, state.viewMonth + 1, 1);
-    ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-    render();
-  };
-  document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
+/* ===== Load person schedule (personnel view preview only) ===== */
+async function loadScheduleForName(name) {
+  const loadBtn = document.getElementById('loadBtn');
+  const hasName = !!(name && name.trim());
+  setSaveEnabled(hasName);
 
-  // ===================== DASHBOARD VIEW + ELIGIBILITY =====================
-  const $toggleDash = document.getElementById('toggleDashboardBtn');
-  const $filtersWrap = document.getElementById('filtersWrap');
-  const $personnelView = document.getElementById('personnelView');
-  const $dashboardView = document.getElementById('dashboardView');
-  const $loadBtn = document.getElementById('loadBtn');
-  const $saveBtn = document.getElementById('exportBtn');
-  const $exportGroup = document.getElementById('exportGroup');
-  let vlChart = null;
+  // Reset current view
+  state.data = {};
+  saveStore();
+  render();
+  if (!hasName) return;
 
-  // Allowed positions to ENTER dashboard (Personnel view) — lowercased for case-insensitive match
-  const DASH_ALLOWED_POS = new Set([
-    'senior gis specialist',
-    'deputy manager',
-    'manager'
-  ]);
+  const prevText = loadBtn ? loadBtn.textContent : '';
+  if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
 
-  function getSelectedResponderPosition() {
-    const nameSel = document.getElementById('selName');
-    const name = (nameSel?.value || '').trim();
-    if (!name) return null;
+  try {
+    const r = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ op: "load", name })
+    });
+    const j = await r.json();
 
-    // Find responder by exact name
-    const r = RESPONDERS.find(x => (x.NAME || '') === name);
-    // Normalize: trim + lowercase for case-insensitive comparison
-    const pos = (r?.POSITION ?? '').trim().toLowerCase();
-    return pos || null;
-  }
+    if (!j?.ok) {
+      console.warn("Worker responded with error:", j);
+      render();
+      return;
+    }
 
-  function isDashboardEligible() {
-    const pos = getSelectedResponderPosition();  // already lowercased
-    return !!pos && DASH_ALLOWED_POS.has(pos);
-  }
-
-  // NEW: keep the same appearance when disabled; no tooltip on hover
-  function setDashToggleDisabled(disabled) {
-    const btn = document.getElementById('toggleDashboardBtn');
-    if (!btn) return;
-
-    btn.disabled = disabled;
-
-    // Remove any visible "disabled" styles (keep consistent look)
-    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-
-    // Manage hover class: remove when disabled so hover doesn't change bg
-    const hoverClass = 'hover:bg-white/25';
-    if (disabled) btn.classList.remove(hoverClass);
-    else if (!btn.classList.contains(hoverClass)) btn.classList.add(hoverClass);
-
-    // No tooltip while disabled; restore contextual title when enabled
-    if (disabled) {
-      btn.removeAttribute('title');
-      btn.setAttribute('aria-disabled', 'true');
+    if (j.found && j.data) {
+      const loaded = stripMeta(j.data);
+      const valid = {};
+      for (const [k, v] of Object.entries(loaded)) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
+      }
+      state.data = valid;
+      saveStore();
+      render();
     } else {
-      btn.removeAttribute('aria-disabled');
-      btn.title = state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View';
+      // none found: keep blank
+      render();
+    }
+  } catch (e) {
+    console.error("Worker load error:", e);
+  } finally {
+    if (loadBtn) { loadBtn.textContent = prevText || "Refresh"; loadBtn.disabled = !hasName; }
+  }
+}
+document.getElementById('loadBtn').onclick = async () => {
+  const selName = document.getElementById('selName');
+  const name = (selName.value || '').trim();
+  if (!name) { alert("Pick a Name first."); selName.focus(); return; }
+  await loadScheduleForName(name);
+};
+
+/* ===== Export (all) ===== */
+function dateRangeList() {
+  const out = [];
+  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return out;
+  const d = new Date(CONFIG.START_DATE);
+  while (d <= CONFIG.END_DATE) {
+    out.push(ymd(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+async function fetchScheduleData(name){
+  try{
+    const r = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Accept":"application/json" },
+      body: JSON.stringify({ op: "load", name })
+    });
+    const j = await r.json();
+    if (j?.ok && j.found && j.data) {
+      return stripMeta(j.data);
+    }
+  }catch(e){
+    console.warn("Fetch schedule failed for", name, e);
+  }
+  return {}; // not found or error
+}
+function downloadBlob(content, filename, type){
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+}
+async function ensureXLSX(){
+  if (window.XLSX) return;
+  const urls = [
+    "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
+    "https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
+    "https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
+  ];
+  for (const url of urls) {
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = url;
+        s.async = true;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error("failed"));
+        document.head.appendChild(s);
+      });
+      if (window.XLSX) return;
+    } catch {}
+  }
+  throw new Error("Failed to load SheetJS (XLSX).");
+}
+
+/* Export menu wiring */
+const exportFileBtn = document.getElementById('exportFileBtn');
+const exportMenu    = document.getElementById('exportMenu');
+const exportVlBtn   = document.getElementById('exportVlBtn');
+const exportTableBtn= document.getElementById('exportTableBtn');
+function toggleMenu(show){ exportMenu.classList.toggle('hidden', !show); }
+if (exportFileBtn) exportFileBtn.addEventListener('click', (e)=>{ e.stopPropagation(); const isHidden = exportMenu.classList.contains('hidden'); toggleMenu(isHidden); });
+document.addEventListener('click', ()=> toggleMenu(false));
+
+/* VL Summary (.txt) */
+async function exportVlSummary(){
+  const names = getAllNames();
+  if (!names.length) { alert("No names found in Responders.json."); return; }
+  const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+  const lines = [];
+  for (const [name, data] of pairs) {
+    lines.push(name);
+    const vlDates = Object.entries(data || {})
+      .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
+      .map(([k]) => parseYMD(k))
+      .sort((a,b)=>a-b);
+    if (!vlDates.length) { lines.push("(no VL)"); lines.push(""); continue; }
+    const groups = {};
+    for (const d of vlDates) {
+      const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+      (groups[key] ||= []).push(d);
+    }
+    const keys = Object.keys(groups).sort();
+    for (const key of keys) {
+      const arr = groups[key];
+      const label = arr[0].toLocaleString(undefined, { month:'long', year:'numeric' });
+      const days = arr.map(d => d.getDate()).join(", ");
+      lines.push(label);
+      lines.push(days);
+    }
+    lines.push("");
+  }
+  const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
+  downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
+}
+if (exportVlBtn) exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportVlSummary(); });
+
+/* Table (.xlsx) */
+async function exportTableXlsx(){
+  await ensureXLSX();
+  const names = getAllNames().sort();
+  if (!names.length) { alert("No names found in Responders.json."); return; }
+  const dates = dateRangeList();
+  if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
+  const schedules = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+
+  const header = ["Name", ...dates];
+  const rows = [header];
+  const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
+
+  for (const [name, data] of schedules) {
+    const row = [name];
+    for (const d of dates) {
+      row.push(statusToCell(data?.[d] || ""));
+    }
+    rows.push(row);
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!freeze"] = { xSplit: 1, ySplit: 1 };
+  ws["!cols"] = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
+  XLSX.utils.book_append_sheet(wb, ws, "Schedule");
+
+  const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
+  XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
+}
+if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportTableXlsx(); });
+
+/* ===== Navigation ===== */
+document.getElementById('prevBtn').onclick = ()=>{
+  const d = new Date(state.viewYear, state.viewMonth - 1, 1);
+  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+  render();
+};
+document.getElementById('nextBtn').onclick = ()=>{
+  const d = new Date(state.viewYear, state.viewMonth + 1, 1);
+  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+  render();
+};
+
+/* ===== Dashboard ===== */
+const $toggleDash = document.getElementById('toggleDashboardBtn');
+const $filtersWrap = document.getElementById('filtersWrap');
+const $personnelView = document.getElementById('personnelView');
+const $dashboardView = document.getElementById('dashboardView');
+const $loadBtn = document.getElementById('loadBtn');
+const $saveBtn = document.getElementById('exportBtn');
+const $exportGroup = document.getElementById('exportGroup');
+
+const $fSupervisors = document.getElementById('fSupervisors');
+const $fPositions   = document.getElementById('fPositions');
+const $metricTotal  = document.getElementById('metricTotalVl');
+const $metricRange  = document.getElementById('metricRange');
+const $matrixTable  = document.getElementById('matrixTable');
+const $hint         = document.getElementById('dashboardHint');
+
+let top5Chart = null;
+
+/* Enable/disable Dashboard entry based on Name position (your earlier rule); 
+   here we always allow entry (since Dashboard now controlled by org filters).
+   If you still want to restrict, add your position logic here. */
+function updateDashToggleEligibility(){
+  // Always enabled now
+  $toggleDash.disabled = false;
+  $toggleDash.title = state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View';
+}
+
+$toggleDash.addEventListener('click', async () => {
+  state.isDashboard = !state.isDashboard;
+  if (state.isDashboard) {
+    enterDashboard();
+    await prepareDashboardFilters();       // fill filters
+    await autoApplySupervisorFromName();   // auto-apply selected Name
+    await buildDashboard();                // build everything
+  } else {
+    exitDashboard();
+  }
+});
+
+function enterDashboard(){
+  $filtersWrap.classList.add('hidden');
+  $loadBtn.classList.add('hidden');
+  $saveBtn.classList.add('hidden');
+  $exportGroup.classList.remove('hidden');
+  $personnelView.classList.add('hidden');
+  $dashboardView.classList.remove('hidden');
+  document.getElementById('dashIcon').textContent = '👥';
+  updateDashToggleEligibility();
+}
+function exitDashboard(){
+  $filtersWrap.classList.remove('hidden');
+  $loadBtn.classList.remove('hidden');
+  $saveBtn.classList.remove('hidden');
+  $exportGroup.classList.add('hidden');
+  $dashboardView.classList.add('hidden');
+  $personnelView.classList.remove('hidden');
+  if (top5Chart) { top5Chart.destroy(); top5Chart = null; }
+  document.getElementById('dashIcon').textContent = '🗓️';
+  updateDashToggleEligibility();
+}
+
+/* Fill filter lists */
+async function prepareDashboardFilters(){
+  // Supervisors list = all names in org.json (keys of ORG_INDEX)
+  const allOrgNames = Array.from(ORG_INDEX.keys()).sort();
+  $fSupervisors.innerHTML = allOrgNames.map(n => `<option>${n}</option>`).join('');
+
+  // Positions = from Responders
+  const allPos = getAllPositions();
+  $fPositions.innerHTML = allPos.map(p => `<option>${p}</option>`).join('');
+
+  // Set date range label
+  $metricRange.textContent = fmtRange();
+
+  // Wire change handlers
+  $fSupervisors.onchange = buildDashboard;
+  $fPositions.onchange = buildDashboard;
+}
+
+/* Auto-apply the selected Name (from personnel) as a supervisor */
+async function autoApplySupervisorFromName(){
+  const nameSel = document.getElementById('selName');
+  const chosen = (nameSel?.value || '').trim();
+  if (!chosen) return;
+
+  // If this name exists in org.json, select it in supervisors filter
+  const idx = Array.from($fSupervisors.options).findIndex(o => o.value === chosen);
+  if (idx >= 0) {
+    $fSupervisors.selectedIndex = -1; // clear previous selection
+    $fSupervisors.options[idx].selected = true;
+  }
+}
+
+/* Build dashboard from current filters */
+async function buildDashboard(){
+  $hint.textContent = 'Loading…';
+  $matrixTable.innerHTML = '';
+  if (top5Chart) { top5Chart.destroy(); top5Chart = null; }
+
+  // Collect filters
+  const selectedSupervisors = Array.from($fSupervisors.selectedOptions).map(o => o.value);
+  const selectedPositions   = Array.from($fPositions.selectedOptions).map(o => o.value);
+
+  // Names allowed by supervisors (subtree)
+  let allowedNames = [];
+  if (selectedSupervisors.length) {
+    allowedNames = getSubtreeNames(selectedSupervisors);
+  } else {
+    // If no supervisor chosen, consider everyone in Responders
+    allowedNames = getAllNames();
+  }
+
+  // Optionally filter by positions (only keep names whose position matches selection)
+  const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
+  if (selectedPositions.length) {
+    const set = new Set(selectedPositions);
+    allowedNames = allowedNames.filter(n => set.has(posMap.get(n) || 'Unspecified'));
+  }
+
+  // Fetch schedules for allowed names
+  const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
+
+  // Build: totals, per-date counts per position, and date->names matrix
+  const dateCountsByPos = new Map(); // date -> position -> count
+  const vlTotal = { count:0 };
+  const dateToNames = new Map();     // date -> [names]
+
+  const labelsDates = dateRangeList();
+  const dateSet = new Set(labelsDates); // within range
+
+  for (const [name, sched] of pairs) {
+    const pos = posMap.get(name) || 'Unspecified';
+    for (const [d, code] of Object.entries(sched || {})) {
+      if (code !== 'VL') continue;
+      if (!dateSet.has(d)) continue;
+      // total
+      vlTotal.count++;
+      // date->position count
+      if (!dateCountsByPos.has(d)) dateCountsByPos.set(d, new Map());
+      const m = dateCountsByPos.get(d);
+      m.set(pos, (m.get(pos) || 0) + 1);
+      // date->names list
+      if (!dateToNames.has(d)) dateToNames.set(d, []);
+      dateToNames.get(d).push(name);
     }
   }
 
-  function updateDashToggleEligibility() {
-    // If we're already in Dashboard, always allow going back
-    if (state.isDashboard) { setDashToggleDisabled(false); return; }
-    const ok = isDashboardEligible();
-    setDashToggleDisabled(!ok);
-  }
+  // Metric
+  $metricTotal.textContent = String(vlTotal.count);
 
-  $toggleDash.addEventListener('click', async () => {
-    // If in Personnel view, only allow if the selected Name has an allowed Position
-    if (!state.isDashboard && !isDashboardEligible()) return;
+  // Top 5 days (by total VL)
+  const byTotal = Array.from(dateCountsByPos.entries()).map(([d, mp]) => {
+    const total = Array.from(mp.values()).reduce((a,b)=>a+b,0);
+    return { date:d, total, byPos: mp };
+  }).sort((a,b)=>b.total - a.total).slice(0,5);
 
-    state.isDashboard = !state.isDashboard;
-    if (state.isDashboard) {
-      enterDashboard();
-      await buildAndRenderDashboard();
-    } else {
-      exitDashboard();
+  // Build grouped (NOT stacked) bar datasets: positions as datasets, x-axis = top-5 dates
+  const positions = getAllPositions(); // fixed order
+  const topDates = byTotal.map(x => x.date);
+
+  const datasets = positions.map(p => ({
+    label: p,
+    data: topDates.map(d => (dateCountsByPos.get(d)?.get(p) || 0)),
+    // default colors (Chart.js will auto-assign)
+    borderWidth: 1
+  }));
+
+  renderTop5Chart(topDates, datasets);
+
+  // Matrix (date → names who filed)
+  renderMatrix(dateToNames);
+
+  $hint.textContent = byTotal.length ? 'Hover bars to see counts per position.' : 'No VL found for the selected filters/date range.';
+}
+
+/* Render Top 5 chart (grouped vertical bars) */
+function renderTop5Chart(dateLabels, datasets){
+  const ctx = document.getElementById('top5Chart').getContext('2d');
+  if (top5Chart) { top5Chart.destroy(); }
+
+  top5Chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: dateLabels.map(d => new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric'})),
+      datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { stacked: false, title: { display: true, text: 'Date' } },
+        y: { stacked: false, beginAtZero: true, title: { display: true, text: 'No. of VL filed per position' }, ticks:{ precision:0 } }
+      },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false }
+      }
     }
   });
+}
 
-  function enterDashboard(){
-    // Hide dropdown selection, Refresh, Save
-    $filtersWrap.classList.add('hidden');
-    $loadBtn.classList.add('hidden');
-    $saveBtn.classList.add('hidden');
+/* Render date → names matrix */
+function renderMatrix(dateToNames){
+  // Only show dates with at least one VL; sort ascending
+  const rows = Array.from(dateToNames.entries())
+    .map(([d, names]) => [d, names.slice().sort()])
+    .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
 
-    // Show Export group in Dashboard
-    $exportGroup.classList.remove('hidden');
+  const hasAny = rows.length > 0;
 
-    // Swap views
-    $personnelView.classList.add('hidden');
-    $dashboardView.classList.remove('hidden');
+  const maxCols = hasAny ? Math.max(...rows.map(([,names]) => names.length)) : 0;
 
-    // change icon and tooltip
-    document.getElementById('dashIcon').textContent = '👥';
-    $toggleDash.title = 'Switch to Personnel View';
-    setDashToggleDisabled(false); // always allow going back
-  }
+  let html = '<thead><tr>';
+  html += '<th class="text-left sticky left-0 z-10">Date</th>';
+  for (let i=0;i<maxCols;i++) html += `<th class="text-left">Name ${i+1}</th>`;
+  html += '</tr></thead><tbody>';
 
-  function exitDashboard(){
-    // Show dropdown selection, Refresh, Save
-    $filtersWrap.classList.remove('hidden');
-    $loadBtn.classList.remove('hidden');
-    $saveBtn.classList.remove('hidden');
-
-    // Hide Export group in Personnel
-    $exportGroup.classList.add('hidden');
-
-    // Swap views
-    $dashboardView.classList.add('hidden');
-    $personnelView.classList.remove('hidden');
-
-    if (vlChart) { vlChart.destroy(); vlChart = null; }
-
-    // revert icon and tooltip
-    document.getElementById('dashIcon').textContent = '🗓️';
-    $toggleDash.title = 'Switch to Dashboard View';
-
-    // Re-apply eligibility rule when back in Personnel view
-    updateDashToggleEligibility();
-  }
-
-  // Build dashboard data from ALL names
-  async function buildAndRenderDashboard(){
-    const hint = document.getElementById('dashboardHint');
-    hint.textContent = 'Loading VL counts from all personnel…';
-
-    const labels = dateRangeList(); // YYYY-MM-DD
-    if (!labels.length) {
-      hint.textContent = 'Set START_DATE and END_DATE in config.json to show dashboard.';
-      return;
+  for (const [d, names] of rows) {
+    html += '<tr>';
+    html += `<td class="text-slate-200 font-medium sticky left-0 bg-slate-900">${new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td>`;
+    for (let i=0;i<maxCols;i++) {
+      html += `<td class="text-slate-300">${names[i] ? names[i] : ''}</td>`;
     }
-
-    // Map name -> position
-    const nameToPos = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
-
-    const names = getAllNames();
-    if (!names.length) {
-      hint.textContent = 'No personnel found in Responders.json.';
-      return;
-    }
-
-    // Fetch all schedules
-    const schedulePairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
-
-    // Positions set
-    const positions = [...new Set(RESPONDERS.map(r => r.POSITION || 'Unspecified'))].sort();
-    const labelIndex = new Map(labels.map((d, i) => [d, i]));
-    const countsByPos = new Map(positions.map(p => [p, new Array(labels.length).fill(0)]));
-
-    // Tally VL per day per position
-    for (const [name, sched] of schedulePairs) {
-      const pos = nameToPos.get(name) || 'Unspecified';
-      const arr = countsByPos.get(pos);
-      if (!arr) continue;
-
-      for (const [dateStr, status] of Object.entries(sched)) {
-        if (status !== 'VL') continue;
-        if (!labelIndex.has(dateStr)) continue;
-        const dObj = parseYMD(dateStr);
-        if (!dateInRange(dObj)) continue;
-        arr[labelIndex.get(dateStr)]++;
-      }
-    }
-
-    const datasets = positions.map(p => ({
-      label: p,
-      data: countsByPos.get(p),
-      stack: 'vl'
-    }));
-
-    renderVLChart(labels, datasets);
-    hint.textContent = 'Tip: Hover a bar to see per-position counts and total.';
+    html += '</tr>';
   }
+  html += '</tbody>';
 
-  function renderVLChart(labels, datasets){
-    const ctx = document.getElementById('vlByDateChart').getContext('2d');
-    if (vlChart) { vlChart.destroy(); }
+  $matrixTable.innerHTML = hasAny ? html : '<tbody><tr><td class="text-slate-400">No VL in range.</td></tr></tbody>';
+}
 
-    vlChart = new Chart(ctx, {
-      type: 'bar',
-      data: { labels, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: 'y',
-        scales: {
-          x: {
-            stacked: true,
-            title: { display: true, text: 'No. of people who filed VL' },
-            ticks: { precision: 0 }
-          },
-          y: {
-            stacked: true,
-            title: { display: true, text: 'Dates' },
-            ticks: { autoSkip: true, maxTicksLimit: 20 }
-          }
-        },
-        plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 14 } },
-          tooltip: {
-            callbacks: {
-              footer: (items) => {
-                const total = items.reduce((s, it) => s + (Number(it.raw) || 0), 0);
-                return `Total: ${total}`;
-              }
-            }
-          },
-          title: {
-            display: true,
-            text: 'Vacation Leave (VL) filings per day — grouped by Position'
-          }
-        },
-        animation: false
-      }
-    });
-  }
+/* ===== Init ===== */
+(async () => {
+  loadStore();
+  await loadConfig();
+  updateTitleFromConfig();
+  await loadResponders();
+  await loadOrganization();
 
-  // Init
-  (async () => {
-    loadStore();
-    await loadConfig();
-    updateTitleFromConfig();
-    await loadResponders();
-    wireResponderEvents();
-    setSaveEnabled(false);
-    ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
-    render();
+  // Populate personnel filters once responders loaded
+  populateRespondersUI();
+  wireResponderEvents();
+  setSaveEnabled(false);
+  ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
+  render();
 
-    // Initial eligibility (no name yet)
-    updateDashToggleEligibility();
-  })();
+  // Export menu visibility only in Dashboard, handled on toggle
+  updateDashToggleEligibility();
+})();
 </script>
 </body>
 </html>
