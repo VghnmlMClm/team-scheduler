@@ -226,8 +226,11 @@ const SCHEDULE_GROUPS = [
 const LABELS = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]));
 const COLORS = Object.fromEntries([
   ...SCHEDULE_OPTIONS.map(o => [o.code, '#' + o.color.toLowerCase()]),
-  ['WEEKEND', '#BFBFBF'] // weekend gray for calendar background
+  ['RD',      '#808080'], // Rest Day (weekends)
+  ['HOL',     '#ffff00'], // Holiday (from config.json)
+  ['WEEKEND', '#808080']  // keep WEEKEND in sync with RD
 ]);
+
 
 /* ===== Helpers ===== */
 const stripMeta = o => Object.fromEntries(Object.entries(o||{}).filter(([k]) => !k.startsWith("_")));
@@ -404,8 +407,8 @@ function dayCell(dateObj, muted=false){
 
   let bg = '';
   if (status)       bg = COLORS[status];
-  else if (holiday) bg = '#00b0f0';
-  else if (weekend) bg = COLORS.WEEKEND;
+  else if (holiday) bg = COLORS.HOL;
+  else if (weekend) bg = COLORS.RD;
 
   const disabled = outRange || holiday || weekend;
 
@@ -421,26 +424,28 @@ function dayCell(dateObj, muted=false){
   cell.dataset.date = id;
   if (bg) cell.style.background = bg;
 
-  // Determine readable text color based on schedule background
-  let dayNumColor = '';
-  if (status) {
-    const textClass = getContrastText(bg); // existing helper
-    dayNumColor = (textClass === 'text-black') ? 'black' : 'white';
-  } else if (holiday || weekend) {
-    dayNumColor = 'black';
-  } else {
-    dayNumColor = 'white';
+  // Determine readable text color for date number
+  let textColor = 'white';
+  if (bg) {
+    const contrast = getContrastText(bg);
+    textColor = (contrast === 'text-black') ? 'black' : 'white';
   }
 
-  const badgeText = status ? LABELS[status] : (holiday ? 'HOL' : (weekend ? 'RD' : ''));
-  const badge = badgeText
-    ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${badgeText}</span>`
-    : '';
+	// Determine badge label
+	const badgeText = status
+	  ? LABELS[status]
+	  : (holiday ? 'HOL' : (weekend ? 'RD' : ''));
+
+	// Make the badge text color match the day number color
+	const badge = badgeText
+	  ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
+	  : '';
+
 
   cell.innerHTML = `
     <div class="flex items-center justify-between">
       <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}"
-            style="color:${dayNumColor}">${dateObj.getDate()}</span>
+            style="color:${textColor}">${dateObj.getDate()}</span>
     </div>
     <div class="mt-1 overflow-hidden">${badge}</div>
   `;
@@ -451,6 +456,7 @@ function dayCell(dateObj, muted=false){
   });
   return cell;
 }
+
 
 
 function onDayClick(id, shift) {
