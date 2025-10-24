@@ -31,7 +31,7 @@
   <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <!-- Single toggle button (no hover when disabled) -->
+        <!-- Dashboard toggle (stealth when disabled) -->
         <button id="toggleDashboardBtn"
           class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center transition"
           aria-label="Toggle view">
@@ -48,8 +48,8 @@
             <button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
           </div>
         </div>
-        <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Refresh</button>
-        <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition opacity-60 cursor-not-allowed">Save</button>
+        <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Refresh</button>
+        <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Save</button>
       </div>
     </div>
 
@@ -118,28 +118,17 @@
 
   <!-- Sidebar -->
   <aside class="bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
-    <div class="p-4 border-b border-slate-700"><h3 class="text-lg font-semibold">Set schedule for selected days</h3></div>
-    <form id="eventForm" class="p-4 space-y-4" onsubmit="return false;">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <button id="btnVL" type="button" class="px-3 py-2 rounded-xl text-white font-medium" style="background:#ed7d31">Vacation Leave</button>
-        <button id="btnWFH" type="button" class="px-3 py-2 rounded-xl text-white font-medium" style="background:#92d050">Work From Home</button>
-        <button id="btnONSITE" type="button" class="px-3 py-2 rounded-xl text-white font-medium" style="background:#548235">On-site</button>
-      </div>
+
+    <!-- GROUPED schedule buttons injected here -->
+    <form id="eventForm" class="p-4 space-y-5" onsubmit="return false;">
+      <div id="schedButtons" class="space-y-4"></div>
       <div class="flex items-center gap-3">
         <button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
       </div>
     </form>
+
     <div class="px-4 pb-4 space-y-4">
-      <div>
-        <div class="flex items-center justify-between mb-2"><h4 class="text-sm font-semibold">Legend</h4></div>
-        <div class="text-sm space-y-1">
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#ed7d31"></span> Vacation Leave</div>
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#548235"></span> On-site</div>
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#92d050"></span> Work From Home</div>
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#00b0f0"></span> Holiday</div>
-          <div class="flex items-center gap-2"><span class="w-4 h-4 inline-block rounded" style="background:#BFBFBF"></span> Weekend</div>
-        </div>
-      </div>
+      <!-- Selected -->
       <div>
         <div class="flex items-center justify-between mb-1">
           <h4 class="text-sm font-semibold">Selected:</h4>
@@ -173,7 +162,7 @@
       <!-- TOP METRICS -->
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div class="text-xs text-slate-400">TOTAL NO OF LEAVES</div>
+          <div class="text-xs text-slate-400">TOTAL NO OF LEAVES (VL)</div>
           <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
         </div>
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
@@ -184,7 +173,7 @@
 
       <!-- TOP 5 DAYS CHART -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <h2 class="text-sm font-semibold mb-2 text-slate-200">Top 5 Days with Max No. of Leaves</h2>
+        <h2 class="text-sm font-semibold mb-2 text-slate-2 00">Top 5 Days with Max No. of Leaves</h2>
         <div class="w-full h-[420px]"><canvas id="top5Chart"></canvas></div>
         <p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
       </div>
@@ -212,10 +201,36 @@ const RESPONDERS_URL = "Responders.json";
 const CONFIG_URL = "config.json";
 const ORG_URL = "organization.json";
 
+/* ===== Schedule Options (no REST DAY/HOLIDAY buttons) ===== */
+const SCHEDULE_OPTIONS = [
+  { name:"ON-SITE",         code:"ONS",  abbr:"ONS", color:"ffffff" },
+  { name:"OFFICE",          code:"OFC",  abbr:"OFC", color:"ffffff" },
+  { name:"WORK FROM HOME",  code:"WFH",  abbr:"WFH", color:"b5e6a2" },
+  { name:"VACATION LEAVE",  code:"VL",   abbr:"VL",  color:"f5c6ab" },
+  { name:"AUTHORIZED ABSENT", code:"AA", abbr:"AA",  color:"ff0000" },
+  { name:"PAID TIME OFF",   code:"PTO",  abbr:"PTO", color:"e87331" },
+  { name:"BIRTHDAY LEAVE",  code:"BDL",  abbr:"BDL", color:"a02b93" },
+  { name:"MATERNITY LEAVE", code:"ML",   abbr:"ML",  color:"f2ceef" },
+  { name:"PATERNITY LEAVE", code:"PL",   abbr:"PL",  color:"0f9ed5" }
+];
+
+/* === Groups (display order) ===*/
+const SCHEDULE_GROUPS = [
+  { title: "WORK SETUP", codes: ["ONS","OFC","WFH"] },
+  { title: "LEAVES", codes: ["VL","AA"] },
+  { title: "SPECIAL LEAVES", codes: ["PTO","BDL","ML","PL"] }
+];
+
+
+/* Build color/label maps + helpers */
+const LABELS = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]));
+const COLORS = Object.fromEntries([
+  ...SCHEDULE_OPTIONS.map(o => [o.code, '#' + o.color.toLowerCase()]),
+  ['WEEKEND', '#BFBFBF'] // weekend gray for calendar background
+]);
+
 /* ===== Helpers ===== */
 const stripMeta = o => Object.fromEntries(Object.entries(o||{}).filter(([k]) => !k.startsWith("_")));
-const COLORS = { VL:'#ed7d31', ONSITE:'#548235', WFH:'#92d050', WEEKEND:'#BFBFBF' };
-const LABELS = { VL:'VL', ONSITE:'SITE', WFH:'WFH' };
 const pad = n => String(n).padStart(2,'0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); };
@@ -227,6 +242,8 @@ function fmtRange(){
   if(!s||!e) return "—";
   return `${s.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})} – ${e.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
 }
+function hexToRGB(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); const n=parseInt(hex,16); return {r:(n>>16)&255, g:(n>>8)&255, b:(n&255)}; }
+function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(g*587)+(b*114))/1000; return yiq>=128 ? 'text-black' : 'text-white'; }
 
 /* ===== State ===== */
 const state = {
@@ -288,11 +305,8 @@ async function loadOrganization(){
     ORG_INDEX.clear();
     ORG_SUPERVISORS = [];
 
-    if (Array.isArray(data)) {
-      data.forEach(indexOrg);
-    } else {
-      indexOrg(data);
-    }
+    if (Array.isArray(data)) data.forEach(indexOrg);
+    else indexOrg(data);
 
     ORG_SUPERVISORS = Array.from(new Set(ORG_SUPERVISORS));
   }catch(e){
@@ -377,6 +391,7 @@ function renderGrid(year, month){
   const remaining = (7 - (grid.children.length % 7)) % 7;
   for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
 }
+
 function dayCell(dateObj, muted=false){
   const id = ymd(dateObj);
   const isToday   = id === ymd(new Date());
@@ -406,14 +421,26 @@ function dayCell(dateObj, muted=false){
   cell.dataset.date = id;
   if (bg) cell.style.background = bg;
 
-  const badgeText = status ? LABELS[status] : (holiday ? 'HOL' : '');
+  // Determine readable text color based on schedule background
+  let dayNumColor = '';
+  if (status) {
+    const textClass = getContrastText(bg); // existing helper
+    dayNumColor = (textClass === 'text-black') ? 'black' : 'white';
+  } else if (holiday || weekend) {
+    dayNumColor = 'black';
+  } else {
+    dayNumColor = 'white';
+  }
+
+  const badgeText = status ? LABELS[status] : (holiday ? 'HOL' : (weekend ? 'RD' : ''));
   const badge = badgeText
     ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10">${badgeText}</span>`
     : '';
 
   cell.innerHTML = `
     <div class="flex items-center justify-between">
-      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span>
+      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}"
+            style="color:${dayNumColor}">${dateObj.getDate()}</span>
     </div>
     <div class="mt-1 overflow-hidden">${badge}</div>
   `;
@@ -424,12 +451,14 @@ function dayCell(dateObj, muted=false){
   });
   return cell;
 }
+
+
 function onDayClick(id, shift) {
   const date = parseYMD(id);
   const wd = date.getDay();
   if (!dateInRange(date)) return;
-  if (isHoliday(date))    return;
-  if (wd === 0 || wd === 6) return;
+  if (isHoliday(date))    return; // holidays locked
+  if (wd === 0 || wd === 6) return; // weekends locked
 
   if (shift && state.lastClicked) {
     const a = parseYMD(state.lastClicked), b = parseYMD(id);
@@ -455,13 +484,48 @@ function renderSelection(){
   selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
   selectedList.innerHTML = items.length
     ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-800 border border-slate-700">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>`
-    : '<p class="text-xs text-slate-500">Click dates to select them.</p>';
+    : '<p class="text-xs text-slate-500">Click weekdays (non-holiday) to select.</p>';
 }
 
-/* ===== Apply types / Save / Load for Personnel ===== */
-document.getElementById('btnVL').onclick = ()=> applyType('VL');
-document.getElementById('btnWFH').onclick = ()=> applyType('WFH');
-document.getElementById('btnONSITE').onclick = ()=> applyType('ONSITE');
+/* ===== Dynamic schedule controls & legend (GROUPED) ===== */
+function buildScheduleButtons(){
+  const wrap = document.getElementById('schedButtons');
+  wrap.innerHTML = '';
+
+  SCHEDULE_GROUPS.forEach(group => {
+    const block = document.createElement('div');
+    block.className = 'rounded-xl border border-slate-800 p-3 bg-slate-900/40';
+
+    const title = document.createElement('div');
+    title.className = 'text-xs text-slate-400 mb-2';
+    title.textContent = group.title;
+    block.appendChild(title);
+
+    // Each button in its own row
+    const grid = document.createElement('div');
+    grid.className = 'grid grid-cols-1 gap-2';
+
+    group.codes.forEach(code => {
+      const opt = SCHEDULE_OPTIONS.find(o => o.code === code);
+      if (!opt) return;
+      const color = '#' + opt.color.toLowerCase();
+      const textClass = getContrastText(color);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `w-full px-3 py-2 rounded-xl font-medium shadow-sm hover:opacity-95 ${textClass}`;
+      btn.style.background = color;
+      btn.textContent = opt.name;
+      btn.addEventListener('click', () => applyType(opt.code));
+      grid.appendChild(btn);
+    });
+
+    block.appendChild(grid);
+    wrap.appendChild(block);
+  });
+}
+
+
+/* ===== Apply / Clear ===== */
 document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
 const deleteBtn = document.getElementById('deleteBtn');
 deleteBtn.onclick = ()=>{
@@ -477,8 +541,8 @@ function applyType(val){
     const dt = parseYMD(d);
     const wd = dt.getDay();
     if (!dateInRange(dt)) continue;
-    if (isHoliday(dt))    continue;
-    if (wd === 0 || wd === 6) continue;
+    if (isHoliday(dt))    continue; // cannot set on holidays
+    if (wd === 0 || wd === 6) continue; // cannot set on weekends
     state.data[d] = val;
   }
   saveStore(); state.selected.clear(); render();
@@ -758,7 +822,7 @@ function toggleMenu(show){ exportMenu.classList.toggle('hidden', !show); }
 if (exportFileBtn) exportFileBtn.addEventListener('click', (e)=>{ e.stopPropagation(); const isHidden = exportMenu.classList.contains('hidden'); toggleMenu(isHidden); });
 document.addEventListener('click', ()=> toggleMenu(false));
 
-/* VL Summary (.txt) */
+/* VL Summary (.txt) — counts VL dates */
 async function exportVlSummary(){
   const names = getFilteredNamesForDashboard();
   if (!names.length) { alert("No names match the current filters."); return; }
@@ -858,13 +922,12 @@ const $hint         = document.getElementById('dashboardHint');
 
 let top5Chart = null;
 
-/* ---------- Eligibility: allow entry only for certain positions (no hover when not eligible) ---------- */
+/* ---------- Dashboard eligibility (stealth when not eligible) ---------- */
 const DASH_ALLOWED_POS = new Set([
   'senior gis specialist',
   'deputy manager',
   'manager'
 ]);
-
 function getSelectedResponderPositionLower() {
   const nameSel = document.getElementById('selName');
   const name = (nameSel?.value || '').trim();
@@ -872,16 +935,13 @@ function getSelectedResponderPositionLower() {
   const r = RESPONDERS.find(x => (x.NAME || '') === name);
   return (r?.POSITION ?? '').trim().toLowerCase() || null;
 }
-
 function isDashboardEligible() {
   const pos = getSelectedResponderPositionLower();
   return !!pos && DASH_ALLOWED_POS.has(pos);
 }
-
 function setDashToggleDisabled(disabled) {
   const btn = document.getElementById('toggleDashboardBtn');
   if (!btn) return;
-
   if (disabled) {
     btn.disabled = true;
     btn.removeAttribute('title');
@@ -898,13 +958,12 @@ function setDashToggleDisabled(disabled) {
     btn.title = state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View';
   }
 }
-
 function updateDashToggleEligibility(){
   if (state.isDashboard) { setDashToggleDisabled(false); return; }
   setDashToggleDisabled(!isDashboardEligible());
 }
 
-/* Build filtered names list for dashboard exports/reports */
+/* Filter helper for dashboard */
 function getFilteredNamesForDashboard() {
   if (!state.isDashboard) return getAllNames().sort();
 
@@ -922,20 +981,18 @@ function getFilteredNamesForDashboard() {
 
 /* Toggle handler */
 $toggleDash.addEventListener('click', async () => {
-  // Guard entry when in Personnel view
   if (!state.isDashboard && !isDashboardEligible()) return;
 
   state.isDashboard = !state.isDashboard;
   if (state.isDashboard) {
     enterDashboard();
-    await prepareDashboardFilters();     // fill filters (supervisors & positions)
-    await autoApplySupervisorFromName(); // select current Name if supervisor
-    await buildDashboard();              // render data
+    await prepareDashboardFilters();
+    await autoApplySupervisorFromName();
+    await buildDashboard();
   } else {
     exitDashboard();
   }
 });
-
 function enterDashboard(){
   $filtersWrap.classList.add('hidden');
   $loadBtn.classList.add('hidden');
@@ -944,7 +1001,7 @@ function enterDashboard(){
   $personnelView.classList.add('hidden');
   $dashboardView.classList.remove('hidden');
   document.getElementById('dashIcon').textContent = '👥';
-  setDashToggleDisabled(false); // always allow going back
+  setDashToggleDisabled(false); // allow going back
 }
 function exitDashboard(){
   $filtersWrap.classList.remove('hidden');
@@ -955,7 +1012,7 @@ function exitDashboard(){
   $personnelView.classList.remove('hidden');
   if (top5Chart) { top5Chart.destroy(); top5Chart = null; }
   document.getElementById('dashIcon').textContent = '🗓️';
-  updateDashToggleEligibility(); // re-apply invisibility if not eligible
+  updateDashToggleEligibility();
 }
 
 /* Fill filter lists (supervisors = only names with TEAM) */
@@ -972,7 +1029,7 @@ async function prepareDashboardFilters(){
   $fPositions.onchange   = buildDashboard;
 }
 
-/* Auto-apply the selected Name (from Personnel) as the supervisor on entry (but user can change later) */
+/* Auto-apply selected Name as supervisor (one-time on entry) */
 async function autoApplySupervisorFromName(){
   const nameSel = document.getElementById('selName');
   const chosen = (nameSel?.value || '').trim();
@@ -987,7 +1044,7 @@ async function autoApplySupervisorFromName(){
   }
 }
 
-/* Build dashboard from current filters */
+/* Build dashboard */
 async function buildDashboard(){
   $hint.textContent = 'Loading…';
   $matrixTable.innerHTML = '';
@@ -1006,9 +1063,9 @@ async function buildDashboard(){
 
   const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
 
-  const dateCountsByPos = new Map(); // date -> position -> count
+  const dateCountsByPos = new Map(); // date -> position -> count (for VL only)
   const vlTotal = { count:0 };
-  const dateToNames = new Map();     // date -> [names]
+  const dateToNames = new Map();     // date -> [names] (for VL only)
 
   const labelsDates = dateRangeList();
   const dateSet = new Set(labelsDates);
@@ -1016,7 +1073,7 @@ async function buildDashboard(){
   for (const [name, sched] of pairs) {
     const pos = posMap.get(name) || 'Unspecified';
     for (const [d, code] of Object.entries(sched || {})) {
-      if (code !== 'VL') continue;
+      if (code !== 'VL') continue;       // dashboard metric focused on VL
       if (!dateSet.has(d)) continue;
 
       vlTotal.count++;
@@ -1052,7 +1109,7 @@ async function buildDashboard(){
   $hint.textContent = byTotal.length ? 'Hover bars to see counts per position.' : 'No VL found for the selected filters/date range.';
 }
 
-/* Render Top 5 chart (grouped vertical bars) */
+/* Render Top 5 chart */
 function renderTop5Chart(dateLabels, datasets){
   const ctx = document.getElementById('top5Chart').getContext('2d');
   if (top5Chart) { top5Chart.destroy(); }
@@ -1113,6 +1170,9 @@ function renderMatrix(dateToNames){
   await loadResponders();
   await loadOrganization();
 
+  // GROUPED schedule controls
+  buildScheduleButtons();
+
   // Populate personnel filters once responders loaded
   populateRespondersUI();
   wireResponderEvents();
@@ -1120,7 +1180,7 @@ function renderMatrix(dateToNames){
   ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
   render();
 
-  // Initial eligibility (hide hover/tooltip if not eligible)
+  // Initial eligibility (stealth if not eligible)
   updateDashToggleEligibility();
 })();
 </script>
