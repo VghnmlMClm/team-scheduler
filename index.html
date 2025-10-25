@@ -20,8 +20,6 @@
     .grad{background:linear-gradient(135deg,#1d4ed8 0%,#06b6d4 100%)}
     .hidden{display:none !important}
     select[multiple] option{padding:4px}
-    #matrixTable th,#matrixTable td{padding:6px 8px; border-bottom:1px solid #1f2937}
-    #matrixTable th{position:sticky; top:0; background:#0f172a}
     #centerTable th,#centerTable td{padding:8px 10px; border-bottom:1px solid #1f2937}
     #centerTable th{position:sticky; top:0; background:#0f172a}
   </style>
@@ -157,28 +155,24 @@
         <select id="fPositions" multiple class="w-full h-32 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
       </div>
 
+      <!-- WORK / LEAVE SWITCH -->
       <div class="mt-4">
-        <label class="block text-xs mb-2 text-slate-400">SCHEDULE TYPES TO DISPLAY</label>
-        <div id="typeCheckboxes" class="space-y-2"></div>
-        <div class="flex items-center gap-2 mt-3">
-          <button id="btnAllTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Select all</button>
-          <button id="btnNoneTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Clear</button>
-          <button id="btnDefaultTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Default (VL)</button>
+        <label class="block text-xs mb-2 text-slate-400">SCHEDULE MODE</label>
+        <div id="typeSwitchWrap" class="inline-flex items-center bg-slate-800/60 border border-slate-700 rounded-xl overflow-hidden">
+          <button id="btnWork"  class="px-3 py-1.5 text-sm hover:bg-slate-700/60">WORK</button>
+          <button id="btnLeave" class="px-3 py-1.5 text-sm hover:bg-slate-700/60">LEAVE</button>
         </div>
+        <div class="text-[11px] text-slate-500 mt-2" id="typeSwitchHint"></div>
       </div>
     </aside>
 
     <!-- CENTER (Table-like chart) -->
     <div class="lg:col-span-6 space-y-4">
-      <!-- TOP METRICS -->
-      <div class="grid grid-cols-2 gap-4">
+      <!-- TOP METRICS (Date Range card removed) -->
+      <div class="grid grid-cols-1 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <div class="text-xs text-slate-400">TOTAL RECORDS (Selected Types)</div>
           <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div class="text-xs text-slate-400">DATE RANGE</div>
-          <div id="metricRange" class="text-base mt-1">—</div>
         </div>
       </div>
 
@@ -197,12 +191,12 @@
       </div>
     </div>
 
-    <!-- RIGHT MATRIX -->
+    <!-- RIGHT: INCOMPLETE SCHEDULES LIST -->
     <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-auto">
-      <h3 class="text-sm font-semibold mb-2 text-slate-200">DATE → NAMES (Selected Types)</h3>
-      <div id="matrixSubtitle" class="text-[11px] text-slate-500 mb-2"></div>
-      <div id="matrixWrap" class="overflow-auto max-h-[620px]">
-        <table id="matrixTable" class="min-w-full text-xs border-separate border-spacing-y-1"></table>
+      <h3 class="text-sm font-semibold mb-2 text-slate-200">INCOMPLETE SCHEDULES (Selected Supervisors)</h3>
+      <div id="missingSubtitle" class="text-[11px] text-slate-500 mb-2">People under selected supervisor(s) with incomplete schedules in range.</div>
+      <div id="missingWrap" class="overflow-auto max-h-[620px]">
+        <div id="missingList" class="text-sm space-y-2"></div>
       </div>
     </aside>
   </div>
@@ -257,11 +251,6 @@ const parseYMD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(
 const normVal = v => String(v ?? "").trim();
 const uniq = arr => [...new Set(arr)];
 function fmtMMMDDYYYY(d){const MMM=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;}
-function fmtRange(){
-  const s=CONFIG.START_DATE, e=CONFIG.END_DATE;
-  if(!s||!e) return "—";
-  return `${s.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})} – ${e.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
-}
 function hexToRGB(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); const n=parseInt(hex,16); return {r:(n>>16)&255, g:(n>>8)&255, b:(n&255)}; }
 function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(g*587)+(b*114))/1000; return yiq>=128 ? 'text-black' : 'text-white'; }
 
@@ -274,7 +263,8 @@ const state = {
   lastClicked: null,
   storeKey: 'calendar-scheduler-v2',
   data: {},
-  isDashboard: false
+  isDashboard: false,
+  typeMode: 'LEAVE' // default to LEAVE
 };
 
 /* ===== Config & Holidays ===== */
@@ -954,15 +944,11 @@ const $exportGroup = document.getElementById('exportGroup');
 const $fSupervisors = document.getElementById('fSupervisors');
 const $fPositions   = document.getElementById('fPositions');
 const $metricTotal  = document.getElementById('metricTotalVl');
-const $metricRange  = document.getElementById('metricRange');
 const $centerTable  = document.getElementById('centerTable');
-const $matrixTable  = document.getElementById('matrixTable');
-const $matrixSubtitle = document.getElementById('matrixSubtitle');
-const $typeCheckboxes = document.getElementById('typeCheckboxes');
 const $hint         = document.getElementById('dashboardHint');
 const $currentTypeCaption = document.getElementById('currentTypeCaption');
-
-let top5Chart = null; // kept for compatibility (unused)
+const $missingList  = document.getElementById('missingList');
+const $missingSubtitle = document.getElementById('missingSubtitle');
 
 /* ---------- Dashboard eligibility (stealth when not eligible) ---------- */
 const DASH_ALLOWED_POS = new Set([
@@ -1005,6 +991,45 @@ function updateDashToggleEligibility(){
   setDashToggleDisabled(!isDashboardEligible());
 }
 
+/* ---- WORK/LEAVE mode ---- */
+const WORK_CODES  = ['ONS','WFH','OFC'];
+const LEAVE_CODES = ['VL','AA','PTO','PL','ML','BDL'];
+function getSelectedTypeCodes(){ return state.typeMode === 'WORK' ? WORK_CODES : LEAVE_CODES; }
+function renderTypeSwitch(){
+  const $work  = document.getElementById('btnWork');
+  const $leave = document.getElementById('btnLeave');
+  const $hint  = document.getElementById('typeSwitchHint');
+  const active   = 'bg-blue-600 text-white';
+  const inactive = 'text-slate-200';
+  [$work,$leave].forEach(el=>el.className='px-3 py-1.5 text-sm hover:bg-slate-700/60 '+inactive);
+  if(state.typeMode==='WORK'){
+    $work.className='px-3 py-1.5 text-sm '+active;
+    $hint.textContent='Showing: ON-SITE, WORK FROM HOME, OFFICE';
+  }else{
+    $leave.className='px-3 py-1.5 text-sm '+active;
+    $hint.textContent='Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
+  }
+  $work.onclick = ()=>{ if(state.typeMode!=='WORK'){ state.typeMode='WORK'; renderTypeSwitch(); buildDashboard(); } };
+  $leave.onclick= ()=>{ if(state.typeMode!=='LEAVE'){ state.typeMode='LEAVE'; renderTypeSwitch(); buildDashboard(); } };
+}
+
+/* Helpers for completeness */
+function isWeekend(d){ const w=d.getDay(); return w===0||w===6; }
+function hasCompleteScheduleForRange(dataObj, selectedTypes){
+  if(!CONFIG.START_DATE||!CONFIG.END_DATE) return false;
+  const selected=new Set(selectedTypes);
+  const d=new Date(CONFIG.START_DATE);
+  while(d<=CONFIG.END_DATE){
+    const id=ymd(d);
+    const v=dataObj?.[id];
+    if(isHoliday(d)){ if(v!=='HOL') return false; }
+    else if(isWeekend(d)){ if(v!=='RD') return false; }
+    else { if(!v || !selected.has(v)) return false; }
+    d.setDate(d.getDate()+1);
+  }
+  return true;
+}
+
 /* Dashboard filter helper */
 function getFilteredNamesForDashboard() {
   if (!state.isDashboard) return getAllNames().sort();
@@ -1021,43 +1046,6 @@ function getFilteredNamesForDashboard() {
   return names.sort();
 }
 
-/* Build schedule type checkboxes (default = VL only) */
-function buildTypeCheckboxes(){
-  $typeCheckboxes.innerHTML = '';
-  const defaultCodes = new Set(['VL']); // default
-  SCHEDULE_OPTIONS.forEach(opt => {
-    const id = `type_${opt.code}`;
-    const color = '#' + opt.color.toLowerCase();
-    const labelColor = getContrastText(color) === 'text-black' ? '#111827' : '#e5e7eb';
-    const wrap = document.createElement('label');
-    wrap.className = 'flex items-center gap-2 text-sm';
-    wrap.innerHTML = `
-      <input type="checkbox" id="${id}" value="${opt.code}" class="h-4 w-4 rounded border-slate-600 bg-black">
-      <span class="px-1.5 py-0.5 rounded text-[11px]" style="background:${color}; color:${labelColor}">${opt.abbr}</span>
-      <span>${opt.name}</span>
-    `;
-    $typeCheckboxes.appendChild(wrap);
-    const cb = wrap.querySelector('input');
-    cb.checked = defaultCodes.has(opt.code);
-    cb.addEventListener('change', buildDashboard);
-  });
-
-  document.getElementById('btnAllTypes').onclick = (e)=>{ e.preventDefault(); setAllTypeChecks(true); };
-  document.getElementById('btnNoneTypes').onclick = (e)=>{ e.preventDefault(); setAllTypeChecks(false); };
-  document.getElementById('btnDefaultTypes').onclick = (e)=>{ e.preventDefault(); setDefaultTypeChecks(); };
-}
-function getSelectedTypeCodes(){
-  return Array.from($typeCheckboxes.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-}
-function setAllTypeChecks(val){
-  $typeCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = val);
-  buildDashboard();
-}
-function setDefaultTypeChecks(){
-  $typeCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = (cb.value === 'VL'));
-  buildDashboard();
-}
-
 /* Toggle handler */
 $toggleDash.addEventListener('click', async () => {
   if (!state.isDashboard && !isDashboardEligible()) return;
@@ -1066,7 +1054,7 @@ $toggleDash.addEventListener('click', async () => {
   if (state.isDashboard) {
     enterDashboard();
     await prepareDashboardFilters();
-    buildTypeCheckboxes();
+    renderTypeSwitch();
     await autoApplySupervisorFromName();
     await buildDashboard();
   } else {
@@ -1090,7 +1078,6 @@ function exitDashboard(){
   $exportGroup.classList.add('hidden');
   $dashboardView.classList.add('hidden');
   $personnelView.classList.remove('hidden');
-  if (top5Chart) { top5Chart.destroy(); top5Chart = null; }
   document.getElementById('dashIcon').textContent = '🗓️';
   updateDashToggleEligibility();
 }
@@ -1102,8 +1089,6 @@ async function prepareDashboardFilters(){
 
   const allPos = getAllPositions();
   $fPositions.innerHTML = allPos.map(p => `<option>${p}</option>`).join('');
-
-  $metricRange.textContent = fmtRange();
 
   function toggleSelectOption(selectEl, option) {
     option.selected = !option.selected;
@@ -1145,7 +1130,7 @@ async function autoApplySupervisorFromName(){
 async function buildDashboard(){
   $hint.textContent = 'Loading…';
   $centerTable.innerHTML = '';
-  $matrixTable.innerHTML = '';
+  $missingList.innerHTML = '';
 
   const selectedTypes = getSelectedTypeCodes();
   $currentTypeCaption.textContent = selectedTypes.length
@@ -1188,7 +1173,7 @@ async function buildDashboard(){
   // Build center table (Date | Count | People (Name [CODE]))
   const rows = Array.from(dateToPeople.entries())
     .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
-    .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
+    .sort((a,b)=>(a[0] < b[0] ? -1 : 1));
 
   let html = '<thead><tr>';
   html += '<th class="text-left">Date</th>';
@@ -1207,37 +1192,25 @@ async function buildDashboard(){
   html += '</tbody>';
   $centerTable.innerHTML = rows.length ? html : '<tbody><tr><td class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
 
-  // Build right matrix (Date | Name 1..N) from same dataset
-  renderMatrixFrom(dateToPeople);
-  $matrixSubtitle.textContent = selectedTypes.length ? `Types: ${selectedTypes.join(', ')}` : 'Types: (none)';
-  $hint.textContent = rows.length ? 'Showing selected schedule types per day.' : 'Adjust filters or schedule types.';
-}
-
-/* Render matrix from date -> [{name,code}] */
-function renderMatrixFrom(dateToPeople){
-  const rows = Array.from(dateToPeople.entries())
-    .map(([d, arr]) => [d, arr.slice().sort((a,b)=> a.name.localeCompare(b.name)).map(x=>x.name)])
-    .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
-
-  const hasAny = rows.length > 0;
-  const maxCols = hasAny ? Math.max(...rows.map(([,names]) => names.length)) : 0;
-
-  let html = '<thead><tr>';
-  html += '<th class="text-left sticky left-0 z-10">Date</th>';
-  for (let i=0;i<maxCols;i++) html += `<th class="text-left">Name ${i+1}</th>`;
-  html += '</tr></thead><tbody>';
-
-  for (const [d, names] of rows) {
-    html += '<tr>';
-    html += `<td class="text-slate-200 font-medium sticky left-0 bg-slate-900">${new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td>`;
-    for (let i=0;i<maxCols;i++) {
-      html += `<td class="text-slate-300">${names[i] ? names[i] : ''}</td>`;
-    }
-    html += '</tr>';
+  // --- RIGHT PANEL: Incomplete schedules ---
+  const nameToData = new Map(pairs.map(([n,d])=>[n,d||{}]));
+  const incomplete = allowedNames.filter(n=>!hasCompleteScheduleForRange(nameToData.get(n),selectedTypes)).sort((a,b)=>a.localeCompare(b));
+  if(!incomplete.length){
+    $missingList.innerHTML=`<div class="text-slate-400 text-sm">Everyone under the selected supervisor(s) has a complete schedule for the range.</div>`;
+  }else{
+    $missingList.innerHTML=incomplete.map(n=>{
+      const pos=posMap.get(n)||'Unspecified';
+      return `<div class="flex items-start gap-2">
+        <span class="w-2 h-2 mt-2 rounded-full bg-yellow-500/80"></span>
+        <div><div class="font-medium">${n}</div><div class="text-xs text-slate-400">${pos}</div></div>
+      </div>`;
+    }).join('');
   }
-  html += '</tbody>';
+  $missingSubtitle.textContent =
+    `Under: ${($fSupervisors&&Array.from($fSupervisors.selectedOptions).map(o=>o.value).join(', '))||'All supervisors'} • `+
+    (selectedTypes.length?`Weekday types considered: ${selectedTypes.join(', ')}`:'No weekday types selected');
 
-  $matrixTable.innerHTML = hasAny ? html : '<tbody><tr><td class="text-slate-400">No data in range.</td></tr></tbody>';
+  $hint.textContent = rows.length ? 'Showing selected schedule types per day.' : 'Adjust filters or schedule types.';
 }
 
 /* ===== Init ===== */
