@@ -27,6 +27,17 @@
       background-color:#0a0f1a !important; /* darker panels */
       border-color:#1e293b !important;
     }
+	
+	/* Match dashboard metric and table panels to other dark panels */
+	#centerTable,
+	#metricTotalVl {
+	  background-color: #0a0f1a !important;
+	}
+
+	#dashboardView .border {
+	  background-color: #0a0f1a !important;
+	}
+
 
     /* Header gradient */
     header.grad {
@@ -71,6 +82,12 @@
 	  background-color:#fcfcfc !important;
 	  color:#0a0f1a !important;   /* dark text on light background */
 	}
+	/* Match dashboard selected color for pills/switches */
+	.dash-selected {
+	  background-color:#fcfcfc !important;
+	  color:#0a0f1a !important;
+	}
+
 
   </style>
 </head>
@@ -1032,19 +1049,27 @@ function renderTypeSwitch(){
   const $work  = document.getElementById('btnWork');
   const $leave = document.getElementById('btnLeave');
   const $hint  = document.getElementById('typeSwitchHint');
-  const active   = 'bg-blue-600 text-white';
+
+  const active   = 'dash-selected';
   const inactive = 'text-slate-200';
-  [$work,$leave].forEach(el=>el.className='px-3 py-1.5 text-sm hover:bg-slate-700/60 '+inactive);
+
+  // reset both to inactive base classes
+  [$work,$leave].forEach(el=>{
+    el.className = 'px-3 py-1.5 text-sm hover:bg-slate-700/60 ' + inactive;
+  });
+
   if(state.typeMode==='WORK'){
-    $work.className='px-3 py-1.5 text-sm '+active;
+    $work.classList.add(...active.split(' '));
     $hint.textContent='Showing: ON-SITE, WORK FROM HOME, OFFICE';
   }else{
-    $leave.className='px-3 py-1.5 text-sm '+active;
+    $leave.classList.add(...active.split(' '));
     $hint.textContent='Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
   }
-  $work.onclick = ()=>{ if(state.typeMode!=='WORK'){ state.typeMode='WORK'; renderTypeSwitch(); buildDashboard(); } };
-  $leave.onclick= ()=>{ if(state.typeMode!=='LEAVE'){ state.typeMode='LEAVE'; renderTypeSwitch(); buildDashboard(); } };
+
+  $work.onclick  = ()=>{ if(state.typeMode!=='WORK'){  state.typeMode='WORK';  renderTypeSwitch(); buildDashboard(); } };
+  $leave.onclick = ()=>{ if(state.typeMode!=='LEAVE'){ state.typeMode='LEAVE'; renderTypeSwitch(); buildDashboard(); } };
 }
+
 
 /* Helpers for completeness */
 function isWeekend(d){ const w=d.getDay(); return w===0||w===6; }
@@ -1150,16 +1175,31 @@ async function prepareDashboardFilters(){
   $fSupervisors.onchange = safeBuildDashboard;
   $fPositions.onchange   = safeBuildDashboard;
 
-  // Robust click-to-toggle without Ctrl/Cmd
-  [$fSupervisors, $fPositions].forEach(selectEl => {
-    selectEl.addEventListener('mousedown', e => {
-      // Only intercept when actually clicking an OPTION element
-      const option = e.target && e.target.closest && e.target.closest('option');
-      if (!option || option.disabled) return;
-      e.preventDefault(); // stop native selection behavior
-      toggleSelectOption(selectEl, option);
-    });
-  });
+
+	// Robust click-to-toggle without Ctrl/Cmd
+	$fSupervisors.addEventListener('mousedown', e => {
+	  const option = e.target && e.target.closest && e.target.closest('option');
+	  if (!option || option.disabled) return;
+	  e.preventDefault();
+	  // allow only one supervisor at a time
+	  Array.from($fSupervisors.options).forEach(o => o.selected = false);
+	  option.selected = true;
+	  $fSupervisors.dispatchEvent(new Event('change', { bubbles: true }));
+	  safeBuildDashboard();
+	  $fSupervisors.blur();
+	});
+
+	$fPositions.addEventListener('mousedown', e => {
+	  const option = e.target && e.target.closest && e.target.closest('option');
+	  if (!option || option.disabled) return;
+	  e.preventDefault();
+	  // still toggle freely for positions
+	  option.selected = !option.selected;
+	  $fPositions.dispatchEvent(new Event('change', { bubbles: true }));
+	  safeBuildDashboard();
+	  $fPositions.blur();
+	});
+
 }
 
 
