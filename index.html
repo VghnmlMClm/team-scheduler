@@ -230,7 +230,11 @@ const SCHEDULE_GROUPS = [
   { title: "LEAVES",         codes: ["VL","AA"] },
   { title: "SPECIAL LEAVES", codes: ["PTO","BDL","ML","PL"] }
 ];
-const LABELS = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]));
+const LABELS = Object.fromEntries([
+  ...SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]),
+  ['RD','RD'],
+  ['HOL','HOL']
+]);
 const NAMES  = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.name]));
 const COLORS = Object.fromEntries([
   ...SCHEDULE_OPTIONS.map(o => [o.code, '#' + o.color.toLowerCase()]),
@@ -404,12 +408,13 @@ function dayCell(dateObj, muted=false){
   const outRange  = !dateInRange(dateObj);
   const holiday   = isHoliday(dateObj);
   const isSelected= state.selected.has(id);
-  const status    = state.data[id] || '';
+	const status = state.data[id] || '';
+	// RD/HOL override individual schedule for display
+	const effective = holiday ? 'HOL' : (weekend ? 'RD' : status);
 
-  let bg = '';
-  if (status)       bg = COLORS[status];
-  else if (holiday) bg = COLORS.HOL;
-  else if (weekend) bg = COLORS.RD;
+	let bg = '';
+	if (effective) bg = COLORS[effective];
+
 
   const disabled = outRange || holiday || weekend;
 
@@ -431,9 +436,8 @@ function dayCell(dateObj, muted=false){
     textColor = (contrast === 'text-black') ? 'black' : 'white';
   }
 
-  const badgeText = status
-    ? LABELS[status]
-    : (holiday ? 'HOL' : (weekend ? 'RD' : ''));
+	const badgeText = effective ? (LABELS[effective] || effective) : '';
+
 
   const badge = badgeText
     ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
@@ -646,11 +650,11 @@ async function uploadScheduleViaProxy(){
   while (d <= CONFIG.END_DATE) {
     const id = ymd(d);
     const wd = d.getDay();
-    if (isHoliday(d)) {
-      mergedData[id] = mergedData[id] || 'HOL';
-    } else if (wd === 0 || wd === 6) {
-      mergedData[id] = mergedData[id] || 'RD';
-    }
+	if (isHoliday(d)) {
+	  mergedData[id] = 'HOL';           // always override to HOL
+	} else if (wd === 0 || wd === 6) {
+	  mergedData[id] = 'RD';            // always override to RD
+	}
     d.setDate(d.getDate() + 1);
   }
 
