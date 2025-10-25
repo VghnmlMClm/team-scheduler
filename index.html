@@ -24,6 +24,16 @@
     #matrixTable th{position:sticky; top:0; background:#0f172a}
     #centerTable th,#centerTable td{padding:8px 10px; border-bottom:1px solid #1f2937}
     #centerTable th{position:sticky; top:0; background:#0f172a}
+    /* header switch */
+    .switch { position: relative; display: inline-block; width: 56px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background: #334155; transition: .2s; border-radius: 999px; }
+    .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 3px; background: white; transition: .2s; border-radius: 999px; }
+    input:checked + .slider { background: #2563eb; }
+    input:checked + .slider:before { transform: translateX(28px); }
+    /* org chart */
+    .tree ul{ padding-left: 1rem; border-left:1px solid #334155; margin-left:.5rem }
+    .tree li{ margin:.35rem 0 }
   </style>
 </head>
 
@@ -41,17 +51,18 @@
         </button>
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
-      <div class="flex items-center gap-2 text-sm">
-        <!-- Dashboard-only Export menu -->
-        <div id="exportGroup" class="relative hidden">
-          <button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
-          <div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
-            <button id="exportVlBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">VL Summary (.txt)</button>
-            <button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
-          </div>
+
+      <!-- HEADER: Category switch (WORK ↔ LEAVE) -->
+      <div class="flex items-center gap-4">
+        <div class="text-sm bg-white/10 rounded-lg px-3 py-1.5">Date Range: <span id="metricRange">—</span></div>
+        <div class="flex items-center gap-2 text-sm">
+          <span>WORK</span>
+          <label class="switch" title="Toggle to show LEAVE types">
+            <input id="catSwitchHeader" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+          <span>LEAVE</span>
         </div>
-        <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Refresh</button>
-        <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Save</button>
       </div>
     </div>
 
@@ -152,37 +163,28 @@
         <select id="fSupervisors" multiple class="w-full h-40 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
         <p class="text-[11px] mt-1 text-slate-500">Click to toggle (no Ctrl/Cmd needed)</p>
       </div>
-      <div class="mb-4">
+      <div class="mb-2">
         <label class="block text-xs mb-1 text-slate-400">SUBORDINATE POSITIONS</label>
         <select id="fPositions" multiple class="w-full h-32 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
       </div>
-
-      <div class="mt-4">
-        <label class="block text-xs mb-2 text-slate-400">SCHEDULE TYPES TO DISPLAY</label>
-        <div id="typeCheckboxes" class="space-y-2"></div>
-        <div class="flex items-center gap-2 mt-3">
-          <button id="btnAllTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Select all</button>
-          <button id="btnNoneTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Clear</button>
-          <button id="btnDefaultTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Default (VL)</button>
-        </div>
-      </div>
+      <!-- Removed schedule-type checklist (now controlled by header switch) -->
     </aside>
 
-    <!-- CENTER (Table-like chart) -->
+    <!-- CENTER (Dates with Selected Schedules) -->
     <div class="lg:col-span-6 space-y-4">
       <!-- TOP METRICS -->
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div class="text-xs text-slate-400">TOTAL RECORDS (Selected Types)</div>
+          <div class="text-xs text-slate-400">TOTAL RECORDS (Selected Category)</div>
           <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
         </div>
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <div class="text-xs text-slate-400">DATE RANGE</div>
-          <div id="metricRange" class="text-base mt-1">—</div>
+          <div id="metricRangeCenter" class="text-base mt-1">—</div>
         </div>
       </div>
 
-      <!-- Table-like chart -->
+      <!-- Do not change this block (structure retained) -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
         <div class="flex items-baseline justify-between">
           <h2 class="text-sm font-semibold mb-2 text-slate-200">Dates with Selected Schedules</h2>
@@ -197,13 +199,11 @@
       </div>
     </div>
 
-    <!-- RIGHT MATRIX -->
+    <!-- RIGHT: ORG CHART of selected supervisor(s) -->
     <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-auto">
-      <h3 class="text-sm font-semibold mb-2 text-slate-200">DATE → NAMES (Selected Types)</h3>
-      <div id="matrixSubtitle" class="text-[11px] text-slate-500 mb-2"></div>
-      <div id="matrixWrap" class="overflow-auto max-h-[620px]">
-        <table id="matrixTable" class="min-w-full text-xs border-separate border-spacing-y-1"></table>
-      </div>
+      <h3 class="text-sm font-semibold mb-2 text-slate-200">ORGANIZATION (Selected Supervisor Trees)</h3>
+      <div id="orgSubtitle" class="text-[11px] text-slate-500 mb-3"></div>
+      <div id="orgChart" class="tree text-sm"></div>
     </aside>
   </div>
 </section>
@@ -244,10 +244,16 @@ const LABELS = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]));
 const NAMES  = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.name]));
 const COLORS = Object.fromEntries([
   ...SCHEDULE_OPTIONS.map(o => [o.code, '#' + o.color.toLowerCase()]),
-  ['RD',      '#808080'], // Rest Day (weekends)
-  ['HOL',     '#ffff00'], // Holiday (from config.json)
-  ['WEEKEND', '#808080']  // keep WEEKEND in sync with RD
+  ['RD',      '#808080'],
+  ['HOL',     '#ffff00'],
+  ['WEEKEND', '#808080']
 ]);
+
+/* Category → codes */
+const CATEGORY_CODES = {
+  WORK:  ['ONS','OFC','WFH'],
+  LEAVE: ['VL','AA','PTO','BDL','ML','PL']
+};
 
 /* ===== Helpers ===== */
 const stripMeta = o => Object.fromEntries(Object.entries(o||{}).filter(([k]) => !k.startsWith("_")));
@@ -482,8 +488,8 @@ function onDayClick(id, shift) {
   const date = parseYMD(id);
   const wd = date.getDay();
   if (!dateInRange(date)) return;
-  if (isHoliday(date))    return; // holidays locked
-  if (wd === 0 || wd === 6) return; // weekends locked
+  if (isHoliday(date))    return;
+  if (wd === 0 || wd === 6) return;
 
   if (shift && state.lastClicked) {
     const a = parseYMD(state.lastClicked), b = parseYMD(id);
@@ -526,7 +532,6 @@ function buildScheduleButtons(){
     title.textContent = group.title;
     block.appendChild(title);
 
-    // Each button in its own row
     const grid = document.createElement('div');
     grid.className = 'grid grid-cols-1 gap-2';
 
@@ -565,8 +570,8 @@ function applyType(val){
     const dt = parseYMD(d);
     const wd = dt.getDay();
     if (!dateInRange(dt)) continue;
-    if (isHoliday(dt))    continue; // cannot set on holidays
-    if (wd === 0 || wd === 6) continue; // cannot set on weekends
+    if (isHoliday(dt))    continue;
+    if (wd === 0 || wd === 6) continue;
     state.data[d] = val;
   }
   saveStore(); state.selected.clear(); render();
@@ -860,76 +865,6 @@ function toggleMenu(show){ exportMenu.classList.toggle('hidden', !show); }
 if (exportFileBtn) exportFileBtn.addEventListener('click', (e)=>{ e.stopPropagation(); const isHidden = exportMenu.classList.contains('hidden'); toggleMenu(isHidden); });
 document.addEventListener('click', ()=> toggleMenu(false));
 
-/* VL Summary (.txt) — counts VL dates */
-async function exportVlSummary(){
-  const names = getFilteredNamesForDashboard();
-  if (!names.length) { alert("No names match the current filters."); return; }
-
-  const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
-  const lines = [];
-
-  for (const [name, data] of pairs) {
-    lines.push(name);
-    const vlDates = Object.entries(data || {})
-      .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
-      .map(([k]) => parseYMD(k))
-      .sort((a,b)=>a-b);
-
-    if (!vlDates.length) { lines.push("(no VL)"); lines.push(""); continue; }
-
-    const groups = {};
-    for (const d of vlDates) {
-      const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
-      (groups[key] ||= []).push(d);
-    }
-    const keys = Object.keys(groups).sort();
-    for (const key of keys) {
-      const arr = groups[key];
-      const label = arr[0].toLocaleString(undefined, { month:'long', year:'numeric' });
-      const days = arr.map(d => d.getDate()).join(", ");
-      lines.push(label);
-      lines.push(days);
-    }
-    lines.push("");
-  }
-
-  const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
-  downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
-}
-if (exportVlBtn) exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportVlSummary(); });
-
-/* Table (.xlsx) */
-async function exportTableXlsx(){
-  await ensureXLSX();
-  const names = getFilteredNamesForDashboard();
-  if (!names.length) { alert("No names match the current filters."); return; }
-
-  const dates = dateRangeList();
-  if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
-
-  const schedules = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
-
-  const header = ["Name", ...dates];
-  const rows = [header];
-  const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
-
-  for (const [name, data] of schedules) {
-    const row = [name];
-    for (const d of dates) row.push(statusToCell(data?.[d] || ""));
-    rows.push(row);
-  }
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!freeze"] = { xSplit: 1, ySplit: 1 };
-  ws["!cols"] = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
-  XLSX.utils.book_append_sheet(wb, ws, "Schedule");
-
-  const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
-  XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
-}
-if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportTableXlsx(); });
-
 /* ===== Navigation ===== */
 document.getElementById('prevBtn').onclick = ()=>{
   const d = new Date(state.viewYear, state.viewMonth - 1, 1);
@@ -955,14 +890,14 @@ const $fSupervisors = document.getElementById('fSupervisors');
 const $fPositions   = document.getElementById('fPositions');
 const $metricTotal  = document.getElementById('metricTotalVl');
 const $metricRange  = document.getElementById('metricRange');
+const $metricRangeCenter = document.getElementById('metricRangeCenter');
 const $centerTable  = document.getElementById('centerTable');
-const $matrixTable  = document.getElementById('matrixTable');
-const $matrixSubtitle = document.getElementById('matrixSubtitle');
-const $typeCheckboxes = document.getElementById('typeCheckboxes');
 const $hint         = document.getElementById('dashboardHint');
 const $currentTypeCaption = document.getElementById('currentTypeCaption');
+const $orgChart = document.getElementById('orgChart');
+const $orgSubtitle = document.getElementById('orgSubtitle');
 
-let top5Chart = null; // kept for compatibility (unused)
+let top5Chart = null; // unused but kept
 
 /* ---------- Dashboard eligibility (stealth when not eligible) ---------- */
 const DASH_ALLOWED_POS = new Set([
@@ -1021,41 +956,11 @@ function getFilteredNamesForDashboard() {
   return names.sort();
 }
 
-/* Build schedule type checkboxes (default = VL only) */
-function buildTypeCheckboxes(){
-  $typeCheckboxes.innerHTML = '';
-  const defaultCodes = new Set(['VL']); // default
-  SCHEDULE_OPTIONS.forEach(opt => {
-    const id = `type_${opt.code}`;
-    const color = '#' + opt.color.toLowerCase();
-    const labelColor = getContrastText(color) === 'text-black' ? '#111827' : '#e5e7eb';
-    const wrap = document.createElement('label');
-    wrap.className = 'flex items-center gap-2 text-sm';
-    wrap.innerHTML = `
-      <input type="checkbox" id="${id}" value="${opt.code}" class="h-4 w-4 rounded border-slate-600 bg-black">
-      <span class="px-1.5 py-0.5 rounded text-[11px]" style="background:${color}; color:${labelColor}">${opt.abbr}</span>
-      <span>${opt.name}</span>
-    `;
-    $typeCheckboxes.appendChild(wrap);
-    const cb = wrap.querySelector('input');
-    cb.checked = defaultCodes.has(opt.code);
-    cb.addEventListener('change', buildDashboard);
-  });
-
-  document.getElementById('btnAllTypes').onclick = (e)=>{ e.preventDefault(); setAllTypeChecks(true); };
-  document.getElementById('btnNoneTypes').onclick = (e)=>{ e.preventDefault(); setAllTypeChecks(false); };
-  document.getElementById('btnDefaultTypes').onclick = (e)=>{ e.preventDefault(); setDefaultTypeChecks(); };
-}
-function getSelectedTypeCodes(){
-  return Array.from($typeCheckboxes.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-}
-function setAllTypeChecks(val){
-  $typeCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = val);
-  buildDashboard();
-}
-function setDefaultTypeChecks(){
-  $typeCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = (cb.value === 'VL'));
-  buildDashboard();
+/* Header category switch → selected codes */
+function selectedCodes(){
+  const checked = document.getElementById('catSwitchHeader').checked;
+  const cat = checked ? 'LEAVE' : 'WORK';
+  return CATEGORY_CODES[cat];
 }
 
 /* Toggle handler */
@@ -1066,7 +971,6 @@ $toggleDash.addEventListener('click', async () => {
   if (state.isDashboard) {
     enterDashboard();
     await prepareDashboardFilters();
-    buildTypeCheckboxes();
     await autoApplySupervisorFromName();
     await buildDashboard();
   } else {
@@ -1081,7 +985,7 @@ function enterDashboard(){
   $personnelView.classList.add('hidden');
   $dashboardView.classList.remove('hidden');
   document.getElementById('dashIcon').textContent = '👥';
-  setDashToggleDisabled(false); // allow going back
+  setDashToggleDisabled(false);
 }
 function exitDashboard(){
   $filtersWrap.classList.remove('hidden');
@@ -1104,13 +1008,13 @@ async function prepareDashboardFilters(){
   $fPositions.innerHTML = allPos.map(p => `<option>${p}</option>`).join('');
 
   $metricRange.textContent = fmtRange();
+  $metricRangeCenter.textContent = fmtRange();
 
   function toggleSelectOption(selectEl, option) {
     option.selected = !option.selected;
     buildDashboard();
     selectEl.blur();
   }
-
   $fSupervisors.onchange = buildDashboard;
   $fPositions.onchange   = buildDashboard;
 
@@ -1124,6 +1028,9 @@ async function prepareDashboardFilters(){
     const option = e.target;
     if (option.tagName === "OPTION") toggleSelectOption($fPositions, option);
   });
+
+  // header category switch reacts
+  document.getElementById('catSwitchHeader').onchange = buildDashboard;
 }
 
 /* Auto-apply selected Name as supervisor (one-time on entry) */
@@ -1141,16 +1048,15 @@ async function autoApplySupervisorFromName(){
   }
 }
 
-/* Build dashboard (table-like) using selected schedule types */
+/* Build dashboard (center table + right org chart) */
 async function buildDashboard(){
   $hint.textContent = 'Loading…';
   $centerTable.innerHTML = '';
-  $matrixTable.innerHTML = '';
+  $orgChart.innerHTML = '';
 
-  const selectedTypes = getSelectedTypeCodes();
-  $currentTypeCaption.textContent = selectedTypes.length
-    ? `Types: ${selectedTypes.map(c=>NAMES[c]||c).join(', ')}`
-    : 'Types: (none)';
+  const codes = selectedCodes();
+  const cat = document.getElementById('catSwitchHeader').checked ? 'LEAVE' : 'WORK';
+  $currentTypeCaption.textContent = `Category: ${cat} (${codes.join('/')})`;
 
   const selectedSupervisors = Array.from($fSupervisors.selectedOptions).map(o => o.value);
   const selectedPositions   = Array.from($fPositions.selectedOptions).map(o => o.value);
@@ -1165,7 +1071,7 @@ async function buildDashboard(){
 
   const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
 
-  // Aggregate: date -> list of {name, code}
+  // Aggregate center: date -> [ {name, code} ] for selected category codes
   const dateToPeople = new Map();
   const dates = dateRangeList();
   const dateSet = new Set(dates);
@@ -1174,18 +1080,17 @@ async function buildDashboard(){
   for (const [name, sched] of pairs) {
     for (const [d, code] of Object.entries(sched || {})) {
       if (!dateSet.has(d)) continue;
-      if (!selectedTypes.length) continue;
-      if (!selectedTypes.includes(code)) continue; // only selected codes
+      if (!codes.includes(code)) continue;
       if (!dateToPeople.has(d)) dateToPeople.set(d, []);
       dateToPeople.get(d).push({ name, code });
       totalRecords++;
     }
   }
 
-  // Build metric
-  $metricTotal.textContent = String(totalRecords);
+  // Metric
+  document.getElementById('metricTotalVl').textContent = String(totalRecords);
 
-  // Build center table (Date | Count | People (Name [CODE]))
+  // Center table (unchanged structure)
   const rows = Array.from(dateToPeople.entries())
     .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
     .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
@@ -1205,39 +1110,39 @@ async function buildDashboard(){
     </tr>`;
   }
   html += '</tbody>';
-  $centerTable.innerHTML = rows.length ? html : '<tbody><tr><td class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
+  $centerTable.innerHTML = rows.length ? html : '<tbody><tr><td class="text-slate-400">No data for selected filters/category.</td></tr></tbody>';
 
-  // Build right matrix (Date | Name 1..N) from same dataset
-  renderMatrixFrom(dateToPeople);
-  $matrixSubtitle.textContent = selectedTypes.length ? `Types: ${selectedTypes.join(', ')}` : 'Types: (none)';
-  $hint.textContent = rows.length ? 'Showing selected schedule types per day.' : 'Adjust filters or schedule types.';
+  $hint.textContent = rows.length ? 'Showing selected category per day.' : 'Adjust filters or switch category.';
+
+  // Right: Org Chart of selected supervisor(s)
+  renderOrgChart(selectedSupervisors);
 }
 
-/* Render matrix from date -> [{name,code}] */
-function renderMatrixFrom(dateToPeople){
-  const rows = Array.from(dateToPeople.entries())
-    .map(([d, arr]) => [d, arr.slice().sort((a,b)=> a.name.localeCompare(b.name)).map(x=>x.name)])
-    .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
-
-  const hasAny = rows.length > 0;
-  const maxCols = hasAny ? Math.max(...rows.map(([,names]) => names.length)) : 0;
-
-  let html = '<thead><tr>';
-  html += '<th class="text-left sticky left-0 z-10">Date</th>';
-  for (let i=0;i<maxCols;i++) html += `<th class="text-left">Name ${i+1}</th>`;
-  html += '</tr></thead><tbody>';
-
-  for (const [d, names] of rows) {
-    html += '<tr>';
-    html += `<td class="text-slate-200 font-medium sticky left-0 bg-slate-900">${new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td>`;
-    for (let i=0;i<maxCols;i++) {
-      html += `<td class="text-slate-300">${names[i] ? names[i] : ''}</td>`;
-    }
-    html += '</tr>';
+/* Org chart renderer */
+function renderOrgChart(supervisors){
+  $orgChart.innerHTML = '';
+  if (!supervisors.length){
+    $orgSubtitle.textContent = 'Tip: choose supervisor(s) on the left.';
+    $orgChart.innerHTML = `<div class="text-slate-400 text-sm">No supervisor selected.</div>`;
+    return;
   }
-  html += '</tbody>';
+  $orgSubtitle.textContent = `Supervisor(s): ${supervisors.join(', ')}`;
 
-  $matrixTable.innerHTML = hasAny ? html : '<tbody><tr><td class="text-slate-400">No data in range.</td></tr></tbody>';
+  function nodeToHTML(node){
+    if (!node || !node.NAME) return '';
+    const role = node.POSITION ? ` — <span class="text-slate-400">${node.POSITION}</span>` : '';
+    const kids = Array.isArray(node.TEAM) ? node.TEAM : [];
+    const childrenHTML = kids.length ? `<ul>${kids.map(nodeToHTML).join('')}</ul>` : '';
+    return `<li><span class="text-slate-200">${node.NAME}</span>${role}${childrenHTML}</li>`;
+  }
+
+  const blocks = supervisors.map(n => {
+    const node = ORG_INDEX.get(n);
+    if (!node) return `<div class="text-slate-400 text-sm mb-3">No data for ${n}.</div>`;
+    return `<div class="mb-4"><ul>${nodeToHTML(node)}</ul></div>`;
+  }).join('');
+
+  $orgChart.innerHTML = blocks || `<div class="text-slate-400 text-sm">No matching org data.</div>`;
 }
 
 /* ===== Init ===== */
@@ -1245,6 +1150,8 @@ function renderMatrixFrom(dateToPeople){
   loadStore();
   await loadConfig();
   updateTitleFromConfig();
+  document.getElementById('metricRange').textContent = fmtRange();
+  document.getElementById('metricRangeCenter').textContent = fmtRange();
   await loadResponders();
   await loadOrganization();
 
@@ -1260,6 +1167,11 @@ function renderMatrixFrom(dateToPeople){
 
   // Initial eligibility (stealth if not eligible)
   updateDashToggleEligibility();
+
+  // Header category switch triggers re-build when in dashboard
+  document.getElementById('catSwitchHeader').addEventListener('change', () => {
+    if (state.isDashboard) buildDashboard();
+  });
 })();
 </script>
 </body>
