@@ -53,45 +53,30 @@
       </div>
     </div>
 
-    <!-- Personnel filters -->
-    <div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div>
-          <label for="selDivision" class="block text-xs text-slate-300 mb-1">DIVISION</label>
-          <select id="selDivision" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-            <option value="">— select division —</option>
-          </select>
-        </div>
-        <div>
-          <label for="selDepartment" class="block text-xs text-slate-300 mb-1">DEPARTMENT</label>
-          <select id="selDepartment" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-            <option value="">— select department —</option>
-          </select>
-        </div>
-        <div>
-          <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
-          <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-            <option value="">— all teams —</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
-          <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-            <option value="">— all positions —</option>
-          </select>
-        </div>
-        <div>
-          <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
-          <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-            <option value="">— select name —</option>
-          </select>
-        </div>
-      </div>
+<!-- Personnel filters -->
+<div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div>
+      <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
+      <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
+        <option value="">— all teams —</option>
+      </select>
+    </div>
+    <div>
+      <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
+      <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
+        <option value="">— all positions —</option>
+      </select>
     </div>
   </div>
-</header>
+  <div>
+    <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
+    <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
+      <option value="">— select name —</option>
+    </select>
+  </div>
+</div>
+
 
 <!-- PERSONNEL VIEW -->
 <main id="personnelView" class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -581,43 +566,27 @@ function setSaveEnabled(enabled) {
   });
 }
 function populateRespondersUI(changed = null) {
-  const divSel  = document.getElementById("selDivision");
-  const depSel  = document.getElementById("selDepartment");
-  const teamSel = document.getElementById("selTeam");
-  const posSel  = document.getElementById("selPosition");
-  const nameSel = document.getElementById("selName");
+  const teamSel  = document.getElementById("selTeam");
+  const posSel   = document.getElementById("selPosition");
+  const nameSel  = document.getElementById("selName");
 
   let cur = {
-    DIVISION:  normVal(divSel.value),
-    DEPARTMENT:normVal(depSel.value),
     TEAM:      normVal(teamSel.value),
     POSITION:  normVal(posSel.value),
     NAME:      normVal(nameSel.value),
   };
 
-  if (changed === "DIVISION")   { cur.DEPARTMENT = ""; cur.TEAM = ""; cur.POSITION = ""; cur.NAME = ""; }
-  if (changed === "DEPARTMENT") { cur.TEAM = "";       cur.POSITION = ""; cur.NAME = ""; }
-  if (changed === "TEAM")       {                      cur.POSITION = ""; cur.NAME = ""; }
-  if (changed === "POSITION")   {                                       cur.NAME = ""; }
+  if (changed === "TEAM")      { cur.POSITION = ""; cur.NAME = ""; }
+  if (changed === "POSITION")  { cur.NAME = ""; }
 
   const all = RESPONDERS;
   const uniqVals = (arr, field) => uniq(arr.map(r => normVal(r[field]))).sort();
 
-  const divValues = uniqVals(all, 'DIVISION');
-  if (cur.DIVISION && !divValues.includes(cur.DIVISION)) cur.DIVISION = "";
-  fillSelect(divSel, divValues, cur.DIVISION, "— select division —");
-  const scopeDiv = cur.DIVISION ? all.filter(r => normVal(r.DIVISION) === cur.DIVISION) : all;
-
-  const depValues = uniqVals(scopeDiv, 'DEPARTMENT');
-  if (cur.DEPARTMENT && !depValues.includes(cur.DEPARTMENT)) cur.DEPARTMENT = "";
-  fillSelect(depSel, depValues, cur.DEPARTMENT, "— select department —");
-  const scopeDep = cur.DEPARTMENT ? scopeDiv.filter(r => normVal(r.DEPARTMENT) === cur.DEPARTMENT) : scopeDiv;
-
-  const teamValues = uniqVals(scopeDep, 'TEAM');
+  const teamValues = uniqVals(all, 'TEAM');
   if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
   fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
 
-  const scopeTeam = cur.TEAM ? scopeDep.filter(r => normVal(r.TEAM) === cur.TEAM) : scopeDep;
+  const scopeTeam = cur.TEAM ? all.filter(r => normVal(r.TEAM) === cur.TEAM) : all;
   const posValues = uniqVals(scopeTeam, 'POSITION');
   if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
   fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
@@ -638,6 +607,9 @@ function populateRespondersUI(changed = null) {
   setSaveEnabled(!!cur.NAME);
   updateDashToggleEligibility();
 }
+
+
+
 function wireResponderEvents() {
   document.getElementById("selDivision").addEventListener("change", ()=> populateRespondersUI("DIVISION"));
   document.getElementById("selDepartment").addEventListener("change", ()=> populateRespondersUI("DEPARTMENT"));
@@ -1090,26 +1062,41 @@ async function prepareDashboardFilters(){
   const allPos = getAllPositions();
   $fPositions.innerHTML = allPos.map(p => `<option>${p}</option>`).join('');
 
+  // Safe toggle helper with error guard
+  function safeBuildDashboard() {
+    try { buildDashboard(); }
+    catch (err) {
+      console.error('buildDashboard error:', err);
+      // keep UI responsive even if a data issue occurs
+    }
+  }
+
   function toggleSelectOption(selectEl, option) {
     option.selected = !option.selected;
-    buildDashboard();
+    // Force a "change" event so any listeners tied to it still run
+    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+    // And rebuild safely
+    safeBuildDashboard();
+    // Avoid the browser changing selection after our manual toggle
     selectEl.blur();
   }
 
-  $fSupervisors.onchange = buildDashboard;
-  $fPositions.onchange   = buildDashboard;
+  // Standard change listeners
+  $fSupervisors.onchange = safeBuildDashboard;
+  $fPositions.onchange   = safeBuildDashboard;
 
-  $fSupervisors.addEventListener("mousedown", e => {
-    e.preventDefault();
-    const option = e.target;
-    if (option.tagName === "OPTION") toggleSelectOption($fSupervisors, option);
-  });
-  $fPositions.addEventListener("mousedown", e => {
-    e.preventDefault();
-    const option = e.target;
-    if (option.tagName === "OPTION") toggleSelectOption($fPositions, option);
+  // Robust click-to-toggle without Ctrl/Cmd
+  [$fSupervisors, $fPositions].forEach(selectEl => {
+    selectEl.addEventListener('mousedown', e => {
+      // Only intercept when actually clicking an OPTION element
+      const option = e.target && e.target.closest && e.target.closest('option');
+      if (!option || option.disabled) return;
+      e.preventDefault(); // stop native selection behavior
+      toggleSelectOption(selectEl, option);
+    });
   });
 }
+
 
 /* Auto-apply selected Name as supervisor (one-time on entry) */
 async function autoApplySupervisorFromName(){
