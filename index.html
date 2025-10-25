@@ -960,22 +960,25 @@ function renderTypeSwitch(){
   const $leave = document.getElementById('btnLeave');
   const $hint  = document.getElementById('typeSwitchHint');
 
-  const active   = 'bg-[#fcfcfc] text-[#0a0f1a] font-semibold border border-slate-500';
+  const active   = 'text-[#0a0f1a] font-semibold border border-slate-500';
   const inactive = 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/60';
 
+  // Reset both buttons first
   [$work,$leave].forEach(el=>{
     el.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + inactive;
+    el.style.backgroundColor = ''; // clear inline bg
   });
 
-  if(state.typeMode==='WORK'){
+  if(state.typeMode === 'WORK'){
     $work.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
+    $work.style.backgroundColor = '#fcfcfc';
     $hint.textContent = 'Showing: ON-SITE, WORK FROM HOME, OFFICE';
   } else {
     $leave.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
+    $leave.style.backgroundColor = '#fcfcfc';
     $hint.textContent = 'Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
   }
 }
-
 document.getElementById('btnWork').onclick = ()=>{ if(state.typeMode!=='WORK'){ state.typeMode='WORK'; renderTypeSwitch(); buildDashboard(); } };
 document.getElementById('btnLeave').onclick= ()=>{ if(state.typeMode!=='LEAVE'){ state.typeMode='LEAVE'; renderTypeSwitch(); buildDashboard(); } };
 
