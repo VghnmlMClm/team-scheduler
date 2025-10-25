@@ -1044,20 +1044,24 @@ function renderTypeSwitch(){
 
 /* Helpers for completeness */
 function isWeekend(d){ const w=d.getDay(); return w===0||w===6; }
-function hasCompleteScheduleForRange(dataObj, selectedTypes){
+// STRICT completeness check for the entire config time frame:
+//  - Holidays must be 'HOL'
+//  - Weekends must be 'RD'
+//  - Weekdays must have ANY set schedule (not empty), regardless of current mode
+function hasCompleteScheduleForRangeStrict(dataObj){
   if(!CONFIG.START_DATE||!CONFIG.END_DATE) return false;
-  const selected=new Set(selectedTypes);
   const d=new Date(CONFIG.START_DATE);
   while(d<=CONFIG.END_DATE){
     const id=ymd(d);
     const v=dataObj?.[id];
     if(isHoliday(d)){ if(v!=='HOL') return false; }
     else if(isWeekend(d)){ if(v!=='RD') return false; }
-    else { if(!v || !selected.has(v)) return false; }
+    else { if(!v) return false; }
     d.setDate(d.getDate()+1);
   }
   return true;
 }
+
 
 /* Dashboard filter helper */
 function getFilteredNamesForDashboard() {
@@ -1236,23 +1240,32 @@ async function buildDashboard(){
   html += '</tbody>';
   $centerTable.innerHTML = rows.length ? html : '<tbody><tr><td class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
 
-  // --- RIGHT PANEL: Incomplete schedules ---
-  const nameToData = new Map(pairs.map(([n,d])=>[n,d||{}]));
-  const incomplete = allowedNames.filter(n=>!hasCompleteScheduleForRange(nameToData.get(n),selectedTypes)).sort((a,b)=>a.localeCompare(b));
-  if(!incomplete.length){
-    $missingList.innerHTML=`<div class="text-slate-400 text-sm">Everyone under the selected supervisor(s) has a complete schedule for the range.</div>`;
-  }else{
-    $missingList.innerHTML=incomplete.map(n=>{
-      const pos=posMap.get(n)||'Unspecified';
-      return `<div class="flex items-start gap-2">
-        <span class="w-2 h-2 mt-2 rounded-full bg-yellow-500/80"></span>
-        <div><div class="font-medium">${n}</div><div class="text-xs text-slate-400">${pos}</div></div>
-      </div>`;
-    }).join('');
-  }
-  $missingSubtitle.textContent =
-    `Under: ${($fSupervisors&&Array.from($fSupervisors.selectedOptions).map(o=>o.value).join(', '))||'All supervisors'} • `+
-    (selectedTypes.length?`Weekday types considered: ${selectedTypes.join(', ')}`:'No weekday types selected');
+
+	
+	// --- RIGHT PANEL: Incomplete schedules ---
+	// Only filter by IMMEDIATE SUPERVISOR(S) — ignore subordinate position filter here.
+	const namesForIncomplete = selectedSupervisors.length ? getSubtreeNames(selectedSupervisors) : getAllNames();
+	const pairsIncomplete = await Promise.all(namesForIncomplete.map(async n => [n, await fetchScheduleData(n)]));
+	const nameToDataStrict = new Map(pairsIncomplete.map(([n,d])=>[n,d||{}]));
+	const incomplete = namesForIncomplete
+	  .filter(n => !hasCompleteScheduleForRangeStrict(nameToDataStrict.get(n)))
+	  .sort((a,b)=>a.localeCompare(b));
+
+	if(!incomplete.length){
+	  $missingList.innerHTML=`<div class="text-slate-400 text-sm">Everyone under the selected supervisor(s) has a complete schedule for the range.</div>`;
+	}else{
+	  $missingList.innerHTML=incomplete.map(n=>{
+		const pos=posMap.get(n)||'Unspecified';
+		return `<div class="flex items-start gap-2">
+		  <span class="w-2 h-2 mt-2 rounded-full bg-yellow-500/80"></span>
+		  <div><div class="font-medium">${n}</div><div class="text-xs text-slate-400">${pos}</div></div>
+		</div>`;
+	  }).join('');
+	}
+	$missingSubtitle.textContent =
+	  `Under: ${($fSupervisors&&Array.from($fSupervisors.selectedOptions).map(o=>o.value).join(', '))||'All supervisors'} • `+
+	  `Completeness rule: Holidays=HOL, Weekends=RD, Weekdays=any set schedule`;
+
 
   $hint.textContent = rows.length ? 'Showing selected schedule types per day.' : 'Adjust filters or schedule types.';
 }
