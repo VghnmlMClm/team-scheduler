@@ -566,37 +566,42 @@ function setSaveEnabled(enabled) {
   });
 }
 function populateRespondersUI(changed = null) {
-  const teamSel  = document.getElementById("selTeam");
-  const posSel   = document.getElementById("selPosition");
-  const nameSel  = document.getElementById("selName");
+  const teamSel = document.getElementById("selTeam");
+  const posSel  = document.getElementById("selPosition");
+  const nameSel = document.getElementById("selName");
 
   let cur = {
-    TEAM:      normVal(teamSel.value),
-    POSITION:  normVal(posSel.value),
-    NAME:      normVal(nameSel.value),
+    TEAM:     normVal(teamSel?.value),
+    POSITION: normVal(posSel?.value),
+    NAME:     normVal(nameSel?.value),
   };
 
-  if (changed === "TEAM")      { cur.POSITION = ""; cur.NAME = ""; }
-  if (changed === "POSITION")  { cur.NAME = ""; }
+  // Reset lower levels when an upper filter changes
+  if (changed === "TEAM")     { cur.POSITION = ""; cur.NAME = ""; }
+  if (changed === "POSITION") { cur.NAME = ""; }
 
   const all = RESPONDERS;
   const uniqVals = (arr, field) => uniq(arr.map(r => normVal(r[field]))).sort();
 
-  const teamValues = uniqVals(all, 'TEAM');
+  // TEAM
+  const teamValues = uniqVals(all, "TEAM");
   if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
   fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
 
+  // POSITION (scoped by TEAM)
   const scopeTeam = cur.TEAM ? all.filter(r => normVal(r.TEAM) === cur.TEAM) : all;
-  const posValues = uniqVals(scopeTeam, 'POSITION');
+  const posValues = uniqVals(scopeTeam, "POSITION");
   if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
   fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
 
+  // NAME (scoped by TEAM & POSITION)
   let scopeForNames = scopeTeam;
   if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
   const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
   if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
   fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
 
+  // If no name, clear current grid preview
   if (!cur.NAME) {
     state.data = {};
     saveStore();
@@ -610,17 +615,36 @@ function populateRespondersUI(changed = null) {
 
 
 
+
 function wireResponderEvents() {
-  document.getElementById("selDivision").addEventListener("change", ()=> populateRespondersUI("DIVISION"));
-  document.getElementById("selDepartment").addEventListener("change", ()=> populateRespondersUI("DEPARTMENT"));
-  document.getElementById("selTeam").addEventListener("change", ()=> populateRespondersUI("TEAM"));
-  document.getElementById("selPosition").addEventListener("change", ()=> populateRespondersUI("POSITION"));
-  document.getElementById("selName").addEventListener("change", async (e) => {
+  const teamSel = document.getElementById("selTeam");
+  const posSel  = document.getElementById("selPosition");
+  const nameSel = document.getElementById("selName");
+
+  // Team change → reset Position & Name, rebuild lists
+  teamSel?.addEventListener("change", () => {
+    populateRespondersUI("TEAM");
+  });
+
+  // Position change → reset Name, rebuild list
+  posSel?.addEventListener("change", () => {
+    populateRespondersUI("POSITION");
+  });
+
+  // Name change → rebuild (keeps selection) + load schedule
+  nameSel?.addEventListener("change", async (e) => {
     populateRespondersUI("NAME");
     updateDashToggleEligibility();
-    await loadScheduleForName(e.target.value);
+    const name = (e.target?.value || "").trim();
+    if (name) {
+      await loadScheduleForName(name);  // <- restores “selecting name pulls schedule”
+    } else {
+      // no name selected; ensure buttons reflect disabled state
+      setSaveEnabled(false);
+    }
   });
 }
+
 
 /* ===== Save via Worker (include preset HOL & RD) ===== */
 async function uploadScheduleViaProxy(){
