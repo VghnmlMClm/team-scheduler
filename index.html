@@ -22,6 +22,8 @@
     select[multiple] option{padding:4px}
     #matrixTable th,#matrixTable td{padding:6px 8px; border-bottom:1px solid #1f2937}
     #matrixTable th{position:sticky; top:0; background:#0f172a}
+    #centerTable th,#centerTable td{padding:8px 10px; border-bottom:1px solid #1f2937}
+    #centerTable th{position:sticky; top:0; background:#0f172a}
   </style>
 </head>
 
@@ -71,7 +73,7 @@
         <div>
           <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
           <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-            <option value="">— select team —</option>
+            <option value="">— all teams —</option>
           </select>
         </div>
       </div>
@@ -79,7 +81,7 @@
         <div>
           <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
           <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-            <option value="">— select position —</option>
+            <option value="">— all positions —</option>
           </select>
         </div>
         <div>
@@ -118,7 +120,6 @@
 
   <!-- Sidebar -->
   <aside class="bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
-
     <!-- GROUPED schedule buttons injected here -->
     <form id="eventForm" class="p-4 space-y-5" onsubmit="return false;">
       <div id="schedButtons" class="space-y-4"></div>
@@ -149,20 +150,30 @@
       <div class="mb-4">
         <label class="block text-xs mb-1 text-slate-400">IMMEDIATE SUPERVISOR(S)</label>
         <select id="fSupervisors" multiple class="w-full h-40 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
-        <p class="text-[11px] mt-1 text-slate-500">Hold Ctrl/Cmd or Shift to select multiple</p>
+        <p class="text-[11px] mt-1 text-slate-500">Click to toggle (no Ctrl/Cmd needed)</p>
       </div>
-      <div>
+      <div class="mb-4">
         <label class="block text-xs mb-1 text-slate-400">SUBORDINATE POSITIONS</label>
         <select id="fPositions" multiple class="w-full h-32 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
       </div>
+
+      <div class="mt-4">
+        <label class="block text-xs mb-2 text-slate-400">SCHEDULE TYPES TO DISPLAY</label>
+        <div id="typeCheckboxes" class="space-y-2"></div>
+        <div class="flex items-center gap-2 mt-3">
+          <button id="btnAllTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Select all</button>
+          <button id="btnNoneTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Clear</button>
+          <button id="btnDefaultTypes" class="px-2 py-1 rounded border border-slate-700 text-xs hover:bg-slate-800">Default (VL)</button>
+        </div>
+      </div>
     </aside>
 
-    <!-- CENTER -->
+    <!-- CENTER (Table-like chart) -->
     <div class="lg:col-span-6 space-y-4">
       <!-- TOP METRICS -->
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div class="text-xs text-slate-400">TOTAL NO OF LEAVES (VL)</div>
+          <div class="text-xs text-slate-400">TOTAL RECORDS (Selected Types)</div>
           <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
         </div>
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
@@ -171,18 +182,25 @@
         </div>
       </div>
 
-      <!-- TOP 5 DAYS CHART -->
+      <!-- Table-like chart -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <h2 class="text-sm font-semibold mb-2 text-slate-2 00">Top 5 Days with Max No. of Leaves</h2>
-        <div class="w-full h-[420px]"><canvas id="top5Chart"></canvas></div>
+        <div class="flex items-baseline justify-between">
+          <h2 class="text-sm font-semibold mb-2 text-slate-200">Dates with Selected Schedules</h2>
+          <span id="currentTypeCaption" class="text-[11px] text-slate-400"></span>
+        </div>
+        <div class="w-full overflow-auto max-h-[520px]">
+          <table id="centerTable" class="min-w-full text-sm border-separate border-spacing-y-1">
+            <!-- built in JS -->
+          </table>
+        </div>
         <p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
       </div>
     </div>
 
     <!-- RIGHT MATRIX -->
     <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-auto">
-      <h3 class="text-sm font-semibold mb-3 text-slate-200">ALL DATES WITH FILED LEAVES → NAMES</h3>
-      <div class="text-[11px] text-slate-500 mb-2">Column 1 = Date; Columns 2+ = Names who filed VL.</div>
+      <h3 class="text-sm font-semibold mb-2 text-slate-200">DATE → NAMES (Selected Types)</h3>
+      <div id="matrixSubtitle" class="text-[11px] text-slate-500 mb-2"></div>
       <div id="matrixWrap" class="overflow-auto max-h-[620px]">
         <table id="matrixTable" class="min-w-full text-xs border-separate border-spacing-y-1"></table>
       </div>
@@ -221,16 +239,15 @@ const SCHEDULE_GROUPS = [
   { title: "SPECIAL LEAVES", codes: ["PTO","BDL","ML","PL"] }
 ];
 
-
 /* Build color/label maps + helpers */
 const LABELS = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]));
+const NAMES  = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.name]));
 const COLORS = Object.fromEntries([
   ...SCHEDULE_OPTIONS.map(o => [o.code, '#' + o.color.toLowerCase()]),
   ['RD',      '#808080'], // Rest Day (weekends)
   ['HOL',     '#ffff00'], // Holiday (from config.json)
   ['WEEKEND', '#808080']  // keep WEEKEND in sync with RD
 ]);
-
 
 /* ===== Helpers ===== */
 const stripMeta = o => Object.fromEntries(Object.entries(o||{}).filter(([k]) => !k.startsWith("_")));
@@ -296,7 +313,7 @@ function updateTitleFromConfig(){
 }
 
 /* ===== Organization (hierarchy) ===== */
-let ORG_ROOT = null, ORG_INDEX = new Map();
+let ORG_INDEX = new Map();
 let ORG_SUPERVISORS = []; // names that have TEAM (immediate supervisors)
 
 async function loadOrganization(){
@@ -304,26 +321,31 @@ async function loadOrganization(){
     const r = await fetch(ORG_URL);
     const data = await r.json();
 
-    ORG_ROOT = data;
     ORG_INDEX.clear();
     ORG_SUPERVISORS = [];
 
-    if (Array.isArray(data)) data.forEach(indexOrg);
-    else indexOrg(data);
+    if (Array.isArray(data)) {
+      data.forEach(indexOrg);              // array of org nodes
+    } else if (data && typeof data === 'object' && data.MANAGER) {
+      indexOrg(data.MANAGER);              // schema with MANAGER root
+    } else {
+      indexOrg(data);                      // single node fallback
+    }
 
-    ORG_SUPERVISORS = Array.from(new Set(ORG_SUPERVISORS));
+    ORG_SUPERVISORS = Array.from(new Set(ORG_SUPERVISORS)).sort();
   }catch(e){
-    ORG_ROOT = null; ORG_INDEX.clear(); ORG_SUPERVISORS = [];
+    console.error('loadOrganization error', e);
+    ORG_INDEX.clear();
+    ORG_SUPERVISORS = [];
   }
 }
 
-function indexOrg(n){
-  if(!n || !n.NAME) return;
-  ORG_INDEX.set(n.NAME, n);
-  if (Array.isArray(n.TEAM) && n.TEAM.length > 0) {
-    ORG_SUPERVISORS.push(n.NAME);
-  }
-  (n.TEAM || []).forEach(indexOrg);
+function indexOrg(node){
+  if (!node || !node.NAME) return;
+  ORG_INDEX.set(node.NAME, node);
+  const team = Array.isArray(node.TEAM) ? node.TEAM : [];
+  if (team.length > 0) ORG_SUPERVISORS.push(node.NAME);
+  for (const child of team) indexOrg(child);
 }
 
 /* Returns all names under each selected supervisor (including the supervisor) */
@@ -431,16 +453,15 @@ function dayCell(dateObj, muted=false){
     textColor = (contrast === 'text-black') ? 'black' : 'white';
   }
 
-	// Determine badge label
-	const badgeText = status
-	  ? LABELS[status]
-	  : (holiday ? 'HOL' : (weekend ? 'RD' : ''));
+  // Determine badge label
+  const badgeText = status
+    ? LABELS[status]
+    : (holiday ? 'HOL' : (weekend ? 'RD' : ''));
 
-	// Make the badge text color match the day number color
-	const badge = badgeText
-	  ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
-	  : '';
-
+  // Badge adopts same text color as date label
+  const badge = badgeText
+    ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
+    : '';
 
   cell.innerHTML = `
     <div class="flex items-center justify-between">
@@ -456,8 +477,6 @@ function dayCell(dateObj, muted=false){
   });
   return cell;
 }
-
-
 
 function onDayClick(id, shift) {
   const date = parseYMD(id);
@@ -493,7 +512,7 @@ function renderSelection(){
     : '<p class="text-xs text-slate-500">Click weekdays (non-holiday) to select.</p>';
 }
 
-/* ===== Dynamic schedule controls & legend (GROUPED) ===== */
+/* ===== Dynamic schedule controls (GROUPED) ===== */
 function buildScheduleButtons(){
   const wrap = document.getElementById('schedButtons');
   wrap.innerHTML = '';
@@ -529,7 +548,6 @@ function buildScheduleButtons(){
     wrap.appendChild(block);
   });
 }
-
 
 /* ===== Apply / Clear ===== */
 document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
@@ -642,7 +660,7 @@ function wireResponderEvents() {
   });
 }
 
-/* ===== Save via Worker ===== */
+/* ===== Save via Worker (include preset HOL & RD) ===== */
 async function uploadScheduleViaProxy(){
   const exportBtn = document.getElementById('exportBtn');
   const selName = document.getElementById('selName');
@@ -662,37 +680,35 @@ async function uploadScheduleViaProxy(){
   const prevText = exportBtn.textContent;
   exportBtn.textContent = "Saving…";
 
-	// --- Include preset HOL (holidays) + RD (weekends) in saved data ---
-	const mergedData = { ...state.data };
-	const d = new Date(CONFIG.START_DATE);
-	while (d <= CONFIG.END_DATE) {
-	  const id = ymd(d);
-	  const wd = d.getDay();
-	  if (isHoliday(d)) {
-		mergedData[id] = mergedData[id] || 'HOL';
-	  } else if (wd === 0 || wd === 6) {
-		mergedData[id] = mergedData[id] || 'RD';
-	  }
-	  d.setDate(d.getDate() + 1);
-	}
+  // Include preset HOL (holidays) + RD (weekends) in saved data
+  const mergedData = { ...state.data };
+  const d = new Date(CONFIG.START_DATE);
+  while (d <= CONFIG.END_DATE) {
+    const id = ymd(d);
+    const wd = d.getDay();
+    if (isHoliday(d)) {
+      mergedData[id] = mergedData[id] || 'HOL';
+    } else if (wd === 0 || wd === 6) {
+      mergedData[id] = mergedData[id] || 'RD';
+    }
+    d.setDate(d.getDate() + 1);
+  }
 
-	// Final save payload
-	const payload = {
-	  op: "save",
-	  name,
-	  data: {
-		...mergedData,
-		_meta: {
-		  division: selDivision.value,
-		  department: selDepartment.value,
-		  team: selTeam.value,
-		  position: selPosition.value,
-		  name,
-		  lastSaved: new Date().toISOString()
-		}
-	  }
-	};
-
+  const payload = {
+    op: "save",
+    name,
+    data: {
+      ...mergedData,
+      _meta: {
+        division: selDivision.value,
+        department: selDepartment.value,
+        team: selTeam.value,
+        position: selPosition.value,
+        name,
+        lastSaved: new Date().toISOString()
+      }
+    }
+  };
 
   try{
     const res = await fetch(PROXY_URL, {
@@ -939,10 +955,14 @@ const $fSupervisors = document.getElementById('fSupervisors');
 const $fPositions   = document.getElementById('fPositions');
 const $metricTotal  = document.getElementById('metricTotalVl');
 const $metricRange  = document.getElementById('metricRange');
+const $centerTable  = document.getElementById('centerTable');
 const $matrixTable  = document.getElementById('matrixTable');
+const $matrixSubtitle = document.getElementById('matrixSubtitle');
+const $typeCheckboxes = document.getElementById('typeCheckboxes');
 const $hint         = document.getElementById('dashboardHint');
+const $currentTypeCaption = document.getElementById('currentTypeCaption');
 
-let top5Chart = null;
+let top5Chart = null; // kept for compatibility (unused)
 
 /* ---------- Dashboard eligibility (stealth when not eligible) ---------- */
 const DASH_ALLOWED_POS = new Set([
@@ -985,7 +1005,7 @@ function updateDashToggleEligibility(){
   setDashToggleDisabled(!isDashboardEligible());
 }
 
-/* Filter helper for dashboard */
+/* Dashboard filter helper */
 function getFilteredNamesForDashboard() {
   if (!state.isDashboard) return getAllNames().sort();
 
@@ -1001,6 +1021,43 @@ function getFilteredNamesForDashboard() {
   return names.sort();
 }
 
+/* Build schedule type checkboxes (default = VL only) */
+function buildTypeCheckboxes(){
+  $typeCheckboxes.innerHTML = '';
+  const defaultCodes = new Set(['VL']); // default
+  SCHEDULE_OPTIONS.forEach(opt => {
+    const id = `type_${opt.code}`;
+    const color = '#' + opt.color.toLowerCase();
+    const labelColor = getContrastText(color) === 'text-black' ? '#111827' : '#e5e7eb';
+    const wrap = document.createElement('label');
+    wrap.className = 'flex items-center gap-2 text-sm';
+    wrap.innerHTML = `
+      <input type="checkbox" id="${id}" value="${opt.code}" class="h-4 w-4 rounded border-slate-600 bg-black">
+      <span class="px-1.5 py-0.5 rounded text-[11px]" style="background:${color}; color:${labelColor}">${opt.abbr}</span>
+      <span>${opt.name}</span>
+    `;
+    $typeCheckboxes.appendChild(wrap);
+    const cb = wrap.querySelector('input');
+    cb.checked = defaultCodes.has(opt.code);
+    cb.addEventListener('change', buildDashboard);
+  });
+
+  document.getElementById('btnAllTypes').onclick = (e)=>{ e.preventDefault(); setAllTypeChecks(true); };
+  document.getElementById('btnNoneTypes').onclick = (e)=>{ e.preventDefault(); setAllTypeChecks(false); };
+  document.getElementById('btnDefaultTypes').onclick = (e)=>{ e.preventDefault(); setDefaultTypeChecks(); };
+}
+function getSelectedTypeCodes(){
+  return Array.from($typeCheckboxes.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+}
+function setAllTypeChecks(val){
+  $typeCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = val);
+  buildDashboard();
+}
+function setDefaultTypeChecks(){
+  $typeCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = (cb.value === 'VL'));
+  buildDashboard();
+}
+
 /* Toggle handler */
 $toggleDash.addEventListener('click', async () => {
   if (!state.isDashboard && !isDashboardEligible()) return;
@@ -1009,6 +1066,7 @@ $toggleDash.addEventListener('click', async () => {
   if (state.isDashboard) {
     enterDashboard();
     await prepareDashboardFilters();
+    buildTypeCheckboxes();
     await autoApplySupervisorFromName();
     await buildDashboard();
   } else {
@@ -1037,7 +1095,7 @@ function exitDashboard(){
   updateDashToggleEligibility();
 }
 
-/* Fill filter lists (supervisors = only names with TEAM) */
+/* Fill filter lists (supervisors = only names with TEAM) + click-to-toggle selection */
 async function prepareDashboardFilters(){
   const supList = ORG_SUPERVISORS.slice().sort();
   $fSupervisors.innerHTML = supList.map(n => `<option>${n}</option>`).join('');
@@ -1047,8 +1105,25 @@ async function prepareDashboardFilters(){
 
   $metricRange.textContent = fmtRange();
 
+  function toggleSelectOption(selectEl, option) {
+    option.selected = !option.selected;
+    buildDashboard();
+    selectEl.blur();
+  }
+
   $fSupervisors.onchange = buildDashboard;
   $fPositions.onchange   = buildDashboard;
+
+  $fSupervisors.addEventListener("mousedown", e => {
+    e.preventDefault();
+    const option = e.target;
+    if (option.tagName === "OPTION") toggleSelectOption($fSupervisors, option);
+  });
+  $fPositions.addEventListener("mousedown", e => {
+    e.preventDefault();
+    const option = e.target;
+    if (option.tagName === "OPTION") toggleSelectOption($fPositions, option);
+  });
 }
 
 /* Auto-apply selected Name as supervisor (one-time on entry) */
@@ -1066,11 +1141,16 @@ async function autoApplySupervisorFromName(){
   }
 }
 
-/* Build dashboard */
+/* Build dashboard (table-like) using selected schedule types */
 async function buildDashboard(){
   $hint.textContent = 'Loading…';
+  $centerTable.innerHTML = '';
   $matrixTable.innerHTML = '';
-  if (top5Chart) { top5Chart.destroy(); top5Chart = null; }
+
+  const selectedTypes = getSelectedTypeCodes();
+  $currentTypeCaption.textContent = selectedTypes.length
+    ? `Types: ${selectedTypes.map(c=>NAMES[c]||c).join(', ')}`
+    : 'Types: (none)';
 
   const selectedSupervisors = Array.from($fSupervisors.selectedOptions).map(o => o.value);
   const selectedPositions   = Array.from($fPositions.selectedOptions).map(o => o.value);
@@ -1085,82 +1165,58 @@ async function buildDashboard(){
 
   const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
 
-  const dateCountsByPos = new Map(); // date -> position -> count (for VL only)
-  const vlTotal = { count:0 };
-  const dateToNames = new Map();     // date -> [names] (for VL only)
-
-  const labelsDates = dateRangeList();
-  const dateSet = new Set(labelsDates);
+  // Aggregate: date -> list of {name, code}
+  const dateToPeople = new Map();
+  const dates = dateRangeList();
+  const dateSet = new Set(dates);
+  let totalRecords = 0;
 
   for (const [name, sched] of pairs) {
-    const pos = posMap.get(name) || 'Unspecified';
     for (const [d, code] of Object.entries(sched || {})) {
-      if (code !== 'VL') continue;       // dashboard metric focused on VL
       if (!dateSet.has(d)) continue;
-
-      vlTotal.count++;
-
-      if (!dateCountsByPos.has(d)) dateCountsByPos.set(d, new Map());
-      const m = dateCountsByPos.get(d);
-      m.set(pos, (m.get(pos) || 0) + 1);
-
-      if (!dateToNames.has(d)) dateToNames.set(d, []);
-      dateToNames.get(d).push(name);
+      if (!selectedTypes.length) continue;
+      if (!selectedTypes.includes(code)) continue; // only selected codes
+      if (!dateToPeople.has(d)) dateToPeople.set(d, []);
+      dateToPeople.get(d).push({ name, code });
+      totalRecords++;
     }
   }
 
-  $metricTotal.textContent = String(vlTotal.count);
+  // Build metric
+  $metricTotal.textContent = String(totalRecords);
 
-  const byTotal = Array.from(dateCountsByPos.entries()).map(([d, mp]) => {
-    const total = Array.from(mp.values()).reduce((a,b)=>a+b,0);
-    return { date:d, total, byPos: mp };
-  }).sort((a,b)=>b.total - a.total).slice(0,5);
+  // Build center table (Date | Count | People (Name [CODE]))
+  const rows = Array.from(dateToPeople.entries())
+    .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
+    .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
 
-  const positions = getAllPositions();
-  const topDates = byTotal.map(x => x.date);
+  let html = '<thead><tr>';
+  html += '<th class="text-left">Date</th>';
+  html += '<th class="text-left">Count</th>';
+  html += '<th class="text-left">People</th>';
+  html += '</tr></thead><tbody>';
 
-  const datasets = positions.map(p => ({
-    label: p,
-    data: topDates.map(d => (dateCountsByPos.get(d)?.get(p) || 0)),
-    borderWidth: 1
-  }));
+  for (const [d, people] of rows) {
+    const list = people.map(p => `${p.name} [${LABELS[p.code]||p.code}]`).join(', ');
+    html += `<tr>
+      <td class="whitespace-nowrap">${new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td>
+      <td>${people.length}</td>
+      <td class="text-slate-300">${list}</td>
+    </tr>`;
+  }
+  html += '</tbody>';
+  $centerTable.innerHTML = rows.length ? html : '<tbody><tr><td class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
 
-  renderTop5Chart(topDates, datasets);
-  renderMatrix(dateToNames);
-
-  $hint.textContent = byTotal.length ? 'Hover bars to see counts per position.' : 'No VL found for the selected filters/date range.';
+  // Build right matrix (Date | Name 1..N) from same dataset
+  renderMatrixFrom(dateToPeople);
+  $matrixSubtitle.textContent = selectedTypes.length ? `Types: ${selectedTypes.join(', ')}` : 'Types: (none)';
+  $hint.textContent = rows.length ? 'Showing selected schedule types per day.' : 'Adjust filters or schedule types.';
 }
 
-/* Render Top 5 chart */
-function renderTop5Chart(dateLabels, datasets){
-  const ctx = document.getElementById('top5Chart').getContext('2d');
-  if (top5Chart) { top5Chart.destroy(); }
-
-  top5Chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: dateLabels.map(d => new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric'})),
-      datasets
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { stacked: false, title: { display: true, text: 'Date' } },
-        y: { stacked: false, beginAtZero: true, title: { display: true, text: 'No. of VL filed per position' }, ticks:{ precision:0 } }
-      },
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: { mode: 'index', intersect: false }
-      }
-    }
-  });
-}
-
-/* Render date → names matrix */
-function renderMatrix(dateToNames){
-  const rows = Array.from(dateToNames.entries())
-    .map(([d, names]) => [d, names.slice().sort()])
+/* Render matrix from date -> [{name,code}] */
+function renderMatrixFrom(dateToPeople){
+  const rows = Array.from(dateToPeople.entries())
+    .map(([d, arr]) => [d, arr.slice().sort((a,b)=> a.name.localeCompare(b.name)).map(x=>x.name)])
     .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
 
   const hasAny = rows.length > 0;
@@ -1181,7 +1237,7 @@ function renderMatrix(dateToNames){
   }
   html += '</tbody>';
 
-  $matrixTable.innerHTML = hasAny ? html : '<tbody><tr><td class="text-slate-400">No VL in range.</td></tr></tbody>';
+  $matrixTable.innerHTML = hasAny ? html : '<tbody><tr><td class="text-slate-400">No data in range.</td></tr></tbody>';
 }
 
 /* ===== Init ===== */
