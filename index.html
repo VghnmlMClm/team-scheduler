@@ -678,18 +678,18 @@ function wireResponderEvents() {
   });
 }
 
-
 /* ===== Save via Worker (include preset HOL & RD) ===== */
 async function uploadScheduleViaProxy(){
-  const exportBtn = document.getElementById('exportBtn');
-  const selName = document.getElementById('selName');
-  const selDivision = document.getElementById('selDivision');
-  const selDepartment = document.getElementById('selDepartment');
-  const selTeam = document.getElementById('selTeam');
+  const exportBtn   = document.getElementById('exportBtn');
+  const selName     = document.getElementById('selName');
+  const selTeam     = document.getElementById('selTeam');
   const selPosition = document.getElementById('selPosition');
+  // these may not exist in the UI anymore; make them null-safe
+  const selDivision   = document.getElementById('selDivision');
+  const selDepartment = document.getElementById('selDepartment');
 
-  const name = (selName.value || '').trim();
-  if(!name){ alert("Pick a Name first."); selName.focus(); return; }
+  const name = (selName?.value || '').trim();
+  if(!name){ alert("Pick a Name first."); selName?.focus(); return; }
 
   if(Object.keys(state.data).length === 0){
     if(!confirm("Your schedule is empty. Save anyway?")) return;
@@ -699,18 +699,20 @@ async function uploadScheduleViaProxy(){
   const prevText = exportBtn.textContent;
   exportBtn.textContent = "Saving…";
 
-  // Include preset HOL (holidays) + RD (weekends) in saved data
+  // Include preset HOL (holidays) + RD (weekends) in saved data — only if config range is valid
   const mergedData = { ...state.data };
-  const d = new Date(CONFIG.START_DATE);
-  while (d <= CONFIG.END_DATE) {
-    const id = ymd(d);
-    const wd = d.getDay();
-    if (isHoliday(d)) {
-      mergedData[id] = mergedData[id] || 'HOL';
-    } else if (wd === 0 || wd === 6) {
-      mergedData[id] = mergedData[id] || 'RD';
+  if (CONFIG.START_DATE && CONFIG.END_DATE) {
+    const d = new Date(CONFIG.START_DATE);
+    while (d <= CONFIG.END_DATE) {
+      const id = ymd(d);
+      const wd = d.getDay();
+      if (isHoliday(d)) {
+        mergedData[id] = mergedData[id] || 'HOL';
+      } else if (wd === 0 || wd === 6) {
+        mergedData[id] = mergedData[id] || 'RD';
+      }
+      d.setDate(d.getDate() + 1);
     }
-    d.setDate(d.getDate() + 1);
   }
 
   const payload = {
@@ -719,10 +721,10 @@ async function uploadScheduleViaProxy(){
     data: {
       ...mergedData,
       _meta: {
-        division: selDivision.value,
-        department: selDepartment.value,
-        team: selTeam.value,
-        position: selPosition.value,
+        division:   selDivision?.value   || "",
+        department: selDepartment?.value || "",
+        team:       selTeam?.value       || "",
+        position:   selPosition?.value   || "",
         name,
         lastSaved: new Date().toISOString()
       }
@@ -755,6 +757,8 @@ async function uploadScheduleViaProxy(){
     exportBtn.textContent = prevText;
   }
 }
+
+
 document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
 /* ===== Load person schedule (personnel view preview only) ===== */
