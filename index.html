@@ -662,21 +662,37 @@ async function uploadScheduleViaProxy(){
   const prevText = exportBtn.textContent;
   exportBtn.textContent = "Saving…";
 
-  const payload = {
-    op: "save",
-    name,
-    data: {
-      ...state.data,
-      _meta: {
-        division: selDivision.value,
-        department: selDepartment.value,
-        team: selTeam.value,
-        position: selPosition.value,
-        name,
-        lastSaved: new Date().toISOString()
-      }
-    }
-  };
+	// --- Include preset HOL (holidays) + RD (weekends) in saved data ---
+	const mergedData = { ...state.data };
+	const d = new Date(CONFIG.START_DATE);
+	while (d <= CONFIG.END_DATE) {
+	  const id = ymd(d);
+	  const wd = d.getDay();
+	  if (isHoliday(d)) {
+		mergedData[id] = mergedData[id] || 'HOL';
+	  } else if (wd === 0 || wd === 6) {
+		mergedData[id] = mergedData[id] || 'RD';
+	  }
+	  d.setDate(d.getDate() + 1);
+	}
+
+	// Final save payload
+	const payload = {
+	  op: "save",
+	  name,
+	  data: {
+		...mergedData,
+		_meta: {
+		  division: selDivision.value,
+		  department: selDepartment.value,
+		  team: selTeam.value,
+		  position: selPosition.value,
+		  name,
+		  lastSaved: new Date().toISOString()
+		}
+	  }
+	};
+
 
   try{
     const res = await fetch(PROXY_URL, {
