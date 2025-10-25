@@ -12,35 +12,72 @@
   <style>
     :root{--brand:#2563eb}
     html,body{height:100%}
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    body{
+      font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background-color:#212121; /* main background */
+      color:#e2e8f0;
+    }
+
+    /* Panels (personnel & dashboard) */
+    #personnelView section,
+    #personnelView aside,
+    #dashboardView section,
+    #dashboardView aside,
+    .bg-slate-900 {
+      background-color:#0a0f1a !important; /* darker panels */
+      border-color:#1e293b !important;
+    }
+
+    /* Header gradient */
+    header.grad {
+      background:linear-gradient(135deg,#1e3a8a 0%,#0369a1 100%);
+    }
+
+    /* Keep calendar and schedule button colors intact */
+    #schedButtons button {
+      background: inherit;
+      filter: none;
+    }
+    .day-cell {
+      background: inherit;
+    }
+
+    /* Dark form controls */
+    select,
+    button:not(#schedButtons button) {
+      background-color:#0f172a;
+      color:#f1f5f9;
+      border-color:#1e293b;
+    }
+    select[multiple] option {
+      background-color:#0f172a;
+      color:#e2e8f0;
+    }
+    button:not(#schedButtons button):hover:not(:disabled){
+      filter:brightness(1.12);
+    }
+
     .day-cell{user-select:none}
     .selected-day{outline:2px solid var(--brand); outline-offset:-2px}
     .today-ring{box-shadow:inset 0 0 0 2px var(--brand)}
     .muted{opacity:.35}
-    .grad{background:linear-gradient(135deg,#1d4ed8 0%,#06b6d4 100%)}
-    .hidden{display:none !important}
     select[multiple] option{padding:4px}
     #centerTable th,#centerTable td{padding:8px 10px; border-bottom:1px solid #1f2937}
-    #centerTable th{position:sticky; top:0; background:#0f172a}
+    #centerTable th{position:sticky; top:0; background:#0a0f1a}
   </style>
 </head>
 
-<body class="bg-black text-slate-100">
-
+<body class="text-slate-100">
 <header class="grad text-white">
   <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <!-- Dashboard toggle (stealth when disabled) -->
-        <button id="toggleDashboardBtn"
-          class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center transition"
-          aria-label="Toggle view">
+        <button id="toggleDashboardBtn" class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center transition" aria-label="Toggle view">
           <span id="dashIcon" class="text-lg">🗓️</span>
         </button>
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
       <div class="flex items-center gap-2 text-sm">
-        <!-- Dashboard-only Export menu -->
         <div id="exportGroup" class="relative hidden">
           <button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
           <div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
@@ -53,35 +90,36 @@
       </div>
     </div>
 
-<!-- Personnel filters -->
-<div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-    <div>
-      <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
-      <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-        <option value="">— all teams —</option>
-      </select>
-    </div>
-    <div>
-      <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
-      <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-        <option value="">— all positions —</option>
-      </select>
+    <!-- PERSONNEL FILTERS -->
+    <div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
+          <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
+            <option value="">— all teams —</option>
+          </select>
+        </div>
+        <div>
+          <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
+          <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
+            <option value="">— all positions —</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
+        <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
+          <option value="">— select name —</option>
+        </select>
+      </div>
     </div>
   </div>
-  <div>
-    <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
-    <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm bg-black border border-slate-700 text-white">
-      <option value="">— select name —</option>
-    </select>
-  </div>
-</div>
-
+</header>
 
 <!-- PERSONNEL VIEW -->
 <main id="personnelView" class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- Calendar -->
-  <section class="lg:col-span-2 bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
+  <!-- CALENDAR -->
+  <section class="lg:col-span-2 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
     <div class="p-4 border-b border-slate-700">
       <div class="flex justify-center items-center gap-4">
         <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
@@ -101,18 +139,15 @@
     </div>
   </section>
 
-  <!-- Sidebar -->
-  <aside class="bg-slate-900 text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
-    <!-- GROUPED schedule buttons injected here -->
+  <!-- SIDEBAR -->
+  <aside class="text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
     <form id="eventForm" class="p-4 space-y-5" onsubmit="return false;">
       <div id="schedButtons" class="space-y-4"></div>
       <div class="flex items-center gap-3">
         <button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
       </div>
     </form>
-
     <div class="px-4 pb-4 space-y-4">
-      <!-- Selected -->
       <div>
         <div class="flex items-center justify-between mb-1">
           <h4 class="text-sm font-semibold">Selected:</h4>
@@ -127,20 +162,17 @@
 <!-- DASHBOARD VIEW -->
 <section id="dashboardView" class="hidden max-w-6xl mx-auto px-4 py-6">
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-    <!-- LEFT EDGE FILTERS -->
-    <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4">
+    <aside class="lg:col-span-3 border border-slate-800 rounded-2xl p-4">
       <h3 class="text-sm font-semibold mb-3 text-slate-200">Filters</h3>
       <div class="mb-4">
         <label class="block text-xs mb-1 text-slate-400">IMMEDIATE SUPERVISOR(S)</label>
-        <select id="fSupervisors" multiple class="w-full h-40 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
+        <select id="fSupervisors" multiple class="w-full h-40 border border-slate-700 rounded-lg p-2 text-sm bg-[#0f172a] text-white"></select>
         <p class="text-[11px] mt-1 text-slate-500">Click to toggle (no Ctrl/Cmd needed)</p>
       </div>
       <div class="mb-4">
         <label class="block text-xs mb-1 text-slate-400">SUBORDINATE POSITIONS</label>
-        <select id="fPositions" multiple class="w-full h-32 bg-black border border-slate-700 rounded-lg p-2 text-sm"></select>
+        <select id="fPositions" multiple class="w-full h-32 border border-slate-700 rounded-lg p-2 text-sm bg-[#0f172a] text-white"></select>
       </div>
-
-      <!-- WORK / LEAVE SWITCH -->
       <div class="mt-4">
         <label class="block text-xs mb-2 text-slate-400">SCHEDULE MODE</label>
         <div id="typeSwitchWrap" class="inline-flex items-center bg-slate-800/60 border border-slate-700 rounded-xl overflow-hidden">
@@ -151,33 +183,26 @@
       </div>
     </aside>
 
-    <!-- CENTER (Table-like chart) -->
     <div class="lg:col-span-6 space-y-4">
-      <!-- TOP METRICS (Date Range card removed) -->
       <div class="grid grid-cols-1 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div class="border border-slate-800 rounded-2xl p-4">
           <div class="text-xs text-slate-400">TOTAL RECORDS (Selected Types)</div>
           <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
         </div>
       </div>
-
-      <!-- Table-like chart -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <div class="border border-slate-800 rounded-2xl p-4">
         <div class="flex items-baseline justify-between">
           <h2 class="text-sm font-semibold mb-2 text-slate-200">Dates with Selected Schedules</h2>
           <span id="currentTypeCaption" class="text-[11px] text-slate-400"></span>
         </div>
         <div class="w-full overflow-auto max-h-[520px]">
-          <table id="centerTable" class="min-w-full text-sm border-separate border-spacing-y-1">
-            <!-- built in JS -->
-          </table>
+          <table id="centerTable" class="min-w-full text-sm border-separate border-spacing-y-1"></table>
         </div>
         <p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
       </div>
     </div>
 
-    <!-- RIGHT: INCOMPLETE SCHEDULES LIST -->
-    <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-auto">
+    <aside class="lg:col-span-3 border border-slate-800 rounded-2xl p-4 overflow-auto">
       <h3 class="text-sm font-semibold mb-2 text-slate-200">INCOMPLETE SCHEDULES (Selected Supervisors)</h3>
       <div id="missingSubtitle" class="text-[11px] text-slate-500 mb-2">People under selected supervisor(s) with incomplete schedules in range.</div>
       <div id="missingWrap" class="overflow-auto max-h-[620px]">
