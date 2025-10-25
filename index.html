@@ -71,10 +71,19 @@
         </button>
         <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
       </div>
-      <div class="flex items-center gap-2 text-sm">
-        <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Refresh</button>
-        <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Save</button>
-      </div>
+		<div class="flex items-center gap-2 text-sm">
+		  <!-- Dashboard-only Export menu -->
+		  <div id="exportGroup" class="relative hidden">
+			<button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
+			<div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
+			  <button id="exportVlBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">VL Summary (.txt)</button>
+			  <button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
+			</div>
+		  </div>
+
+		  <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Refresh</button>
+		  <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Save</button>
+		</div>
     </div>
 
     <!-- PERSONNEL FILTERS -->
@@ -768,6 +777,124 @@ async function fetchScheduleData(name){
   }
   return {};
 }
+/* ===== Download helper ===== */
+function downloadBlob(content, filename, type){
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+}
+
+/* ===== Ensure XLSX (SheetJS) present ===== */
+async function ensureXLSX(){
+  if (window.XLSX) return;
+  const urls = [
+    "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
+    "https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
+    "https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
+  ];
+  for (const url of urls) {
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = url; s.async = true;
+        s.onload = resolve; s.onerror = () => reject(new Error("failed"));
+        document.head.appendChild(s);
+      });
+      if (window.XLSX) return;
+    } catch {}
+  }
+  throw new Error("Failed to load SheetJS (XLSX).");
+}
+
+/* ===== Export menu wiring ===== */
+const exportFileBtn  = document.getElementById('exportFileBtn');
+const exportMenu     = document.getElementById('exportMenu');
+const exportVlBtn    = document.getElementById('exportVlBtn');
+const exportTableBtn = document.getElementById('exportTableBtn');
+
+function toggleMenu(show){ exportMenu.classList.toggle('hidden', !show); }
+if (exportFileBtn) exportFileBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const isHidden = exportMenu.classList.contains('hidden');
+  toggleMenu(isHidden);
+});
+document.addEventListener('click', ()=> toggleMenu(false));
+
+/* ===== VL Summary (.txt) ===== */
+async function exportVlSummary(){
+  const names = getFilteredNamesForDashboard();
+  if (!names.length) { alert("No names match the current filter."); return; }
+
+  const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+  const lines = [];
+
+  for (const [name, data] of pairs) {
+    lines.push(name);
+    const vlDates = Object.entries(data || {})
+      .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
+      .map(([k]) => parseYMD(k))
+      .sort((a,b)=>a-b);
+
+    if (!vlDates.length) { lines.push("(no VL)"); lines.push(""); continue; }
+
+    const groups = {};
+    for (const d of vlDates) {
+      const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+      (groups[key] ||= []).push(d);
+    }
+    const keys = Object.keys(groups).sort();
+    for (const key of keys) {
+      const arr = groups[key];
+      const label = arr[0].toLocaleString(undefined, { month:'long', year:'numeric' });
+      const days = arr.map(d => d.getDate()).join(", ");
+      lines.push(label);
+      lines.push(days);
+    }
+    lines.push("");
+  }
+
+  const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
+  downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
+}
+
+/* ===== Table (.xlsx) ===== */
+async function exportTableXlsx(){
+  await ensureXLSX();
+  const names = getFilteredNamesForDashboard();
+  if (!names.length) { alert("No names match the current filter."); return; }
+
+  const dates = dateRangeList();
+  if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
+
+  const schedules = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+
+  const header = ["Name", ...dates];
+  const rows = [header];
+  const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
+
+  for (const [name, data] of schedules) {
+    const row = [name];
+    for (const d of dates) row.push(statusToCell(data?.[d] || ""));
+    rows.push(row);
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!freeze"] = { xSplit: 1, ySplit: 1 };
+  ws["!cols"] = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
+  XLSX.utils.book_append_sheet(wb, ws, "Schedule");
+
+  const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
+  XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
+}
+
+if (exportVlBtn)    exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportVlSummary(); });
+if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportTableXlsx(); });
+
 
 /* ===== Navigation ===== */
 document.getElementById('prevBtn').onclick = ()=>{
@@ -788,6 +915,7 @@ const $personnelView = document.getElementById('personnelView');
 const $dashboardView = document.getElementById('dashboardView');
 const $loadBtn = document.getElementById('loadBtn');
 const $saveBtn = document.getElementById('exportBtn');
+const $exportGroup = document.getElementById('exportGroup');
 
 const $fSupervisors = document.getElementById('fSupervisors');
 const $metricTotal  = document.getElementById('metricTotalVl');
@@ -831,18 +959,23 @@ function renderTypeSwitch(){
   const $work  = document.getElementById('btnWork');
   const $leave = document.getElementById('btnLeave');
   const $hint  = document.getElementById('typeSwitchHint');
-  const active   = 'bg-[#fcfcfc] text-[#0a0f1a] font-semibold';
-  const inactive = 'text-slate-200';
 
-  [$work,$leave].forEach(el=>el.className='px-3 py-1.5 text-sm hover:bg-slate-700/60 '+inactive);
+  const active   = 'bg-[#fcfcfc] text-[#0a0f1a] font-semibold border border-slate-500';
+  const inactive = 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/60';
+
+  [$work,$leave].forEach(el=>{
+    el.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + inactive;
+  });
+
   if(state.typeMode==='WORK'){
-    $work.className='px-3 py-1.5 text-sm '+active;
-    $hint.textContent='Showing: ON-SITE, WORK FROM HOME, OFFICE';
-  }else{
-    $leave.className='px-3 py-1.5 text-sm '+active;
-    $hint.textContent='Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
+    $work.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
+    $hint.textContent = 'Showing: ON-SITE, WORK FROM HOME, OFFICE';
+  } else {
+    $leave.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
+    $hint.textContent = 'Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
   }
 }
+
 document.getElementById('btnWork').onclick = ()=>{ if(state.typeMode!=='WORK'){ state.typeMode='WORK'; renderTypeSwitch(); buildDashboard(); } };
 document.getElementById('btnLeave').onclick= ()=>{ if(state.typeMode!=='LEAVE'){ state.typeMode='LEAVE'; renderTypeSwitch(); buildDashboard(); } };
 
@@ -891,8 +1024,10 @@ function enterDashboard(){
   $personnelView.classList.add('hidden');
   $dashboardView.classList.remove('hidden');
   document.getElementById('dashIcon').textContent = '👥';
+  $exportGroup.classList.remove('hidden');
   setDashToggleDisabled(false);
 }
+
 function exitDashboard(){
   $filtersWrap.classList.remove('hidden');
   $loadBtn.classList.remove('hidden');
@@ -900,8 +1035,10 @@ function exitDashboard(){
   $dashboardView.classList.add('hidden');
   $personnelView.classList.remove('hidden');
   document.getElementById('dashIcon').textContent = '🗓️';
+  $exportGroup.classList.add('hidden');
   updateDashToggleEligibility();
 }
+
 
 /* Populate supervisors with -ALL- (single select) */
 async function prepareDashboardFilters(){
