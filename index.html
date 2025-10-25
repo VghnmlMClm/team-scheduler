@@ -1229,16 +1229,10 @@ async function buildDashboard(){
     ? `Types: ${selectedTypes.map(c=>NAMES[c]||c).join(', ')}`
     : 'Types: (none)';
 
-  const selectedSupervisors = Array.from($fSupervisors.selectedOptions).map(o => o.value);
-  const selectedPositions   = Array.from($fPositions.selectedOptions).map(o => o.value);
+	const selectedSupervisors = Array.from($fSupervisors.selectedOptions).map(o => o.value);
+	let allowedNames = selectedSupervisors.length ? getSubtreeNames(selectedSupervisors) : getAllNames();
+	const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
 
-  let allowedNames = selectedSupervisors.length ? getSubtreeNames(selectedSupervisors) : getAllNames();
-
-  const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
-  if (selectedPositions.length) {
-    const set = new Set(selectedPositions);
-    allowedNames = allowedNames.filter(n => set.has(posMap.get(n) || 'Unspecified'));
-  }
 
   const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
 
@@ -1262,26 +1256,55 @@ async function buildDashboard(){
   // Build metric
   $metricTotal.textContent = String(totalRecords);
 
-  // Build center table (Date | Count | People (Name [CODE]))
-  const rows = Array.from(dateToPeople.entries())
-    .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
-    .sort((a,b)=>(a[0] < b[0] ? -1 : 1));
+	// Build center table:
+	const rows = Array.from(dateToPeople.entries())
+	  .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
+	  .sort((a,b)=> (a[0] < b[0] ? -1 : 1));
 
-  let html = '<thead><tr>';
-  html += '<th class="text-left">Date</th>';
-  html += '<th class="text-left">Count</th>';
-  html += '<th class="text-left">People</th>';
-  html += '</tr></thead><tbody>';
+	let html = '<thead><tr>';
+	html += '<th class="text-left">Date</th>';
+	html += '<th class="text-left">Count</th>';
+	html += '<th class="text-left">Details</th>';
+	html += '</tr></thead><tbody>';
 
-  for (const [d, people] of rows) {
-    const list = people.map(p => `${p.name} [${LABELS[p.code]||p.code}]`).join(', ');
-    html += `<tr>
-      <td class="whitespace-nowrap">${new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</td>
-      <td>${people.length}</td>
-      <td class="text-slate-300">${list}</td>
-    </tr>`;
-  }
-  html += '</tbody>';
+	for (const [d, people] of rows) {
+	  // group names by schedule code for this date
+	  const byCode = new Map();
+	  for (const p of people) {
+		if (!byCode.has(p.code)) byCode.set(p.code, []);
+		byCode.get(p.code).push(p.name);
+	  }
+
+	  // sort codes and names for stable output
+	  const codes = Array.from(byCode.keys()).sort((a,b) => (a < b ? -1 : 1));
+	  codes.forEach(c => byCode.set(c, byCode.get(c).sort((a,b)=>a.localeCompare(b))));
+
+	  const typesStr = codes.map(c => LABELS[c] || c).join(', ');
+	  const dateStr  = new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+
+	  // Summary row
+	  html += `<tr>
+		<td class="whitespace-nowrap align-top">${dateStr}</td>
+		<td class="align-top">${people.length}</td>
+		<td class="text-slate-300 align-top">[ ${typesStr || '—'} ]</td>
+	  </tr>`;
+
+	  // Detail rows per code
+	  for (const code of codes) {
+		const names = byCode.get(code);
+		html += `<tr>
+		  <td></td>
+		  <td></td>
+		  <td class="text-slate-300"><span class="font-semibold">${LABELS[code] || code}:</span> ${names.join(', ')}</td>
+		</tr>`;
+	  }
+	}
+
+	html += '</tbody>';
+	$centerTable.innerHTML = rows.length
+	  ? html
+	  : '<tbody><tr><td class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
+
   $centerTable.innerHTML = rows.length ? html : '<tbody><tr><td class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
 
 
