@@ -10,75 +10,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-  :root {
-    --brand:#2563eb;
-  }
-
-  html, body {
-    height:100%;
-  }
-
-  body {
-    font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background-color:#020617; /* almost black */
-    color:#e2e8f0;
-  }
-
-  /* Dark theme for all panels / cards */
-  header.grad,
-  main,
-  section,
-  aside,
-  footer,
-  .bg-slate-900,
-  .border-slate-800,
-  .border-slate-700 {
-    background-color:#0a0f1a !important; 
-    border-color:#1e293b !important;
-  }
-
-  /* Calendar & table contrast */
-  .day-cell { user-select:none }
-  .selected-day { outline:2px solid var(--brand); outline-offset:-2px }
-  .today-ring { box-shadow:inset 0 0 0 2px var(--brand) }
-  .muted { opacity:.35 }
-
-  /* Buttons & inputs */
-  select,
-  button {
-    background-color:#0f172a !important;
-    color:#f1f5f9 !important;
-    border-color:#1e293b !important;
-  }
-  select[multiple] option {
-    background-color:#0f172a;
-    color:#e2e8f0;
-  }
-  button:hover:not(:disabled) {
-    filter:brightness(1.15);
-  }
-
-  /* Table-like charts */
-  #centerTable th,
-  #centerTable td {
-    padding:8px 10px;
-    border-bottom:1px solid #1f2937;
-  }
-  #centerTable th {
-    position:sticky;
-    top:0;
-    background:#0f172a;
-  }
-
-  /* Gradient header tweak for darker mode */
-  header.grad {
-    background:linear-gradient(135deg,#1e3a8a 0%,#0369a1 100%);
-  }
-
-  .hover\:bg-slate-800:hover { background-color:#1e293b !important; }
-  .hover\:bg-slate-700\/60:hover { background-color:rgba(51,65,85,0.6) !important; }
-</style>
-
+    :root{--brand:#2563eb}
+    html,body{height:100%}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .day-cell{user-select:none}
+    .selected-day{outline:2px solid var(--brand); outline-offset:-2px}
+    .today-ring{box-shadow:inset 0 0 0 2px var(--brand)}
+    .muted{opacity:.35}
+    .grad{background:linear-gradient(135deg,#1d4ed8 0%,#06b6d4 100%)}
+    .hidden{display:none !important}
+    select[multiple] option{padding:4px}
+    #centerTable th,#centerTable td{padding:8px 10px; border-bottom:1px solid #1f2937}
+    #centerTable th{position:sticky; top:0; background:#0f172a}
+  </style>
 </head>
 
 <body class="bg-black text-slate-100">
@@ -1134,72 +1078,48 @@ function exitDashboard(){
   updateDashToggleEligibility();
 }
 
-function getPositionsUnderSupervisors(supervisors){
-  // names in the subtree(s)
-  const names = supervisors.length ? getSubtreeNames(supervisors) : getAllNames();
-  // map names -> positions from RESPONDERS
-  const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
-  const set = new Set();
-  names.forEach(n => set.add(posMap.get(n) || 'Unspecified'));
-  return Array.from(set).sort();
-}
-
-function rebuildPositionsForCurrentSelection(){
-  if (!$fPositions || !$fSupervisors) return;
-  const supervisors = Array.from($fSupervisors.selectedOptions).map(o => o.value);
-  const prevSelected = new Set(Array.from($fPositions.selectedOptions).map(o => o.value));
-
-  const list = getPositionsUnderSupervisors(supervisors);
-  // rebuild options
-  $fPositions.innerHTML = list.map(p => `<option>${p}</option>`).join('');
-
-  // keep any previously selected positions if still valid
-  Array.from($fPositions.options).forEach(opt => {
-    opt.selected = prevSelected.has(opt.value);
-  });
-}
-
-
 /* Fill filter lists (supervisors = only names with TEAM) + click-to-toggle selection */
 async function prepareDashboardFilters(){
   const supList = ORG_SUPERVISORS.slice().sort();
   $fSupervisors.innerHTML = supList.map(n => `<option>${n}</option>`).join('');
 
-  // Initial positions (all) until a supervisor is picked
   const allPos = getAllPositions();
   $fPositions.innerHTML = allPos.map(p => `<option>${p}</option>`).join('');
 
-  $metricRange.textContent = fmtRange();
-
-  // Normal onchange still triggers dashboard build
-  $fSupervisors.onchange = () => {
-    rebuildPositionsForCurrentSelection();
-    buildDashboard();
-  };
-  $fPositions.onchange   = buildDashboard;
-
-  // Click-to-toggle multiselect (no Ctrl/Cmd) for Supervisors
-  $fSupervisors.addEventListener("mousedown", e => {
-    const option = e.target;
-    if (option && option.tagName === "OPTION") {
-      e.preventDefault();               // prevent default selection-clearing behavior
-      option.selected = !option.selected;
-      rebuildPositionsForCurrentSelection();
-      buildDashboard();
+  // Safe toggle helper with error guard
+  function safeBuildDashboard() {
+    try { buildDashboard(); }
+    catch (err) {
+      console.error('buildDashboard error:', err);
+      // keep UI responsive even if a data issue occurs
     }
-  });
+  }
 
-  // Click-to-toggle multiselect (no Ctrl/Cmd) for Positions as well
-  $fPositions.addEventListener("mousedown", e => {
-    const option = e.target;
-    if (option && option.tagName === "OPTION") {
-      e.preventDefault();
-      option.selected = !option.selected;
-      buildDashboard();
-    }
+  function toggleSelectOption(selectEl, option) {
+    option.selected = !option.selected;
+    // Force a "change" event so any listeners tied to it still run
+    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+    // And rebuild safely
+    safeBuildDashboard();
+    // Avoid the browser changing selection after our manual toggle
+    selectEl.blur();
+  }
+
+  // Standard change listeners
+  $fSupervisors.onchange = safeBuildDashboard;
+  $fPositions.onchange   = safeBuildDashboard;
+
+  // Robust click-to-toggle without Ctrl/Cmd
+  [$fSupervisors, $fPositions].forEach(selectEl => {
+    selectEl.addEventListener('mousedown', e => {
+      // Only intercept when actually clicking an OPTION element
+      const option = e.target && e.target.closest && e.target.closest('option');
+      if (!option || option.disabled) return;
+      e.preventDefault(); // stop native selection behavior
+      toggleSelectOption(selectEl, option);
+    });
   });
 }
-
 
 
 /* Auto-apply selected Name as supervisor (one-time on entry) */
