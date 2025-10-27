@@ -9,9 +9,9 @@
       { "NAME": "Encarnado, Gerik Ivan", "POSITION": "SENIOR GIS SPECIALIST" },
       { "NAME": "See, Eliza Kathleen", "POSITION": "SENIOR GIS SPECIALIST" },
       { "NAME": "Wenceslao, Roesel", "POSITION": "SENIOR GIS SPECIALIST" },
-      { "NAME": "Zapanta, Andrew", "POSITION": "SENIOR GIS OPERATOR"},
-      { "NAME":"Sana, Abegail", "POSITION": "LEAD SENIOR LAND TECHNICAL SPECIALIST"},
-      { "NAME": "Cutamora, Marc Justin", "POSITION": "LEAD SENIOR LAND TECHNICAL SPECIALIST"} 
+      { "NAME": "Zapanta, Andrew", "POSITION": "SENIOR GIS OPERATOR" },
+      { "NAME": "Sana, Abegail", "POSITION": "LEAD SENIOR LAND TECHNICAL SPECIALIST" },
+      { "NAME": "Cutamora, Marc Justin", "POSITION": "LEAD SENIOR LAND TECHNICAL SPECIALIST" }
     ]
   },
   {
@@ -67,10 +67,10 @@
       { "NAME": "Ordoño, Abigail Jafet", "POSITION": "JUNIOR GIS SPECIALIST" }
     ]
   },
-  { 
+  {
     "NAME": "Zapanta, Andrew",
-	"POSITION": "SENIOR GIS OPERATOR",
-	"TEAM": [
+    "POSITION": "SENIOR GIS OPERATOR",
+    "TEAM": [
       { "NAME": "Cruz, Vjan Michael", "POSITION": "JUNIOR GIS OPERATOR" },
       { "NAME": "Concepcion, Jamaica", "POSITION": "JUNIOR GIS OPERATOR" },
       { "NAME": "Llegue, Michelle", "POSITION": "JUNIOR GIS OPERATOR" },
@@ -78,28 +78,28 @@
       { "NAME": "Salcedo, Francis", "POSITION": "JUNIOR GIS OPERATOR" }
     ]
   },
-  { 
+  {
     "NAME": "Sana, Abegail",
-	"POSITION": "SENIOR LAND TECHNICAL SPECIALIST",
-	"TEAM": [
+    "POSITION": "SENIOR LAND TECHNICAL SPECIALIST",
+    "TEAM": [
       { "NAME": "Cruz, Jan Michael Vincent", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Dancel, Angelic", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Castilla, Regine", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Reboroso, Sunrise", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Rollo, Mark Gil", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
-      { "NAME": "Tumbaga, Nicole", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
+      { "NAME": "Tumbaga, Nicole", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" }
     ]
   },
-  { 
+  {
     "NAME": "Cutamora, Marc Justin",
-	"POSITION": "SENIOR LAND TECHNICAL SPECIALIST",
-	"TEAM": [
+    "POSITION": "SENIOR LAND TECHNICAL SPECIALIST",
+    "TEAM": [
       { "NAME": "Bernabe, Christopher", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Lorenzo, Lindley", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Dacayanan, Jessa Mae", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Datul, Pel-jay", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
       { "NAME": "Felipe, Roberto Jr.", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
-      { "NAME": "Pacada, Roniel", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
+      { "NAME": "Pacada, Roniel", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" }
     ]
   }
 ]
