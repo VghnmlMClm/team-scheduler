@@ -1186,17 +1186,26 @@ async function buildDashboard(){
 	  });
 
 		codes.forEach((code, idx) => {
-		  const names = byCode[code].slice().sort((a,b)=>a.localeCompare(b)); // full names
+		  const names = byCode[code].slice().sort((a,b)=>a.localeCompare(b));
 		  const dateCell = idx === 0 ? dateLabel : '';
 		  const countCell = names.length;
-		  const details  = `<span class="font-semibold">${code}:</span> ${names.join(', ')}`;
+		  const nameLines = names.map(n => `<div>${n}</div>`).join('');
+		  const details = `
+			<div>
+			  <div class="font-semibold text-slate-100 mb-1">${code}</div>
+			  <div class="pl-3 border-l border-slate-700 space-y-1">${nameLines}</div>
+			</div>
+		  `;
 
-		  html += `<tr>
-			<td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
-			<td>${countCell}</td>
-			<td class="text-slate-300">${details}</td>
-		  </tr>`;
+		  html += `
+			<tr class="align-top">
+			  <td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
+			  <td>${countCell}</td>
+			  <td class="text-slate-300">${details}</td>
+			</tr>
+		  `;
 		});
+
 
 	}
 
