@@ -1166,8 +1166,9 @@ async function buildDashboard(){
 	  codes.forEach((code, idx) => {
 		const dateCell = idx === 0 ? dateLabel : '';
 		const countCell = names.length; // per-code count
-		const names = byCode[code].slice().sort((a,b)=> toSurname(a).localeCompare(toSurname(b)));
-		const details = `${code}: [${names.map(toSurname).join(', ')}]`;
+		const names = byCode[code].sort((a,b)=>a.localeCompare(b));
+		const details  = `${code}: ${names.join(', ')}`;
+
 
 
 		html += `<tr>
