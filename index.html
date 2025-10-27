@@ -57,6 +57,13 @@
       background-color:#fcfcfc !important;
       color:#0a0f1a !important;
     }
+	
+	/* Center table polish */
+	#centerTable th, #centerTable td { padding: .5rem .75rem; border-bottom: 1px solid #1e293b; }
+	#centerTable th:first-child, #centerTable td:first-child { width: 170px; white-space: nowrap; }
+	#centerTable th:nth-child(2), #centerTable td:nth-child(2) { width: 72px; }
+	#centerTable tbody tr:hover td { background-color: #0f172a; }
+
   </style>
 </head>
 
@@ -191,7 +198,7 @@
 	</aside>
 
     <!-- CENTER -->
-    <div class="lg:col-span-6 space-y-4">
+    <div class="lg:col-span-9 space-y-4">
       <!-- TOTAL -->
       <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
         <div class="text-xs text-slate-400">TOTAL RECORDS (Selected Types)</div>
@@ -263,6 +270,13 @@ const uniq = arr => [...new Set(arr)];
 function fmtMMMDDYYYY(d){const MMM=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;}
 function hexToRGB(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); const n=parseInt(hex,16); return {r:(n>>16)&255, g:(n>>8)&255, b:(n&255)}; }
 function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(g*587)+(b*114))/1000; return yiq>=128 ? 'text-black' : 'text-white'; }
+function toSurname(full){
+  if(!full) return '';
+  const partsByComma = full.split(',');
+  if (partsByComma.length > 1) return partsByComma[0].trim();
+  const parts = full.trim().split(/\s+/);
+  return parts[parts.length - 1] || '';
+}
 
 /* ===== State ===== */
 const state = {
@@ -1129,7 +1143,6 @@ async function buildDashboard(){
   $metricTotal.textContent = String(totalRecords);
 
 	// Build center table in requested layout:
-	// DATE  | COUNT(per-code) | DETAILS (CODE: [names])
 	let html = '<thead><tr>';
 	html += '<th class="text-left">Date</th>';
 	html += '<th class="text-left">Count</th>';
@@ -1151,13 +1164,14 @@ async function buildDashboard(){
 	  });
 
 	  codes.forEach((code, idx) => {
-		const names = byCode[code].sort((a,b)=>a.localeCompare(b));
 		const dateCell = idx === 0 ? dateLabel : '';
 		const countCell = names.length; // per-code count
-		const details  = `${code}: ${names.join(', ')}`;
+		const names = byCode[code].slice().sort((a,b)=> toSurname(a).localeCompare(toSurname(b)));
+		const details = `${code}: [${names.map(toSurname).join(', ')}]`;
+
 
 		html += `<tr>
-		  <td class="whitespace-nowrap">${dateCell}</td>
+		  <td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
 		  <td>${countCell}</td>
 		  <td class="text-slate-300">${details}</td>
 		</tr>`;
@@ -1167,7 +1181,7 @@ async function buildDashboard(){
 	html += '</tbody>';
 	$centerTable.innerHTML = rows.length
 	  ? html
-	  : '<tbody><tr><td class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
+	  : '<tbody><tr><td colspan="3" class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
 
   // Incomplete list (strict) — only filtered by supervisor
   const nameToData = new Map(pairs.map(([n,d])=>[n,d||{}]));
