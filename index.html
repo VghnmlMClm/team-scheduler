@@ -1267,25 +1267,36 @@ async function buildDashboard(){
   }
   $metricTotal.textContent = String(totalRecords);
 
-	// ===== WARNING: Days when everyone is on leave =====
+	// ===== WARNING: Days when everyone (EXCEPT the immediate supervisor) is on leave =====
 	const leaveCodes = ['VL','AA','PTO','PL','ML','BDL'];
-	const teamNames = allowedNames;
 	const warningEl = document.getElementById('warningList');
 
-	const warningDates = [];
-	for (const d of dates) {
-	  const people = pairs.map(([name, sched]) => sched?.[d]).filter(v => v);
-	  if (people.length === teamNames.length && people.every(v => leaveCodes.includes(v))) {
-		warningDates.push(fmtMMMDDYYYY(parseYMD(d)));
-	  }
-	}
-
-	if (warningDates.length) {
-	  warningEl.innerHTML = warningDates.map(date =>
-		`<div class="text-red-300 font-medium">${date}</div>`
-	  ).join('');
+	// If filtering "ALL", we can't know each team's supervisor—show a hint instead
+	const supVal = ($fSupervisors.value || '__ALL__');
+	if (supVal === '__ALL__') {
+	  warningEl.innerHTML = `<div class="text-slate-500 text-xs italic">
+		Select an Immediate Supervisor to see full-team leave days (supervisor excluded).
+	  </div>`;
 	} else {
-	  warningEl.innerHTML = `<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>`;
+	  // Subtree under selected supervisor, EXCLUDING the supervisor themself
+	  const teamWithoutSupervisor = getSubtreeNames([supVal]).filter(n => n !== supVal);
+
+	  // Build a quick name -> schedule map from the already-fetched pairs
+	  const schedByName = new Map(pairs.map(([n, d]) => [n, d || {}]));
+
+	  const warningDates = [];
+	  for (const d of dates) {
+		if (teamWithoutSupervisor.length === 0) continue; // no direct reports
+		const everyoneOnLeave = teamWithoutSupervisor.every(n => {
+		  const code = schedByName.get(n)?.[d] || '';
+		  return leaveCodes.includes(code);
+		});
+		if (everyoneOnLeave) warningDates.push(fmtMMMDDYYYY(parseYMD(d)));
+	  }
+
+	  warningEl.innerHTML = warningDates.length
+		? warningDates.map(date => `<div class="text-red-300 font-medium">${date}</div>`).join('')
+		: `<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>`;
 	}
 
 	// Build center table in requested layout:
