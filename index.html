@@ -316,7 +316,15 @@ const state = {
 };
 
 /* ===== Config & Holidays ===== */
-let CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
+let CONFIG = {
+  START_DATE: null,
+  END_DATE: null,
+  HOLIDAYS_SET: new Set(),
+  DEADLINE_AT: null,
+  DEADLINE_DATE_STR: null,
+  DEADLINE_TIME_STR: null
+};
+
 const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
 const dateInRange = d => {
   if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
@@ -328,13 +336,28 @@ async function loadConfig(){
   try{
     const r = await fetch(CONFIG_URL);
     const j = await r.json();
-    CONFIG.START_DATE  = parseDateStr(j.START_DATE);
-    CONFIG.END_DATE    = parseDateStr(j.END_DATE);
+    CONFIG.START_DATE   = parseDateStr(j.START_DATE);
+    CONFIG.END_DATE     = parseDateStr(j.END_DATE);
     CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
+
+    CONFIG.DEADLINE_DATE_STR = j["DEADLINE DATE"] || null;
+    CONFIG.DEADLINE_TIME_STR = j["DEADLINE TIME"] || null;
+    CONFIG.DEADLINE_AT       = (CONFIG.DEADLINE_DATE_STR && CONFIG.DEADLINE_TIME_STR)
+      ? buildDeadline(CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR)
+      : null;
+
   }catch{
-    CONFIG = { START_DATE: null, END_DATE: null, HOLIDAYS_SET: new Set() };
+    CONFIG = {
+      START_DATE: null,
+      END_DATE: null,
+      HOLIDAYS_SET: new Set(),
+      DEADLINE_AT: null,
+      DEADLINE_DATE_STR: null,
+      DEADLINE_TIME_STR: null
+    };
   }
 }
+
 function clampView(year, month) {
   if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
   const monthLast  = new Date(year, month+1, 0);
@@ -704,6 +727,11 @@ function wireResponderEvents() {
 
 /* ===== Save via Worker (includes preset HOL & RD) ===== */
 async function uploadScheduleViaProxy(){
+  if (isPastDeadline()){
+    const when = [CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ');
+    alert(`Saving is locked.\nDeadline was ${when}.\nPlease contact GDS-Voughn Calma.`);
+    return;
+  }
   const exportBtn = document.getElementById('exportBtn');
   const selName = document.getElementById('selName');
   const selTeam = document.getElementById('selTeam');
@@ -819,6 +847,35 @@ document.getElementById('loadBtn').onclick = async () => {
 };
 
 /* ===== Export helpers (used by dashboard too if needed) ===== */
+function parseGmtTime(str){
+  // Accepts: "GMT+8 1700", "GMT+08:00 17:00", "+08:00 17:00"
+  const s = String(str || '').trim();
+  const m = s.match(/(?:GMT)?\s*([+-]\d{1,2})(?::?(\d{2}))?\s+(\d{2}):?(\d{2})/i);
+  if (!m) return null;
+  const offH = parseInt(m[1], 10);
+  const offM = parseInt(m[2] || '0', 10);
+  const hh   = parseInt(m[3], 10);
+  const mm   = parseInt(m[4], 10);
+  if (isNaN(offH) || isNaN(offM) || isNaN(hh) || isNaN(mm)) return null;
+  return { offH, offM, hh, mm };
+}
+
+function buildDeadline(dateStr, timeStr){
+  const d = parseDateStr(dateStr);
+  const t = parseGmtTime(timeStr);
+  if (!d || !t) return null;
+  // Local time at GMT+X converted to UTC => subtract the offset
+  const utcMs = Date.UTC(
+    d.getFullYear(), d.getMonth(), d.getDate(),
+    t.hh - t.offH, t.mm - t.offM, 0, 0
+  );
+  return new Date(utcMs);
+}
+
+function isPastDeadline(){
+  return !!CONFIG.DEADLINE_AT && Date.now() > CONFIG.DEADLINE_AT.getTime();
+}
+
 function dateRangeList() {
   const out = [];
   if (!CONFIG.START_DATE || !CONFIG.END_DATE) return out;
@@ -1272,6 +1329,15 @@ async function buildDashboard(){
 (async () => {
   loadStore();
   await loadConfig();
+  if (isPastDeadline()){
+	  const saveBtn = document.getElementById('exportBtn');
+	  if (saveBtn){
+		saveBtn.disabled = true;
+		saveBtn.title = `Deadline passed: ${[CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ')}`;
+		saveBtn.classList.add('opacity-60','cursor-not-allowed');
+	  }
+	}
+
   updateTitleFromConfig();
   await loadResponders();
   await loadOrganization();
