@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
-  tailwind.config = { darkMode: 'class' } // dark styles only apply if you add `class="dark"` manually
+  tailwind.config = { darkMode: 'class' }
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
@@ -352,7 +352,7 @@ function updateTitleFromConfig(){
 
 /* ===== Organization ===== */
 let ORG_INDEX = new Map();
-let ORG_SUPERVISORS = []; // names that have TEAM
+let ORG_SUPERVISORS = [];
 
 async function loadOrganization(){
   try{
