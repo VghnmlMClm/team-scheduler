@@ -27,7 +27,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./   # serve files from repo root
+          path: ./
 
   deploy:
     runs-on: ubuntu-latest
