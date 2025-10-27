@@ -260,6 +260,22 @@ const COLORS = Object.fromEntries([
   ['HOL', '#ffff00']  // holidays
 ]);
 
+/*======INSTRUCTIONS======*/
+function showIntroModal(show = true){
+  const m = document.getElementById('introModal');
+  if (!m) return;
+  m.classList.toggle('hidden', !show);
+  if (show) setTimeout(()=>document.getElementById('introCloseBtn')?.focus(), 0);
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target?.id === 'introCloseBtn') {
+    showIntroModal(false);
+    localStorage.setItem('introSeen', '1');
+  }
+});
+
+
 /* ===== Helpers ===== */
 const stripMeta = o => Object.fromEntries(Object.entries(o||{}).filter(([k]) => !k.startsWith("_")));
 const pad = n => String(n).padStart(2,'0');
@@ -1259,5 +1275,33 @@ async function buildDashboard(){
   updateDashToggleEligibility();
 })();
 </script>
+
+
+<div id="introModal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center hidden">
+  <div class="w-[min(680px,92vw)] rounded-2xl border border-slate-700 bg-[#0a0f1a] shadow-2xl p-5">
+    <h2 class="text-lg font-semibold mb-3">Quick Start</h2>
+    <pre class="whitespace-pre-wrap text-sm leading-relaxed bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-slate-200">
+
+(1)	SELECT TEAM
+	SELECT POSITION
+	SELECT NAME *IMPORTANT*
+
+
+(2)	SELECT DATE/S
+	SELECT WORK SETUP/LEAVES FOR SELECTED DATE/S
+	REPEAT TIL COMPLETE
+
+(3)	SAVE
+	WAIT FOR POP UP CONFIRMATION
+	IF NO CONFIRMATION, CONTACT GDS-VOUGHN CALMA
+
+</pre>
+    <div class="mt-4 text-right">
+      <button id="introCloseBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800">GOTCHA</button>
+    </div>
+  </div>
+</div>
+
+
 </body>
 </html>
