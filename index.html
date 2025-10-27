@@ -188,7 +188,7 @@
 
 	  <!-- INCOMPLETE SCHEDULES (moved here) -->
 	  <hr class="my-4 border-slate-700">
-	  <h3 class="text-sm font-semibold mb-2 text-slate-200">INCOMPLETE SCHEDULES (Selected Supervisor)</h3>
+	  <h3 class="text-sm font-semibold mb-2 text-slate-200">INCOMPLETE SCHEDULES (Per Immediate Supervisor Team)</h3>
 	  <div id="missingSubtitle" class="text-[11px] text-slate-500 mb-2">
 		People with incomplete schedules in config range.
 	  </div>
@@ -201,14 +201,14 @@
     <div class="lg:col-span-9 space-y-4">
       <!-- TOTAL -->
       <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
-        <div class="text-xs text-slate-400">TOTAL RECORDS (Selected Types)</div>
+        <div class="text-xs text-slate-400">TOTAL RECORDS (FILTERED)</div>
         <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
       </div>
 
       <!-- Table -->
       <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
         <div class="flex items-baseline justify-between">
-          <h2 class="text-sm font-semibold mb-2 text-slate-200">Dates with Selected Schedules</h2>
+          <h2 class="text-sm font-semibold mb-2 text-slate-200">Schedule Summary</h2>
           <span id="currentTypeCaption" class="text-[11px] text-slate-400"></span>
         </div>
         <div class="w-full overflow-auto max-h-[520px]">
@@ -270,13 +270,6 @@ const uniq = arr => [...new Set(arr)];
 function fmtMMMDDYYYY(d){const MMM=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;}
 function hexToRGB(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); const n=parseInt(hex,16); return {r:(n>>16)&255, g:(n>>8)&255, b:(n&255)}; }
 function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(g*587)+(b*114))/1000; return yiq>=128 ? 'text-black' : 'text-white'; }
-function toSurname(full){
-  if(!full) return '';
-  const partsByComma = full.split(',');
-  if (partsByComma.length > 1) return partsByComma[0].trim();
-  const parts = full.trim().split(/\s+/);
-  return parts[parts.length - 1] || '';
-}
 
 /* ===== State ===== */
 const state = {
