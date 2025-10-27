@@ -214,11 +214,23 @@
 
     <!-- CENTER -->
     <div class="lg:col-span-9 space-y-4">
-      <!-- TOTAL -->
-      <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
-        <div class="text-xs text-slate-400">TOTAL RECORDS (FILTERED)</div>
-        <div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
-      </div>
+	<!-- TOTAL + WARNING -->
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+	  <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
+		<div class="text-xs text-slate-400">TOTAL RECORDS (FILTERED)</div>
+		<div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
+	  </div>
+
+	  <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
+		<div class="text-xs text-red-400 flex items-center gap-2">
+		  ⚠ WARNING
+		</div>
+		<div id="warningList" class="text-sm mt-2 text-slate-200 space-y-1">
+		  <div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>
+		</div>
+	  </div>
+	</div>
+
 
       <!-- Table -->
       <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
@@ -1254,6 +1266,27 @@ async function buildDashboard(){
     }
   }
   $metricTotal.textContent = String(totalRecords);
+
+	// ===== WARNING: Days when everyone is on leave =====
+	const leaveCodes = ['VL','AA','PTO','PL','ML','BDL'];
+	const teamNames = allowedNames;
+	const warningEl = document.getElementById('warningList');
+
+	const warningDates = [];
+	for (const d of dates) {
+	  const people = pairs.map(([name, sched]) => sched?.[d]).filter(v => v);
+	  if (people.length === teamNames.length && people.every(v => leaveCodes.includes(v))) {
+		warningDates.push(fmtMMMDDYYYY(parseYMD(d)));
+	  }
+	}
+
+	if (warningDates.length) {
+	  warningEl.innerHTML = warningDates.map(date =>
+		`<div class="text-red-300 font-medium">${date}</div>`
+	  ).join('');
+	} else {
+	  warningEl.innerHTML = `<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>`;
+	}
 
 	// Build center table in requested layout:
 	let html = '<thead><tr>';
