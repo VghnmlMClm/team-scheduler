@@ -1,14 +1,29 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0f1a">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+  tailwind.config = { darkMode: 'class' } // dark styles only apply if you add `class="dark"` manually
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+	:root, html { color-scheme: dark; }
+	input, select, textarea, button {
+	  color-scheme: dark;
+	  background-color: #0f172a;
+	  color: #f1f5f9;
+	  border-color: #1e293b;
+	}
+	img, video, canvas, svg { filter: none; }
+	iframe { color-scheme: dark; background: transparent; }
+
     :root{--brand:#2563eb}
     html,body{height:100%}
     body{
@@ -1290,8 +1305,7 @@ showIntroModal(true);
     <h2 class="text-lg font-semibold mb-3">INSTRUCTIONS!!!</h2>
     <div class="text-sm leading-relaxed text-slate-200 space-y-4">
       <p class="text-[#0a0f1a] italic text-center font-semibold">
-        IF SITE IS NOT INTUITIVE ENOUGH<br>
-        (looking at you, Ma'am Jonalyn)
+        IF SITE IS NOT INTUITIVE ENOUGH (looking at you, Ma'am Jonalyn)
       </p>
 
       <div>
