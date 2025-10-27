@@ -340,6 +340,7 @@ async function loadConfig(){
     CONFIG.END_DATE     = parseDateStr(j.END_DATE);
     CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
 
+    // Deadline fields
     CONFIG.DEADLINE_DATE_STR = j["DEADLINE DATE"] || null;
     CONFIG.DEADLINE_TIME_STR = j["DEADLINE TIME"] || null;
     CONFIG.DEADLINE_AT       = (CONFIG.DEADLINE_DATE_STR && CONFIG.DEADLINE_TIME_STR)
@@ -357,6 +358,7 @@ async function loadConfig(){
     };
   }
 }
+
 
 function clampView(year, month) {
   if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
@@ -856,7 +858,7 @@ function parseGmtTime(str){
   const offM = parseInt(m[2] || '0', 10);
   const hh   = parseInt(m[3], 10);
   const mm   = parseInt(m[4], 10);
-  if (isNaN(offH) || isNaN(offM) || isNaN(hh) || isNaN(mm)) return null;
+  if ([offH,offM,hh,mm].some(Number.isNaN)) return null;
   return { offH, offM, hh, mm };
 }
 
@@ -864,7 +866,7 @@ function buildDeadline(dateStr, timeStr){
   const d = parseDateStr(dateStr);
   const t = parseGmtTime(timeStr);
   if (!d || !t) return null;
-  // Local time at GMT+X converted to UTC => subtract the offset
+  // Convert local(GMT+offset) to UTC by subtracting the offset
   const utcMs = Date.UTC(
     d.getFullYear(), d.getMonth(), d.getDate(),
     t.hh - t.offH, t.mm - t.offM, 0, 0
@@ -875,6 +877,7 @@ function buildDeadline(dateStr, timeStr){
 function isPastDeadline(){
   return !!CONFIG.DEADLINE_AT && Date.now() > CONFIG.DEADLINE_AT.getTime();
 }
+
 
 function dateRangeList() {
   const out = [];
@@ -1329,7 +1332,7 @@ async function buildDashboard(){
 (async () => {
   loadStore();
   await loadConfig();
-  if (isPastDeadline()){
+	if (isPastDeadline()){
 	  const saveBtn = document.getElementById('exportBtn');
 	  if (saveBtn){
 		saveBtn.disabled = true;
