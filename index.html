@@ -593,7 +593,33 @@ function populateRespondersUI(changed = null) {
   if (changed === "POSITION") { cur.NAME = ""; }
 
   const all = RESPONDERS;
-  const uniqVals = (arr, field) => uniq(arr.map(r => normVal(r[field]))).sort();
+	const POSITION_ORDER = [
+	  "MANAGER",
+	  "DEPUTY MANAGER",
+	  "LEAD SENIOR LAND TECHNICAL SPECIALIST",
+	  "SENIOR LAND TECHNICAL SPECIALIST",
+	  "SENIOR GIS SPECIALIST",
+	  "SENIOR GIS OPERATOR",
+	  "JUNIOR LAND TECHNICAL SPECIALIST",
+	  "JUNIOR GIS SPECIALIST",
+	  "JUNIOR GIS OPERATOR"
+	];
+
+	const uniqVals = (arr, field) => {
+	  const vals = uniq(arr.map(r => normVal(r[field]))).filter(Boolean);
+	  if (field === "POSITION") {
+		return vals.sort((a, b) => {
+		  const ia = POSITION_ORDER.indexOf(a.toUpperCase());
+		  const ib = POSITION_ORDER.indexOf(b.toUpperCase());
+		  if (ia === -1 && ib === -1) return a.localeCompare(b);
+		  if (ia === -1) return 1;   // items not in the list go after
+		  if (ib === -1) return -1;
+		  return ia - ib;
+		});
+	  }
+	  return vals.sort();
+	};
+
 
   const teamValues = uniqVals(all, "TEAM");
   if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
