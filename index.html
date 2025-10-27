@@ -822,6 +822,18 @@ function downloadBlob(content, filename, type){
   a.click();
   setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
 }
+const POSITION_ORDER_EXPORT = [
+  "MANAGER",
+  "DEPUTY MANAGER",
+  "LEAD SENIOR LAND TECHNICAL SPECIALIST",
+  "SENIOR LAND TECHNICAL SPECIALIST",
+  "SENIOR GIS SPECIALIST",
+  "SENIOR GIS OPERATOR",
+  "JUNIOR LAND TECHNICAL SPECIALIST",
+  "JUNIOR GIS SPECIALIST",
+  "JUNIOR GIS OPERATOR"
+];
+
 
 /* ===== Ensure XLSX (SheetJS) present ===== */
 async function ensureXLSX(){
@@ -905,14 +917,31 @@ async function exportTableXlsx(){
   const dates = dateRangeList();
   if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
 
-  const schedules = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+	// include position and sort by POSITION_ORDER_EXPORT
+	const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || "Unspecified"]));
+	const schedules = await Promise.all(names.map(async n => {
+	  const data = await fetchScheduleData(n);
+	  const pos  = posMap.get(n) || "Unspecified";
+	  return [n, pos, data];
+	}));
 
-  const header = ["Name", ...dates];
+	schedules.sort((a, b) => {
+	  const ia = POSITION_ORDER_EXPORT.indexOf(a[1].toUpperCase());
+	  const ib = POSITION_ORDER_EXPORT.indexOf(b[1].toUpperCase());
+	  if (ia === -1 && ib === -1) return a[1].localeCompare(b[1]);
+	  if (ia === -1) return 1;
+	  if (ib === -1) return -1;
+	  return ia - ib;
+	});
+
+
+  const header = ["Position", "Name", ...dates];
   const rows = [header];
   const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
 
-  for (const [name, data] of schedules) {
-    const row = [name];
+	for (const [name, pos, data] of schedules) {
+	  const row = [pos, name];
+
     for (const d of dates) row.push(statusToCell(data?.[d] || ""));
     rows.push(row);
   }
@@ -1156,20 +1185,19 @@ async function buildDashboard(){
 		month:'short', day:'numeric', year:'numeric'
 	  });
 
-	  codes.forEach((code, idx) => {
-		const dateCell = idx === 0 ? dateLabel : '';
-		const countCell = names.length; // per-code count
-		const names = byCode[code].sort((a,b)=>a.localeCompare(b));
-		const details  = `${code}: ${names.join(', ')}`;
+		codes.forEach((code, idx) => {
+		  const names = byCode[code].slice().sort((a,b)=>a.localeCompare(b)); // full names
+		  const dateCell = idx === 0 ? dateLabel : '';
+		  const countCell = names.length;
+		  const details  = `<span class="font-semibold">${code}:</span> ${names.join(', ')}`;
 
+		  html += `<tr>
+			<td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
+			<td>${countCell}</td>
+			<td class="text-slate-300">${details}</td>
+		  </tr>`;
+		});
 
-
-		html += `<tr>
-		  <td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
-		  <td>${countCell}</td>
-		  <td class="text-slate-300">${details}</td>
-		</tr>`;
-	  });
 	}
 
 	html += '</tbody>';
