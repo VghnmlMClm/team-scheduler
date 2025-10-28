@@ -257,6 +257,9 @@ const PROXY_URL   = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
 const RESPONDERS_URL = "Responders.json";
 const CONFIG_URL  = "config.json";
 const ORG_URL     = "organization.json";
+const SITE_ASSIGN_URL = "site assignment.json";
+const PULLOUT_RULES_URL = "pullout-deployment.json";
+
 
 /* ===== Schedules ===== */
 const SCHEDULE_OPTIONS = [
@@ -418,6 +421,185 @@ async function loadOrganization(){
 		ORG_SUPERVISORS = [];
 	}
 }
+
+/* ===== Deployment/Pullout Data ===== */
+let SITE_ASSIGN = {};      // { siteName: [ "Last, First", ... ] }
+let PULLOUT_RULES = [];    // [ { Site, CYCLE, WEEK, DAY }, ... ]
+
+async function loadDeploymentData(){
+	try{
+		const [saRes, prRes] = await Promise.all([
+			fetch(SITE_ASSIGN_URL), fetch(PULLOUT_RULES_URL)
+		]);
+		SITE_ASSIGN   = await saRes.json();         // site -> array of names
+		PULLOUT_RULES = await prRes.json();         // array of rules
+	}catch(e){
+		console.error("Deployment data load failed", e);
+		SITE_ASSIGN = {}; 
+		PULLOUT_RULES = [];
+	}
+}
+
+/* Find the assigned site by full name exactly as listed */
+function findSiteForName(fullName){
+	for (const [site, people] of Object.entries(SITE_ASSIGN || {})){
+		if (Array.isArray(people) && people.includes(fullName)) return site;
+	}
+	return null;
+}
+
+/* Find rule row by site */
+function findRuleForSite(site){
+	return (PULLOUT_RULES || []).find(r => (r?.Site||"") === site) || null;
+}
+
+/* ===== Workweek helpers (Mon–Fri; holidays stay in the week) ===== */
+function firstMondayOfYear(year){
+	const d = new Date(year, 0, 1); // Jan 1
+	const wd = d.getDay();          // 0 Sun .. 6 Sat
+	const offset = (wd === 0) ? 1 : (wd <= 1 ? 1 - wd : 8 - wd); // to Monday
+	d.setDate(d.getDate() + offset);
+	return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function workweekStartByIndex(year, weekIndex1){
+	const firstMon = firstMondayOfYear(year);
+	const d = new Date(firstMon);
+	d.setDate(d.getDate() + 7*(weekIndex1-1));
+	return d; // Monday
+}
+
+/* Return an array of Date objects for the workdays (Mon–Fri) inside [start, end],
+   skipping weekends and using your HOLIDAYS_SET to mark non-working days. */
+function listWorkdays(startDate, endDate){
+	const out = [];
+	const d = new Date(startDate);
+	while (d <= endDate){
+		const wd = d.getDay();
+		if (wd >= 1 && wd <= 5 && !isHoliday(d)) out.push(new Date(d));
+		d.setDate(d.getDate()+1);
+	}
+	return out;
+}
+
+/* 3rd Friday within a window (if holiday → previous workday) */
+function thirdFridayOrPrevWorkday(windowStart, windowEnd){
+	const d = new Date(windowStart);
+	const fridays = [];
+	while (d <= windowEnd){
+		if (d.getDay() === 5) fridays.push(new Date(d));
+		d.setDate(d.getDate()+1);
+	}
+	if (fridays.length < 3) return null;
+	let target = fridays[2]; // 0-based -> 3rd Friday
+	if (isHoliday(target)){  // back up to previous workday
+		let b = new Date(target);
+		do { b.setDate(b.getDate()-1); } 
+		while ((b.getDay()===0||b.getDay()===6) || isHoliday(b));
+		target = b;
+	}
+	return target;
+}
+
+/* Compute DEPLOYMENT/PULLOUT dates falling inside the visible month for a name */
+function computeDeploymentEventsForMonth(fullName, year, month){
+	const site = findSiteForName(fullName);
+	if (!site) return []; // no site assignment
+	const rule = findRuleForSite(site);
+	if (!rule) return [];
+
+	const { CYCLE, WEEK, DAY } = rule; // DAY: 0|1|2 (ignored for CYCLE=3 per spec)
+	const monthStart = new Date(year, month, 1);
+	const monthEnd   = new Date(year, month+1, 0);
+
+	// Walk enough weeks to cover the month safely
+	const events = [];
+
+	if (CYCLE === 3){
+		// Active 3 weeks from anchor week, then 1-week gap; repeat
+		// Anchor week index is WEEK
+		const anchorY = year; // good enough for within-month traversal
+		const anchorStart = workweekStartByIndex(anchorY, WEEK);
+
+		// Iterate windows across ~10 weeks around the month
+		for (let k=-8; k<=8; k++){
+			const start = new Date(anchorStart);
+			start.setDate(start.getDate() + k*28);        // 3w active + 1w gap = 4-week cycle
+			const activeStart = new Date(start);
+			const activeEnd   = new Date(start); 
+			activeEnd.setDate(activeEnd.getDate() + 7*3 - 1); // 3 weeks window
+
+			// deployment: first workday in [activeStart, activeEnd]
+			const wds = listWorkdays(activeStart, activeEnd);
+			if (wds.length === 0) continue;
+			const dep = wds[0];
+
+			// pullout: 3rd Friday within active window (or prev workday if holiday)
+			const po = thirdFridayOrPrevWorkday(activeStart, activeEnd);
+
+			// push if within month & config range
+			for (const [label, date] of [["DEPLOYMENT", dep], ["PULLOUT", po]]){
+				if (!date) continue;
+				if (!dateInRange(date)) continue;
+				if (date < monthStart || date > monthEnd) continue;
+				events.push({ date: ymd(date), label });
+			}
+		}
+	} else {
+		// CYCLE 1/2: cycle window size = CYCLE weeks
+		const weeksPerCycle = Math.max(1, Number(CYCLE)||1);
+		const anchorStart = workweekStartByIndex(year, WEEK);
+
+		// Iterate several cycles around the month
+		for (let k=-8; k<=8; k++){
+			const cycleStart = new Date(anchorStart);
+			cycleStart.setDate(cycleStart.getDate() + k * 7*weeksPerCycle);
+			const cycleEnd   = new Date(cycleStart);
+			cycleEnd.setDate(cycleEnd.getDate() + 7*weeksPerCycle - 1);
+
+			const wds = listWorkdays(cycleStart, cycleEnd);
+			if (wds.length === 0) continue;
+
+			// deployment
+			let dep = null;
+			if (DAY === 0 || DAY === 1){ // "1st workday"
+				dep = wds[0];
+			} else if (DAY === 2){       // "2nd workday"
+				dep = wds[1] || wds[0];
+			}
+
+			// pullout
+			let po = null;
+			if (DAY === 0){              // last workday
+				po = wds[wds.length-1];
+			} else if (DAY === 1){       // 2nd-to-last
+				po = wds[wds.length-2] || wds[wds.length-1];
+			} else if (DAY === 2){       // last workday
+				po = wds[wds.length-1];
+			}
+
+			for (const [label, date] of [["DEPLOYMENT", dep], ["PULLOUT", po]]){
+				if (!date) continue;
+				if (!dateInRange(date)) continue;
+				if (date < monthStart || date > monthEnd) continue;
+				events.push({ date: ymd(date), label });
+			}
+		}
+	}
+
+	// dedupe by date+label
+	const keyset = new Set();
+	const out = [];
+	for (const e of events){
+		const key = e.date + "|" + e.label;
+		if (!keyset.has(key)){ 
+			keyset.add(key); 
+			out.push(e); 
+		}
+	}
+	return out;
+}
+
 
 /* Returns all names under each selected supervisor (including the supervisor) */
 function getSubtreeNames(supervisors){
@@ -1388,6 +1570,8 @@ async function buildDashboard(){
 	updateTitleFromConfig();
 	await loadResponders();
 	await loadOrganization();
+	await loadDeploymentData();
+
 
 	// GROUPED schedule controls
 	buildScheduleButtons();
