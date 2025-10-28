@@ -316,6 +316,40 @@ const state = {
 	sitePlan: null                // [{Site,CYCLE,WEEK,DAY}, ...]
 };
 
+// Generic JSON fetch via proxy with multiple op fallbacks, then direct as last resort
+async function fetchJsonViaProxy(path, { preferProxy = true } = {}) {
+  const tryOps = ['pullout_rules','fetch_json','proxy_get','get_json','load_file'];
+  if (preferProxy) {
+    for (const op of tryOps) {
+      try {
+        const r = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          // send both path and url to be friendly with different worker handlers
+          body: JSON.stringify({ op, path, url: path })
+        });
+        const j = await r.json().catch(() => null);
+        if (!r.ok || !j) continue;
+
+        // normalize a few common shapes
+        if (Array.isArray(j)) return j;
+        if (Array.isArray(j.data)) return j.data;
+        if (Array.isArray(j.rows)) return j.rows;
+        if (j.ok && Array.isArray(j.data?.rows)) return j.data.rows;
+        if (j.ok && Array.isArray(j.rows)) return j.rows;
+        if (j.ok && j.data) return j.data;
+
+        // if it's an object we can use directly, return it
+        if (typeof j === 'object') return j;
+      } catch {}
+    }
+  }
+  // final fallback: direct fetch
+  const r = await fetch(path, { cache: 'no-store' });
+  return await r.json();
+}
+
+
 /* ===== Config & Holidays ===== */
 let CONFIG = {
 	START_DATE: null,
@@ -408,18 +442,27 @@ let SITE_ASSIGN = {};      // { siteName: [ "Last, First", ... ] }
 let PULLOUT_RULES = [];    // [ { Site, CYCLE, WEEK, DAY }, ... ]
 
 async function loadDeploymentData(){
-	try{
-		const [saRes, prRes] = await Promise.all([
-			fetch(SITE_ASSIGN_URL), fetch(PULLOUT_RULES_URL)
-		]);
-		SITE_ASSIGN   = await saRes.json();
-		PULLOUT_RULES = await prRes.json();
-	}catch(e){
-		console.error("Deployment data load failed", e);
-		SITE_ASSIGN = {}; 
-		PULLOUT_RULES = [];
-	}
+  try {
+    const saPromise = fetch(SITE_ASSIGN_URL).then(r => r.json());
+    const prPromise = fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ op: 'fetch_json', path: 'pullout-deployment.json' })
+    })
+    .then(r => r.json())
+    .then(j => j?.data || j || []);  // handle both {ok:true,data:[…]} and plain array
+
+    const [sa, pr] = await Promise.all([saPromise, prPromise]);
+    SITE_ASSIGN   = sa || {};
+    PULLOUT_RULES = Array.isArray(pr) ? pr : (pr?.rows || []);
+  } catch (e) {
+    console.error("Deployment data load failed", e);
+    SITE_ASSIGN = {};
+    PULLOUT_RULES = [];
+  }
 }
+
+
 function norm(s){ return String(s||'').trim().toLowerCase(); }
 
 function findSiteForName(fullName){
