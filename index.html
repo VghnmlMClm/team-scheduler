@@ -555,185 +555,130 @@ function listWorkdays(startDate, endDate){
 async function computeDeploymentMarkersForSelected() {
   state.deploymentMarkers.clear();
 
-  // Window bounds (fallback = current month if config is missing)
+  // Window = config range, with current month fallback
   const y = state.viewYear, m = state.viewMonth;
   const fallbackStart = new Date(y, m, 1);
   const fallbackEnd   = new Date(y, m + 1, 0);
   const windowStart   = CONFIG.START_DATE ?? fallbackStart;
   const windowEnd     = CONFIG.END_DATE   ?? fallbackEnd;
 
-  // Selected person
+  // Need a selected name + deployment data
   const selEl = document.getElementById('selName');
   const name  = (selEl?.value || '').trim();
   if (!name || !SITE_ASSIGN || !PULLOUT_RULES) return;
 
-  // Resolve site and rule
+  // Site & plan
   const assignedSite = findSiteForName(name);
   if (!assignedSite) return;
   const plan = findRuleForSite(assignedSite);
   if (!plan) return;
 
-  // Pull out plan fields (allow for optional TYPE)
   const CYCLE = Number(plan.CYCLE);
   const WEEK  = Number(plan.WEEK);
   const DAY   = Number(plan.DAY);
-  const TYPE  = Number(plan.TYPE ?? 0); // 0/undefined, 1, 2
+  const TYPE  = Number(plan.TYPE ?? 0);  // 0 = default, 1 = WFH-only, 2 = both
 
-  // ----- helpers (local) -----
-  const isWD = (d) => isWorkingDay(d);
-  const copy = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const clampInWindow = (d) => (d >= windowStart && d <= windowEnd);
+  if (![1, 2, 3].includes(CYCLE)) return;
 
-  function nthWorkingFrom(d0, n) {
-    const d = copy(d0);
+  // ---------- utilities ----------
+  const isWD = (d) => {
+    const w = d.getDay();
+    return w !== 0 && w !== 6 && !isHoliday(d);
+  };
+  const addDays = (d, n) => {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
+  };
+  const nthWorkingFrom = (start, n) => {
+    let d = new Date(start);
     let c = 0;
-    while (true) {
-      if (isWD(d)) { c++; if (c === n) return copy(d); }
+    for (;;) {
+      if (isWD(d)) { c++; if (c === n) return new Date(d); }
       d.setDate(d.getDate() + 1);
     }
-  }
-
-  function advanceOneWorkWeek(start) {
-    let d = copy(start);
-    let worked = 0;
-    while (worked < 5) { if (isWD(d)) worked++; d.setDate(d.getDate() + 1); }
-    while (!isWD(d)) d.setDate(d.getDate() + 1);
-    return d;
-  }
-
-  function listWorkingDaysSpan(start, spanDays) {
+  };
+  const listWorkingDaysInSpan = (start, spanDays) => {
     const out = [];
     const end = addDays(start, spanDays);
-    const d = copy(start);
+    const d = new Date(start);
     while (d < end) {
       if (isWD(d)) out.push(ymd(d));
       d.setDate(d.getDate() + 1);
     }
     return out;
-  }
-
-  function lastWorkingInSpan(start, spanDays, kFromEnd = 0) {
-    const wds = listWorkingDaysSpan(start, spanDays);
-    if (!wds.length) return null;
-    const idx = Math.max(0, wds.length - 1 - (kFromEnd || 0));
-    return parseYMD(wds[idx]);
-  }
-
-  // map cycle → {activeWeeks, gapWeeks, deployPicker, pullPicker}
-  const cycleConfig = {
-    1: {
-      activeWeeks: 1, gapWeeks: 0,
-      deployPicker: (start) => (DAY === 2 ? nthWorkingFrom(start, 2) : nthWorkingFrom(start, 1)),
-      pullPicker:   (start) => {
-        if (DAY === 1) return lastWorkingInSpan(start, 7, 1); // 2nd-to-last
-        // DAY===0 or anything else → last workday
-        return lastWorkingInSpan(start, 7, 0);
-      },
-      advanceCursor: (start) => advanceOneWorkWeek(start) // +1 workweek
-    },
-    2: {
-      activeWeeks: 2, gapWeeks: 0,
-      deployPicker: (start) => (DAY === 2 ? nthWorkingFrom(start, 2) : nthWorkingFrom(start, 1)),
-      pullPicker:   (start) => {
-        if (DAY === 1) return lastWorkingInSpan(start, 14, 1);
-        return lastWorkingInSpan(start, 14, 0);
-      },
-      advanceCursor: (start) => { let d = copy(start); for (let i=0;i<2;i++) d = advanceOneWorkWeek(d); return d; } // +2 workweeks
-    },
-    3: {
-      activeWeeks: 3, gapWeeks: 1,
-      deployPicker: (start) => nthWorkingFrom(start, 1),
-      pullPicker:   (start) => thirdFridayOfSpan(start, 21), // 3-week active window
-      advanceCursor: (start) => { let d = copy(start); for (let i=0;i<4;i++) d = advanceOneWorkWeek(d); return d; } // +3 active +1 gap
-    },
-    4: {
-      // 3 months active ≈ 12 weeks, then 1 week inactive
-      activeWeeks: 12, gapWeeks: 1,
-      deployPicker: (start) => (DAY === 2 ? nthWorkingFrom(start, 2) : nthWorkingFrom(start, 1)),
-      pullPicker:   (start) => {
-        if (DAY === 1) return lastWorkingInSpan(start, 84, 1); // 12*7=84 days span
-        return lastWorkingInSpan(start, 84, 0);
-      },
-      advanceCursor: (start) => { let d = copy(start); for (let i=0;i<13;i++) d = advanceOneWorkWeek(d); return d; } // +12 active +1 gap
-    }
   };
+  const clampInWindow = (d) => d >= windowStart && d <= windowEnd;
 
-  const cfg = cycleConfig[CYCLE];
-  if (!cfg) return; // unknown cycle → nothing
+  // ---------- baseline ----------
+  function firstMondayOfYear(year) {
+    const d = new Date(year, 0, 1);
+    const wd = d.getDay(); // 0–6
+    const off = (wd === 0) ? 1 : (wd <= 1 ? 1 - wd : 8 - wd);
+    d.setDate(d.getDate() + off);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  const year     = (windowStart).getFullYear();
+  const baseMon  = firstMondayOfYear(year);
+  const baseline = addDays(baseMon, 7 * ((Number(WEEK) > 0 ? Number(WEEK) : 1) - 1));
 
-  // Baseline "week 1" Monday is the first Monday of the YEAR of START_DATE
-  const startYear = (CONFIG.START_DATE ?? windowStart).getFullYear();
-  const baseMon   = firstMondayOfYear(startYear);
-  let cursor = new Date(baseMon);
-  cursor.setDate(cursor.getDate() + 7 * (Math.max(1, Number(WEEK)||1) - 1)); // Monday of WEEK#
-
-
-  // To compute "SCHED WFH between pull(n) and deploy(n+1)", we need sequences
+  // ---------- main loop ----------
   const deployments = [];
-  const pullouts    = [];
+  const pullouts = [];
 
-  // Generate a long enough sequence to cover window (plus a buffer across boundaries)
-  const hardStop = addDays(windowEnd, 120); // safety buffer
-  while (cursor <= hardStop) {
-    const deploy = cfg.deployPicker(cursor);
-    const pull   = cfg.pullPicker(cursor);
+  let cursor = new Date(baseline);
+  while (cursor <= windowEnd) {
+    if (CYCLE === 1 || CYCLE === 2) {
+      const firstWD  = nthWorkingFrom(cursor, 1);
+      const secondWD = nthWorkingFrom(cursor, 2);
+      const deploy   = (DAY === 2 ? secondWD : firstWD);
 
-    if (deploy && pull) {
-      deployments.push(deploy);
-      pullouts.push(pull);
+      const spanDays = CYCLE * 7;
+      const wds = listWorkingDaysInSpan(cursor, spanDays);
+      if (wds.length) {
+        const pullStr =
+          DAY === 1 ? wds[Math.max(0, wds.length - 2)] : wds[wds.length - 1];
+        const pull = parseYMD(pullStr);
+        if (deploy && clampInWindow(deploy)) deployments.push(deploy);
+        if (pull && clampInWindow(pull)) pullouts.push(pull);
+      }
+      cursor = addDays(cursor, spanDays);
     }
 
-    // move to next cycle start
-    cursor = cfg.advanceCursor(cursor);
-
-    // small guard to avoid infinite loops if something goes wrong
-    if (deploy && pull && deploy > hardStop && pull > hardStop) break;
-  }
-
-  // Place markers according to TYPE
-  function mark(date, label) {
-    const k = ymd(date);
-    if (!clampInWindow(date)) return;
-    // last write wins; TYPE:2 may overlap but that's okay (center badge shows last set)
-    state.deploymentMarkers.set(k, label);
-  }
-
-  // TYPE 0 (or missing): just DEPLOYMENT/PULLOUT
-  // TYPE 1: only SCHED WFH between pull(n) and deploy(n+1)
-  // TYPE 2: both pul/deploy and SCHED WFH between
-  for (let i = 0; i < deployments.length; i++) {
-    const dep = deployments[i];
-    const pul = pullouts[i];
-
-    if ((TYPE === 0 || isNaN(TYPE))) {
-      if (dep && clampInWindow(dep)) mark(dep, "DEPLOYMENT");
-      if (pul && clampInWindow(pul)) mark(pul, "PULLOUT");
-    } else if (TYPE === 2) {
-      if (dep && clampInWindow(dep)) mark(dep, "DEPLOYMENT");
-      if (pul && clampInWindow(pul)) mark(pul, "PULLOUT");
-      // WFH band will be added in the separate loop below
+    else if (CYCLE === 3) {
+      const deploy = nthWorkingFrom(cursor, 1);
+      const pull = thirdFridayOfSpan(cursor, 21); // 3 weeks × 7 days
+      if (deploy && clampInWindow(deploy)) deployments.push(deploy);
+      if (pull && clampInWindow(pull)) pullouts.push(pull);
+      cursor = addDays(cursor, 28); // 3 on + 1 off
     }
-    // TYPE 1 will skip placing pul/deploy here
   }
 
-  // Add SCHED WFH bands for TYPE 1 and TYPE 2
+  // ---------- mark events ----------
+  function mark(d, label) {
+    if (clampInWindow(d)) state.deploymentMarkers.set(ymd(d), label);
+  }
+
+  // TYPE 0 / null → only deploy/pull
+  // TYPE 1 → only SCHED WFH between pull (n) and deploy (n+1)
+  // TYPE 2 → both pul/deploy and SCHED WFH between
+  if (TYPE === 0 || TYPE == null || TYPE === 2) {
+    deployments.forEach(d => mark(d, "DEPLOYMENT"));
+    pullouts.forEach(d => mark(d, "PULLOUT"));
+  }
+
   if (TYPE === 1 || TYPE === 2) {
     for (let i = 0; i < pullouts.length - 1; i++) {
-      const start = addDays(pullouts[i], 1);      // the day AFTER pullout
-      const end   = addDays(deployments[i + 1], -1); // the day BEFORE next deployment
-      if (start > end) continue;
-
-      const d = copy(start);
+      const start = addDays(pullouts[i], 1);
+      const end   = addDays(deployments[i + 1], -1);
+      const d = new Date(start);
       while (d <= end) {
-        if (isWD(d) && clampInWindow(d)) {
-          mark(d, "SCHED WFH");
-        }
+        if (isWD(d) && clampInWindow(d)) mark(d, "SCHED WFH");
         d.setDate(d.getDate() + 1);
       }
     }
   }
 }
-
 
 
 /* ===== Responders ===== */
