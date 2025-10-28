@@ -578,7 +578,7 @@ async function computeDeploymentMarkersForSelected() {
   const DAY   = Number(plan.DAY);
   const TYPE  = Number(plan.TYPE ?? 0);  // 0 = default, 1 = WFH-only, 2 = both
 
-  if (![1, 2, 3].includes(CYCLE)) return;
+  if (![1, 2, 3, 4].includes(CYCLE)) return;
 
   // ---------- utilities ----------
   const isWD = (d) => (d.getDay() !== 0 && d.getDay() !== 6 && !isHoliday(d));
@@ -632,76 +632,79 @@ async function computeDeploymentMarkersForSelected() {
   const baseMon    = firstMondayOfYear(anchorYear);
   const baseline   = addDays(baseMon, 7 * ((Number(WEEK) > 0 ? Number(WEEK) : 1) - 1));
 
-  // ---------- horizon (±16 weeks around window) ----------
-  const evalStart = addDays(windowStart, -7 * 16);
-  const evalEnd   = addDays(windowEnd,    7 * 16);
-
-  // ---------- generate full sequences across horizon ----------
-  const deployments = [];
-  const pullouts    = [];
-
-  // per-cycle params
+  // ---------- cycle config (active span vs period) ----------
   const cfg = (function() {
     if (CYCLE === 1) {
       return {
-        spanDays: 7,
+        activeDays: 7,  periodDays: 7,
         deploy: (start) => (DAY === 2 ? nthWorkingFrom(start, 2) : nthWorkingFrom(start, 1)),
-        pull:   (start) => (DAY === 1 ? lastWorkingInSpan(start, 7, 1) : lastWorkingInSpan(start, 7, 0)),
-        advance:(start) => addDays(start, 7),
+        pull:   (start) => (DAY === 1 ? lastWorkingInSpan(start, 7, 1) : lastWorkingInSpan(start, 7, 0))
       };
     }
     if (CYCLE === 2) {
       return {
-        spanDays: 14,
+        activeDays: 14, periodDays: 14,
         deploy: (start) => (DAY === 2 ? nthWorkingFrom(start, 2) : nthWorkingFrom(start, 1)),
-        pull:   (start) => (DAY === 1 ? lastWorkingInSpan(start, 14, 1) : lastWorkingInSpan(start, 14, 0)),
-        advance:(start) => addDays(start, 14),
+        pull:   (start) => (DAY === 1 ? lastWorkingInSpan(start, 14, 1) : lastWorkingInSpan(start, 14, 0))
       };
     }
-    // CYCLE === 3 (3-on/1-off)
+    if (CYCLE === 3) {
+      // 3 on / 1 off
+      return {
+        activeDays: 21, periodDays: 28,
+        deploy: (start) => nthWorkingFrom(start, 1),
+        pull:   (start) => thirdFridayOfSpan(start, 21)
+      };
+    }
+    // CYCLE 4 (if you added it earlier): 12 weeks active + 1 week inactive
     return {
-      spanDays: 21,
-      deploy: (start) => nthWorkingFrom(start, 1),
-      pull:   (start) => thirdFridayOfSpan(start, 21),
-      advance:(start) => addDays(start, 28), // 21 active + 7 gap
+      activeDays: 84, periodDays: 91,
+      deploy: (start) => (DAY === 2 ? nthWorkingFrom(start, 2) : nthWorkingFrom(start, 1)),
+      pull:   (start) => (DAY === 1 ? lastWorkingInSpan(start, 84, 1) : lastWorkingInSpan(start, 84, 0))
     };
   })();
 
-  // Start cursor: rewind so the block before evalStart is also covered
+  // ---------- horizon (±16 weeks around window) ----------
+  const evalStart = addDays(windowStart, -7 * 16);
+  const evalEnd   = addDays(windowEnd,    7 * 16);
+
+  // ---------- build blocks in order ----------
+  const blocks = []; // { start, deploy, pull }
+  // Rewind by full period so we align to block boundaries (important for CYCLE 3)
   let cursor = new Date(baseline);
-  while (addDays(cursor, -cfg.spanDays) > evalStart) {
-    cursor = addDays(cursor, -cfg.spanDays);
+  while (addDays(cursor, -cfg.periodDays) > evalStart) {
+    cursor = addDays(cursor, -cfg.periodDays);
   }
 
-  // Walk forward across horizon (with a guard)
+  // Walk forward across horizon with a guard
   let guard = 0;
-  while (cursor <= addDays(evalEnd, cfg.spanDays * 2) && guard < 2000) {
+  while (cursor <= addDays(evalEnd, cfg.periodDays * 2) && guard < 2000) {
     guard++;
-    const dep = cfg.deploy(cursor);
-    const pul = cfg.pull(cursor);
-    if (dep) deployments.push(dep);
-    if (pul) pullouts.push(pul);
-    cursor = cfg.advance(cursor);
+    const deploy = cfg.deploy(cursor);
+    const pull   = cfg.pull(cursor);
+    blocks.push({ start: new Date(cursor), deploy, pull });
+    cursor = addDays(cursor, cfg.periodDays);
   }
 
-  // ---------- mark helpers ----------
+  // ---------- marking ----------
   const mark = (d, label) => { if (d && clampInWindow(d)) state.deploymentMarkers.set(ymd(d), label); };
 
-  // TYPE 0/null → only DEPLOYMENT/PULLOUT
-  // TYPE 1      → only SCHED WFH (between pull(n) and deploy(n+1))
-  // TYPE 2      → both
   const showPD  = (TYPE === 0 || TYPE == null) || (TYPE === 2);
   const showWFH = (TYPE === 1 || TYPE === 2);
 
   if (showPD) {
-    deployments.forEach(d => mark(d, "DEPLOYMENT"));
-    pullouts.forEach(p => mark(p, "PULLOUT"));
+    for (const b of blocks) {
+      if (b.deploy) mark(b.deploy, "DEPLOYMENT");
+      if (b.pull)   mark(b.pull,   "PULLOUT");
+    }
   }
 
-  if (showWFH && pullouts.length && deployments.length) {
-    for (let i = 0; i < Math.min(pullouts.length, deployments.length - 1); i++) {
-      const bandStart = addDays(pullouts[i], 1);
-      const bandEnd   = addDays(deployments[i + 1], -1);
+  if (showWFH) {
+    for (let i = 0; i < blocks.length - 1; i++) {
+      const cur = blocks[i], next = blocks[i + 1];
+      if (!cur.pull || !next.deploy) continue;
+      const bandStart = addDays(cur.pull, 1);
+      const bandEnd   = addDays(next.deploy, -1);
       if (bandStart > bandEnd) continue;
 
       const d = new Date(bandStart);
