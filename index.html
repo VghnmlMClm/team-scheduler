@@ -420,14 +420,37 @@ async function loadDeploymentData(){
 		PULLOUT_RULES = [];
 	}
 }
+function norm(s){ return String(s||'').trim().toLowerCase(); }
+
 function findSiteForName(fullName){
-	for (const [site, people] of Object.entries(SITE_ASSIGN || {})){
-		if (Array.isArray(people) && people.includes(fullName)) return site;
-	}
-	return null;
+  const target = norm(fullName);
+  // handle either { "Site A": ["Last, First", ...] } OR [{site:"Site A", names:[...]}]
+  if (Array.isArray(SITE_ASSIGN)) {
+    for (const row of SITE_ASSIGN) {
+      const site = row.Site || row.site || row.SITE;
+      const names = row.Names || row.names || row.PEOPLE || row.people || [];
+      if (Array.isArray(names) && names.some(n => norm(n) === target)) return site || null;
+    }
+    return null;
+  }
+  for (const [site, people] of Object.entries(SITE_ASSIGN || {})){
+    if (Array.isArray(people) && people.some(n => norm(n) === target)) return site;
+  }
+  return null;
 }
+
 function findRuleForSite(site){
-	return (PULLOUT_RULES || []).find(r => (r?.Site||"") === site) || null;
+  const s = norm(site);
+  if (!Array.isArray(PULLOUT_RULES)) return null;
+  // accept key variants and string numbers
+  for (const r of PULLOUT_RULES){
+    const rSite  = r.Site || r.site || r.SITE;
+    const CYCLE  = Number(r.CYCLE ?? r.cycle);
+    const WEEK   = Number(r.WEEK  ?? r.week);
+    const DAY    = Number(r.DAY   ?? r.day);
+    if (norm(rSite) === s) return { Site:rSite, CYCLE, WEEK, DAY };
+  }
+  return null;
 }
 
 /* ===== Workweek helpers ===== */
@@ -474,9 +497,16 @@ function listWorkdays(startDate, endDate){
 async function computeDeploymentMarkersForSelected(){
   state.deploymentMarkers.clear();
 
-  const sel = document.getElementById('selName');
-  const name = (sel?.value || '').trim();
-  if (!name || !CONFIG.START_DATE || !CONFIG.END_DATE) return;
+  // fallback window: current month if config missing
+  if (!CONFIG.START_DATE || !CONFIG.END_DATE){
+    const y = state.viewYear, m = state.viewMonth;
+    CONFIG.START_DATE = new Date(y, m, 1);
+    CONFIG.END_DATE   = new Date(y, m+1, 0);
+  }
+
+  const selEl = document.getElementById('selName');
+  const name  = (selEl?.value || '').trim();
+  if (!name) return;
 
   if (!SITE_ASSIGN || !PULLOUT_RULES) return;
 
@@ -490,19 +520,17 @@ async function computeDeploymentMarkersForSelected(){
   const WEEK  = Number(plan.WEEK);
   const DAY   = Number(plan.DAY);
 
-  const Y = CONFIG.START_DATE.getFullYear();
   const windowStart = new Date(CONFIG.START_DATE);
   const windowEnd   = new Date(CONFIG.END_DATE);
 
-  // Week 1 anchor
-  const week1 = workweekStartByIndex(Y, WEEK);
+  const week1 = workweekStartByIndex(windowStart.getFullYear(), WEEK);
   const isWorking = d => isWorkingDay(d);
 
   function nthWorkingFrom(d0, n){
     const d = new Date(d0);
-    let c=0;
-    while(true){
-      if(isWorking(d)){ c++; if(c===n) return new Date(d); }
+    let c = 0;
+    while (true){
+      if (isWorking(d)){ c++; if (c === n) return new Date(d); }
       d.setDate(d.getDate()+1);
     }
   }
@@ -534,15 +562,16 @@ async function computeDeploymentMarkersForSelected(){
       }
       if (wds.length){
         let pull;
-        if (DAY === 0) pull = parseYMD(wds[wds.length-1]);
-        else if (DAY === 1) pull = parseYMD(wds[Math.max(0, wds.length-2)]);
-        else pull = parseYMD(wds[wds.length-1]);
+        if (DAY === 0)      pull = parseYMD(wds[wds.length-1]);              // last workday
+        else if (DAY === 1) pull = parseYMD(wds[Math.max(0, wds.length-2)]); // 2nd-to-last
+        else                pull = parseYMD(wds[wds.length-1]);              // last workday
 
         if (deploy >= windowStart && deploy <= windowEnd) state.deploymentMarkers.set(ymd(deploy), "DEPLOYMENT");
         if (pull   >= windowStart && pull   <= windowEnd) state.deploymentMarkers.set(ymd(pull),   "PULLOUT");
       }
 
       for (let i=0;i<CYCLE;i++) cursor = advanceOneWorkWeek(cursor);
+
     } else if (CYCLE === 3){
       const deploy = nthWorkingFrom(cursor, 1);
       const pull   = thirdFridayOfSpan(cursor, 21); // 3-week active window
@@ -551,11 +580,13 @@ async function computeDeploymentMarkersForSelected(){
       if (pull && pull >= windowStart && pull <= windowEnd) state.deploymentMarkers.set(ymd(pull), "PULLOUT");
 
       for (let i=0;i<4;i++) cursor = advanceOneWorkWeek(cursor); // 3w active + 1w gap
+
     } else {
-      break;
+      break; // unknown CYCLE
     }
   }
 }
+
 
 /* ===== Responders ===== */
 let RESPONDERS = [];
@@ -1142,16 +1173,19 @@ if (exportVlBtn)    exportVlBtn.addEventListener('click', async ()=>{ toggleMenu
 if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportTableXlsx(); });
 
 /* ===== Navigation ===== */
-document.getElementById('prevBtn').onclick = ()=>{
-	const d = new Date(state.viewYear, state.viewMonth - 1, 1);
-	({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-	render();
+document.getElementById('prevBtn').onclick = async ()=>{
+  const d = new Date(state.viewYear, state.viewMonth - 1, 1);
+  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+  await computeDeploymentMarkersForSelected();
+  render();
 };
-document.getElementById('nextBtn').onclick = ()=>{
-	const d = new Date(state.viewYear, state.viewMonth + 1, 1);
-	({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-	render();
+document.getElementById('nextBtn').onclick = async ()=>{
+  const d = new Date(state.viewYear, state.viewMonth + 1, 1);
+  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+  await computeDeploymentMarkersForSelected();
+  render();
 };
+
 
 /* ===== Dashboard view & filters ===== */
 const $toggleDash = document.getElementById('toggleDashboardBtn');
@@ -1484,6 +1518,8 @@ async function buildDashboard(){
 	await loadResponders();
 	await loadOrganization();
 	await loadDeploymentData(); // site assignments + rules for DEPLOYMENT/PULLOUT
+	const n0 = document.getElementById('selName')?.value?.trim();
+	if (n0) { await computeDeploymentMarkersForSelected(); render(); }
 
 	// Controls
 	buildScheduleButtons();
