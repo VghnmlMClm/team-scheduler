@@ -450,17 +450,25 @@ async function loadDeploymentData(){
       body: JSON.stringify({ op: 'fetch_json', path: 'pullout-deployment.json' })
     })
     .then(r => r.json())
-    .then(j => j?.data || j || []);  // handle both {ok:true,data:[…]} and plain array
+    .then(j => {
+      let v = (j && j.data !== undefined) ? j.data : j; // prefer j.data when present
+      if (typeof v === 'string') {
+        try { v = JSON.parse(v); } catch {}
+      }
+      // accept both {rows:[...]} and plain array
+      return Array.isArray(v) ? v : (Array.isArray(v?.rows) ? v.rows : []);
+    });
 
     const [sa, pr] = await Promise.all([saPromise, prPromise]);
     SITE_ASSIGN   = sa || {};
-    PULLOUT_RULES = Array.isArray(pr) ? pr : (pr?.rows || []);
+    PULLOUT_RULES = pr || [];
   } catch (e) {
     console.error("Deployment data load failed", e);
     SITE_ASSIGN = {};
     PULLOUT_RULES = [];
   }
 }
+
 
 
 function norm(s){ return String(s||'').trim().toLowerCase(); }
@@ -750,15 +758,6 @@ function dayCell(dateObj, muted = false) {
   `;
 
   cell.addEventListener('click', (e) => {
-    if (disabled) return;
-    onDayClick(id, e.shiftKey);
-  });
-  return cell;
-}
-
-  cell.innerHTML = firstLine + secondLine;
-
-  cell.addEventListener('click', e => {
     if (disabled) return;
     onDayClick(id, e.shiftKey);
   });
