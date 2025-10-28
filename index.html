@@ -639,7 +639,7 @@ function renderGrid(year, month){
 	const remaining = (7 - (grid.children.length % 7)) % 7;
 	for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
 }
-function dayCell(dateObj, muted=false){
+function dayCell(dateObj, muted = false) {
   const id = ymd(dateObj);
   const isToday   = id === ymd(new Date());
   const wd        = dateObj.getDay();
@@ -656,7 +656,7 @@ function dayCell(dateObj, muted=false){
   const disabled = outRange || holiday || weekend;
 
   const cell = document.createElement('button');
-  cell.type='button';
+  cell.type = 'button';
   cell.className = [
     'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
     muted ? 'muted' : '',
@@ -673,21 +673,28 @@ function dayCell(dateObj, muted=false){
     textColor = (contrast === 'text-black') ? 'black' : 'white';
   }
 
-  const marker = state.deploymentMarkers.get(id) || ''; // "DEPLOYMENT" | "PULLOUT" | ""
+  const marker = state.deploymentMarkers.get(id) || ''; // "DEPLOYMENT" | "PULLOUT"
   const schedCode = effective ? (LABELS[effective] || effective) : '';
 
-  // First line: "11 - DEPLOYMENT" (marker only if present)
+  // --- LINE 1: "11 - DEPLOYMENT" ---
   const firstLine = `
     <div class="flex items-center gap-1" style="color:${textColor}">
-      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span>
+      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday ? 'today-ring' : ''}">
+        ${dateObj.getDate()}
+      </span>
       ${marker ? `<span class="text-[11px] font-medium tracking-wide">- ${marker}</span>` : ''}
     </div>
   `;
 
-  // Second line: "[SCHED CODE]" if there is one
-  const secondLine = schedCode
-    ? `<div class="mt-0.5 text-[11px] opacity-90" style="color:${textColor}">[${schedCode}]</div>`
-    : '';
+  // --- LINE 2: restored schedule code rendering ---
+  let secondLine = '';
+  if (schedCode) {
+    secondLine = `
+      <div class="text-[12px] font-semibold mt-1" style="color:${textColor}">
+        ${schedCode}
+      </div>
+    `;
+  }
 
   cell.innerHTML = firstLine + secondLine;
 
@@ -697,6 +704,7 @@ function dayCell(dateObj, muted=false){
   });
   return cell;
 }
+
 
 function onDayClick(id, shift) {
 	const date = parseYMD(id);
