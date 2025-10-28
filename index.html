@@ -1,254 +1,254 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0a0f1a">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script>
-  tailwind.config = { darkMode: 'class' }
-  </script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-	:root, html { color-scheme: dark; }
-	input, select, textarea, button {
-	  color-scheme: dark;
-	  background-color: #0f172a;
-	  color: #f1f5f9;
-	  border-color: #1e293b;
-	}
-	img, video, canvas, svg { filter: none; }
-	iframe { color-scheme: dark; background: transparent; }
+	<meta name="color-scheme" content="dark">
+	<meta name="theme-color" content="#0a0f1a">
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<script>
+	tailwind.config = { darkMode: 'class' }
+	</script>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<style>
+		:root, html { color-scheme: dark; }
+		input, select, textarea, button {
+		  color-scheme: dark;
+		  background-color: #0f172a;
+		  color: #f1f5f9;
+		  border-color: #1e293b;
+		}
+		img, video, canvas, svg { filter: none; }
+		iframe { color-scheme: dark; background: transparent; }
 
-    :root{--brand:#2563eb}
-    html,body{height:100%}
-    body{
-      font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background-color:#212121; /* main background */
-      color:#e2e8f0;
-    }
+		:root{--brand:#2563eb}
+		html,body{height:100%}
+		body{
+		  font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+		  background-color:#212121; /* main background */
+		  color:#e2e8f0;
+		}
 
-    /* Panels (personnel & dashboard) */
-    #personnelView section,
-    #personnelView aside,
-    #dashboardView section,
-    #dashboardView aside,
-    .bg-slate-900 {
-      background-color:#0a0f1a !important; /* darker panels */
-      border-color:#1e293b !important;
-    }
+		/* Panels (personnel & dashboard) */
+		#personnelView section,
+		#personnelView aside,
+		#dashboardView section,
+		#dashboardView aside,
+		.bg-slate-900 {
+		  background-color:#0a0f1a !important; /* darker panels */
+		  border-color:#1e293b !important;
+		}
 
-    /* Header gradient */
-    header.grad { background:linear-gradient(135deg,#1e3a8a 0%,#0369a1 100%) }
+		/* Header gradient */
+		header.grad { background:linear-gradient(135deg,#1e3a8a 0%,#0369a1 100%) }
 
-    /* Keep calendar and schedule button colors intact */
-    #schedButtons button { background: inherit; filter: none; }
-    .day-cell { background: inherit; }
+		/* Keep calendar and schedule button colors intact */
+		#schedButtons button { background: inherit; filter: none; }
+		.day-cell { background: inherit; }
 
-    /* Dark form controls */
-    select,
-    button:not(#schedButtons button) {
-      background-color:#0f172a;
-      color:#f1f5f9;
-      border-color:#1e293b;
-    }
-    select[multiple] option { background-color:#0f172a; color:#e2e8f0; }
-    button:not(#schedButtons button):hover:not(:disabled){ filter:brightness(1.12) }
+		/* Dark form controls */
+		select,
+		button:not(#schedButtons button) {
+		  background-color:#0f172a;
+		  color:#f1f5f9;
+		  border-color:#1e293b;
+		}
+		select[multiple] option { background-color:#0f172a; color:#e2e8f0; }
+		button:not(#schedButtons button):hover:not(:disabled){ filter:brightness(1.12) }
 
-    .day-cell{user-select:none}
-    .selected-day{outline:2px solid var(--brand); outline-offset:-2px}
-    .today-ring{box-shadow:inset 0 0 0 2px var(--brand)}
-    .muted{opacity:.35}
+		.day-cell{user-select:none}
+		.selected-day{outline:2px solid var(--brand); outline-offset:-2px}
+		.today-ring{box-shadow:inset 0 0 0 2px var(--brand)}
+		.muted{opacity:.35}
 
-    /* Center table sticky header matches panel bg */
-    #centerTable th{position:sticky; top:0; background:#0a0f1a}
+		/* Center table sticky header matches panel bg */
+		#centerTable th{position:sticky; top:0; background:#0a0f1a}
 
-    /* Dashboard selected filter highlight (where applicable) */
-    #fSupervisors option:checked {
-      background-color:#fcfcfc !important;
-      color:#0a0f1a !important;
-    }
-	
-	/* Center table polish */
-	#centerTable th, #centerTable td { padding: .5rem .75rem; border-bottom: 1px solid #1e293b; }
-	#centerTable th:first-child, #centerTable td:first-child { width: 170px; white-space: nowrap; }
-	#centerTable th:nth-child(2), #centerTable td:nth-child(2) { width: 72px; }
-	#centerTable tbody tr:hover td { background-color: #0f172a; }
+		/* Dashboard selected filter highlight (where applicable) */
+		#fSupervisors option:checked {
+		  background-color:#fcfcfc !important;
+		  color:#0a0f1a !important;
+		}
+		
+		/* Center table polish */
+		#centerTable th, #centerTable td { padding: .5rem .75rem; border-bottom: 1px solid #1e293b; }
+		#centerTable th:first-child, #centerTable td:first-child { width: 170px; white-space: nowrap; }
+		#centerTable th:nth-child(2), #centerTable td:nth-child(2) { width: 72px; }
+		#centerTable tbody tr:hover td { background-color: #0f172a; }
 
-  </style>
+	</style>
 </head>
 
 <body class="text-slate-100">
 
 <header class="grad text-white">
-  <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <button id="toggleDashboardBtn" class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center transition" aria-label="Toggle view">
-          <span id="dashIcon" class="text-lg">🗓️</span>
-        </button>
-        <h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
-      </div>
-		<div class="flex items-center gap-2 text-sm">
-		  <!-- Dashboard-only Export menu -->
-		  <div id="exportGroup" class="relative hidden">
-			<button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
-			<div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
-			  <button id="exportVlBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">VL Summary (.txt)</button>
-			  <button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
+	<div class="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-4">
+		<div class="flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<button id="toggleDashboardBtn" class="w-9 h-9 rounded-2xl bg-white/15 grid place-items-center transition" aria-label="Toggle view">
+					<span id="dashIcon" class="text-lg">🗓️</span>
+				</button>
+				<h1 id="appTitle" class="text-xl sm:text-2xl font-semibold">Scheduler</h1>
 			</div>
-		  </div>
+			<div class="flex items-center gap-2 text-sm">
+				<!-- Dashboard-only Export menu -->
+				<div id="exportGroup" class="relative hidden">
+					<button id="exportFileBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Export</button>
+					<div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
+						<button id="exportVlBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">VL Summary (.txt)</button>
+						<button id="exportTableBtn" class="w-full px-3 py-2 text-left hover:bg-slate-800">Table (.xlsx)</button>
+					</div>
+				</div>
 
-		  <button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Refresh</button>
-		  <button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Save</button>
+				<button id="loadBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Refresh</button>
+				<button id="exportBtn" disabled class="px-3 py-2 rounded-lg bg-white/10 transition opacity-60 cursor-not-allowed">Save</button>
+			</div>
 		</div>
-    </div>
 
-    <!-- PERSONNEL FILTERS -->
-    <div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
-          <select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
-            <option value="">— all teams —</option>
-          </select>
-        </div>
-        <div>
-          <label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
-          <select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
-            <option value="">— all positions —</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
-        <select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
-          <option value="">— select name —</option>
-        </select>
-      </div>
-    </div>
-  </div>
+		<!-- PERSONNEL FILTERS -->
+		<div id="filtersWrap" class="grid grid-cols-1 gap-3 text-sm">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+				<div>
+					<label for="selTeam" class="block text-xs text-slate-300 mb-1">TEAM</label>
+					<select id="selTeam" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
+						<option value="">— all teams —</option>
+					</select>
+				</div>
+				<div>
+					<label for="selPosition" class="block text-xs text-slate-300 mb-1">POSITION</label>
+					<select id="selPosition" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
+						<option value="">— all positions —</option>
+					</select>
+				</div>
+			</div>
+			<div>
+				<label for="selName" class="block text-xs text-slate-300 mb-1">NAME</label>
+				<select id="selName" class="w-full px-3 py-1.5 rounded-lg text-sm border border-slate-700 text-white">
+					<option value="">— select name —</option>
+				</select>
+			</div>
+		</div>
+	</div>
 </header>
 
 <!-- PERSONNEL VIEW -->
 <main id="personnelView" class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- CALENDAR -->
-  <section class="lg:col-span-2 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
-    <div class="p-4 border-b border-slate-700">
-      <div class="flex justify-center items-center gap-4">
-        <button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
-        <div class="text-center">
-          <h2 id="monthLabel" class="text-lg font-semibold"></h2>
-          <p id="selectedCount" class="text-xs text-slate-400"></p>
-        </div>
-        <button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
-      </div>
-    </div>
-    <div class="p-4">
-      <div class="grid grid-cols-7 text-xs font-medium text-slate-400 mb-2 select-none">
-        <div class="text-center">Sun</div><div class="text-center">Mon</div><div class="text-center">Tue</div>
-        <div class="text-center">Wed</div><div class="text-center">Thu</div><div class="text-center">Fri</div><div class="text-center">Sat</div>
-      </div>
-      <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
-    </div>
-  </section>
+	<!-- CALENDAR -->
+	<section class="lg:col-span-2 text-slate-100 rounded-2xl shadow-sm border border-slate-800">
+		<div class="p-4 border-b border-slate-700">
+			<div class="flex justify-center items-center gap-4">
+				<button id="prevBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Previous month">◀</button>
+				<div class="text-center">
+					<h2 id="monthLabel" class="text-lg font-semibold"></h2>
+					<p id="selectedCount" class="text-xs text-slate-400"></p>
+				</div>
+				<button id="nextBtn" class="p-2 rounded-lg hover:bg-slate-800" title="Next month">▶</button>
+			</div>
+		</div>
+		<div class="p-4">
+			<div class="grid grid-cols-7 text-xs font-medium text-slate-400 mb-2 select-none">
+				<div class="text-center">Sun</div><div class="text-center">Mon</div><div class="text-center">Tue</div>
+				<div class="text-center">Wed</div><div class="text-center">Thu</div><div class="text-center">Fri</div><div class="text-center">Sat</div>
+			</div>
+			<div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
+		</div>
+	</section>
 
-  <!-- SIDEBAR -->
-  <aside class="text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
-    <form id="eventForm" class="p-4 space-y-5" onsubmit="return false;">
-      <div id="schedButtons" class="space-y-4"></div>
-      <div class="flex items-center gap-3">
-        <button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
-      </div>
-    </form>
-    <div class="px-4 pb-4 space-y-4">
-      <div>
-        <div class="flex items-center justify-between mb-1">
-          <h4 class="text-sm font-semibold">Selected:</h4>
-          <button id="clearSelectionBtn" class="px-3 py-1.5 rounded-lg border border-slate-600 hover:bg-slate-800 text-xs">Clear selection</button>
-        </div>
-        <div id="selectedList" class="text-sm text-slate-300"></div>
-      </div>
-    </div>
-  </aside>
+	<!-- SIDEBAR -->
+	<aside class="text-slate-100 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
+		<form id="eventForm" class="p-4 space-y-5" onsubmit="return false;">
+			<div id="schedButtons" class="space-y-4"></div>
+			<div class="flex items-center gap-3">
+				<button id="deleteBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800" type="button">Clear status on selected</button>
+			</div>
+		</form>
+		<div class="px-4 pb-4 space-y-4">
+			<div>
+				<div class="flex items-center justify-between mb-1">
+					<h4 class="text-sm font-semibold">Selected:</h4>
+					<button id="clearSelectionBtn" class="px-3 py-1.5 rounded-lg border border-slate-600 hover:bg-slate-800 text-xs">Clear selection</button>
+				</div>
+				<div id="selectedList" class="text-sm text-slate-300"></div>
+			</div>
+		</div>
+	</aside>
 </main>
 
 <!-- DASHBOARD VIEW -->
 <section id="dashboardView" class="hidden max-w-6xl mx-auto px-4 py-6">
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-    <!-- LEFT: Filters -->
-    <aside class="lg:col-span-3 border border-slate-800 rounded-2xl p-4">
-	  <h3 class="text-sm font-semibold mb-3 text-slate-200">Filters</h3>
+	<div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+		<!-- LEFT: Filters -->
+		<aside class="lg:col-span-3 border border-slate-800 rounded-2xl p-4">
+			<h3 class="text-sm font-semibold mb-3 text-slate-200">Filters</h3>
 
-	  <div class="mb-4">
-		<label class="block text-xs mb-1 text-slate-400">IMMEDIATE SUPERVISOR</label>
-		<select id="fSupervisors" class="w-full border border-slate-700 rounded-lg p-2 text-sm bg-[#0f172a] text-white">
-		  <option value="__ALL__">-ALL-</option>
-		</select>
-	  </div>
+			<div class="mb-4">
+				<label class="block text-xs mb-1 text-slate-400">IMMEDIATE SUPERVISOR</label>
+				<select id="fSupervisors" class="w-full border border-slate-700 rounded-lg p-2 text-sm bg-[#0f172a] text-white">
+					<option value="__ALL__">-ALL-</option>
+				</select>
+			</div>
 
-	  <!-- WORK / LEAVE SWITCH -->
-	  <div class="mt-4">
-		<label class="block text-xs mb-2 text-slate-400">SCHEDULE MODE</label>
-		<div id="typeSwitchWrap" class="inline-flex items-center bg-slate-800/60 border border-slate-700 rounded-xl overflow-hidden">
-		  <button id="btnWork"  class="px-3 py-1.5 text-sm hover:bg-slate-700/60">WORK</button>
-		  <button id="btnLeave" class="px-3 py-1.5 text-sm hover:bg-slate-700/60">LEAVE</button>
+			<!-- WORK / LEAVE SWITCH -->
+			<div class="mt-4">
+				<label class="block text-xs mb-2 text-slate-400">SCHEDULE MODE</label>
+				<div id="typeSwitchWrap" class="inline-flex items-center bg-slate-800/60 border border-slate-700 rounded-xl overflow-hidden">
+					<button id="btnWork"  class="px-3 py-1.5 text-sm hover:bg-slate-700/60">WORK</button>
+					<button id="btnLeave" class="px-3 py-1.5 text-sm hover:bg-slate-700/60">LEAVE</button>
+				</div>
+				<div class="text-[11px] text-slate-500 mt-2" id="typeSwitchHint"></div>
+			</div>
+
+			<!-- INCOMPLETE SCHEDULES (moved here) -->
+			<hr class="my-4 border-slate-700">
+			<h3 class="text-sm font-semibold mb-2 text-slate-200">INCOMPLETE SCHEDULES (Per Immediate Supervisor Team)</h3>
+			<div id="missingSubtitle" class="text-[11px] text-slate-500 mb-2">
+				People with incomplete schedules in config range.
+			</div>
+			<div id="missingWrap" class="overflow-auto max-h-[360px]">
+				<div id="missingList" class="text-sm space-y-2"></div>
+			</div>
+		</aside>
+
+		<!-- CENTER -->
+		<div class="lg:col-span-9 space-y-4">
+			<!-- TOTAL + WARNING -->
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+				<div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
+					<div class="text-xs text-slate-400">TOTAL RECORDS (FILTERED)</div>
+					<div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
+				</div>
+
+				<div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
+					<div class="text-xs text-red-400 flex items-center gap-2">
+						⚠ WARNING
+					</div>
+					<div id="warningList" class="text-sm mt-2 text-slate-200 space-y-1">
+						<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>
+					</div>
+				</div>
+			</div>
+
+
+			<!-- Table -->
+			<div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
+				<div class="flex items-baseline justify-between">
+					<h2 class="text-sm font-semibold mb-2 text-slate-200">Schedule Summary</h2>
+					<span id="currentTypeCaption" class="text-[11px] text-slate-400"></span>
+				</div>
+				<div class="w-full overflow-auto max-h-[520px]">
+					<table id="centerTable" class="min-w-full text-sm border-separate border-spacing-y-1"></table>
+				</div>
+				<p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
+			</div>
 		</div>
-		<div class="text-[11px] text-slate-500 mt-2" id="typeSwitchHint"></div>
-	  </div>
-
-	  <!-- INCOMPLETE SCHEDULES (moved here) -->
-	  <hr class="my-4 border-slate-700">
-	  <h3 class="text-sm font-semibold mb-2 text-slate-200">INCOMPLETE SCHEDULES (Per Immediate Supervisor Team)</h3>
-	  <div id="missingSubtitle" class="text-[11px] text-slate-500 mb-2">
-		People with incomplete schedules in config range.
-	  </div>
-	  <div id="missingWrap" class="overflow-auto max-h-[360px]">
-		<div id="missingList" class="text-sm space-y-2"></div>
-	  </div>
-	</aside>
-
-    <!-- CENTER -->
-    <div class="lg:col-span-9 space-y-4">
-	<!-- TOTAL + WARNING -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-	  <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
-		<div class="text-xs text-slate-400">TOTAL RECORDS (FILTERED)</div>
-		<div id="metricTotalVl" class="text-3xl font-semibold mt-1">—</div>
-	  </div>
-
-	  <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
-		<div class="text-xs text-red-400 flex items-center gap-2">
-		  ⚠ WARNING
-		</div>
-		<div id="warningList" class="text-sm mt-2 text-slate-200 space-y-1">
-		  <div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>
-		</div>
-	  </div>
 	</div>
-
-
-      <!-- Table -->
-      <div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
-        <div class="flex items-baseline justify-between">
-          <h2 class="text-sm font-semibold mb-2 text-slate-200">Schedule Summary</h2>
-          <span id="currentTypeCaption" class="text-[11px] text-slate-400"></span>
-        </div>
-        <div class="w-full overflow-auto max-h-[520px]">
-          <table id="centerTable" class="min-w-full text-sm border-separate border-spacing-y-1"></table>
-        </div>
-        <p id="dashboardHint" class="mt-3 text-xs text-slate-400"></p>
-      </div>
-    </div>
-  </div>
 </section>
 
 <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-slate-500">
-  <p>By:VghnmlMClm (2025)</p>
+	<p>By:VghnmlMClm (2025)</p>
 </footer>
 
 <script>
@@ -260,46 +260,46 @@ const ORG_URL     = "organization.json";
 
 /* ===== Schedules ===== */
 const SCHEDULE_OPTIONS = [
-  { name:"ON-SITE",         code:"ONS",  abbr:"ONS", color:"ffffff" },
-  { name:"OFFICE",          code:"OFC",  abbr:"OFC", color:"ffffff" },
-  { name:"WORK FROM HOME",  code:"WFH",  abbr:"WFH", color:"b5e6a2" },
-  { name:"VACATION LEAVE",  code:"VL",   abbr:"VL",  color:"f5c6ab" },
-  { name:"AUTHORIZED ABSENT", code:"AA", abbr:"AA",  color:"ff0000" },
-  { name:"PAID TIME OFF",   code:"PTO",  abbr:"PTO", color:"e87331" },
-  { name:"BIRTHDAY LEAVE",  code:"BDL",  abbr:"BDL", color:"a02b93" },
-  { name:"MATERNITY LEAVE", code:"ML",   abbr:"ML",  color:"f2ceef" },
-  { name:"PATERNITY LEAVE", code:"PL",   abbr:"PL",  color:"0f9ed5" }
+	{ name:"ON-SITE",         code:"ONS",  abbr:"ONS", color:"ffffff" },
+	{ name:"OFFICE",          code:"OFC",  abbr:"OFC", color:"ffffff" },
+	{ name:"WORK FROM HOME",  code:"WFH",  abbr:"WFH", color:"b5e6a2" },
+	{ name:"VACATION LEAVE",  code:"VL",   abbr:"VL",  color:"f5c6ab" },
+	{ name:"AUTHORIZED ABSENT", code:"AA", abbr:"AA",  color:"ff0000" },
+	{ name:"PAID TIME OFF",   code:"PTO",  abbr:"PTO", color:"e87331" },
+	{ name:"BIRTHDAY LEAVE",  code:"BDL",  abbr:"BDL", color:"a02b93" },
+	{ name:"MATERNITY LEAVE", code:"ML",   abbr:"ML",  color:"f2ceef" },
+	{ name:"PATERNITY LEAVE", code:"PL",   abbr:"PL",  color:"0f9ed5" }
 ];
 const SCHEDULE_GROUPS = [
-  { title: "WORK SETUP",     codes: ["ONS","OFC","WFH"] },
-  { title: "LEAVES",         codes: ["VL","AA"] },
-  { title: "SPECIAL LEAVES", codes: ["PTO","BDL","ML","PL"] }
+	{ title: "WORK SETUP",     codes: ["ONS","OFC","WFH"] },
+	{ title: "LEAVES",         codes: ["VL","AA"] },
+	{ title: "SPECIAL LEAVES", codes: ["PTO","BDL","ML","PL"] }
 ];
 const LABELS = Object.fromEntries([
-  ...SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]),
-  ['RD','RD'],
-  ['HOL','HOL']
+	...SCHEDULE_OPTIONS.map(o => [o.code, o.abbr]),
+	['RD','RD'],
+	['HOL','HOL']
 ]);
 const NAMES  = Object.fromEntries(SCHEDULE_OPTIONS.map(o => [o.code, o.name]));
 const COLORS = Object.fromEntries([
-  ...SCHEDULE_OPTIONS.map(o => [o.code, '#' + o.color.toLowerCase()]),
-  ['RD',  '#808080'], // weekends
-  ['HOL', '#ffff00']  // holidays
+	...SCHEDULE_OPTIONS.map(o => [o.code, '#' + o.color.toLowerCase()]),
+	['RD',  '#808080'], // weekends
+	['HOL', '#ffff00']  // holidays
 ]);
 
 /*======INSTRUCTIONS======*/
 function showIntroModal(show = true){
-  const m = document.getElementById('introModal');
-  if (!m) return;
-  m.classList.toggle('hidden', !show);
-  if (show) setTimeout(()=>document.getElementById('introCloseBtn')?.focus(), 0);
+	const m = document.getElementById('introModal');
+	if (!m) return;
+	m.classList.toggle('hidden', !show);
+	if (show) setTimeout(()=>document.getElementById('introCloseBtn')?.focus(), 0);
 }
 
 document.addEventListener('click', (e) => {
-  if (e.target?.id === 'introCloseBtn') {
-    showIntroModal(false);
-    localStorage.setItem('introSeen', '1');
-  }
+	if (e.target?.id === 'introCloseBtn') {
+		showIntroModal(false);
+		localStorage.setItem('introSeen', '1');
+	}
 });
 
 
@@ -316,75 +316,75 @@ function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(
 
 /* ===== State ===== */
 const state = {
-  viewYear: new Date().getFullYear(),
-  viewMonth: new Date().getMonth(),
-  selected: new Set(),
-  focusDay: ymd(new Date()),
-  lastClicked: null,
-  storeKey: 'calendar-scheduler-v2',
-  data: {},
-  isDashboard: false,
-  typeMode: 'LEAVE' // default
+	viewYear: new Date().getFullYear(),
+	viewMonth: new Date().getMonth(),
+	selected: new Set(),
+	focusDay: ymd(new Date()),
+	lastClicked: null,
+	storeKey: 'calendar-scheduler-v2',
+	data: {},
+	isDashboard: false,
+	typeMode: 'LEAVE' // default
 };
 
 /* ===== Config & Holidays ===== */
 let CONFIG = {
-  START_DATE: null,
-  END_DATE: null,
-  HOLIDAYS_SET: new Set(),
-  DEADLINE_AT: null,
-  DEADLINE_DATE_STR: null,
-  DEADLINE_TIME_STR: null
+	START_DATE: null,
+	END_DATE: null,
+	HOLIDAYS_SET: new Set(),
+	DEADLINE_AT: null,
+	DEADLINE_DATE_STR: null,
+	DEADLINE_TIME_STR: null
 };
 
 const parseDateStr = s => { if (!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
 const dateInRange = d => {
-  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
-  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  return dd >= CONFIG.START_DATE && dd <= CONFIG.END_DATE;
+	if (!CONFIG.START_DATE || !CONFIG.END_DATE) return true;
+	const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+	return dd >= CONFIG.START_DATE && dd <= CONFIG.END_DATE;
 };
 const isHoliday = d => CONFIG.HOLIDAYS_SET.has(ymd(d));
 async function loadConfig(){
-  try{
-    const r = await fetch(CONFIG_URL);
-    const j = await r.json();
-    CONFIG.START_DATE   = parseDateStr(j.START_DATE);
-    CONFIG.END_DATE     = parseDateStr(j.END_DATE);
-    CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
+	try{
+		const r = await fetch(CONFIG_URL);
+		const j = await r.json();
+		CONFIG.START_DATE   = parseDateStr(j.START_DATE);
+		CONFIG.END_DATE     = parseDateStr(j.END_DATE);
+		CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
 
-    // Deadline fields
-    CONFIG.DEADLINE_DATE_STR = j["DEADLINE DATE"] || null;
-    CONFIG.DEADLINE_TIME_STR = j["DEADLINE TIME"] || null;
-    CONFIG.DEADLINE_AT       = (CONFIG.DEADLINE_DATE_STR && CONFIG.DEADLINE_TIME_STR)
-      ? buildDeadline(CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR)
-      : null;
+		// Deadline fields
+		CONFIG.DEADLINE_DATE_STR = j["DEADLINE DATE"] || null;
+		CONFIG.DEADLINE_TIME_STR = j["DEADLINE TIME"] || null;
+		CONFIG.DEADLINE_AT       = (CONFIG.DEADLINE_DATE_STR && CONFIG.DEADLINE_TIME_STR)
+		  ? buildDeadline(CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR)
+		  : null;
 
-  }catch{
-    CONFIG = {
-      START_DATE: null,
-      END_DATE: null,
-      HOLIDAYS_SET: new Set(),
-      DEADLINE_AT: null,
-      DEADLINE_DATE_STR: null,
-      DEADLINE_TIME_STR: null
-    };
-  }
+	}catch{
+		CONFIG = {
+		  START_DATE: null,
+		  END_DATE: null,
+		  HOLIDAYS_SET: new Set(),
+		  DEADLINE_AT: null,
+		  DEADLINE_DATE_STR: null,
+		  DEADLINE_TIME_STR: null
+		};
+	}
 }
 
 
 function clampView(year, month) {
-  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
-  const monthLast  = new Date(year, month+1, 0);
-  if (monthLast < CONFIG.START_DATE) return { year: CONFIG.START_DATE.getFullYear(), month: CONFIG.START_DATE.getMonth() };
-  const monthFirst = new Date(year, month, 1);
-  if (monthFirst > CONFIG.END_DATE) return { year: CONFIG.END_DATE.getFullYear(), month: CONFIG.END_DATE.getMonth() };
-  return { year, month };
+	if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
+	const monthLast  = new Date(year, month+1, 0);
+	if (monthLast < CONFIG.START_DATE) return { year: CONFIG.START_DATE.getFullYear(), month: CONFIG.START_DATE.getMonth() };
+	const monthFirst = new Date(year, month, 1);
+	if (monthFirst > CONFIG.END_DATE) return { year: CONFIG.END_DATE.getFullYear(), month: CONFIG.END_DATE.getMonth() };
+	return { year, month };
 }
 function updateTitleFromConfig(){
-  const el = document.getElementById('appTitle');
-  if (!el) return;
-  const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
-  el.textContent = (s && e) ? `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})` : "Scheduler";
+	const el = document.getElementById('appTitle');
+	if (!el) return;
+	const s = CONFIG.START_DATE, e = CONFIG.END_DATE;
+	el.textContent = (s && e) ? `Scheduler (${fmtMMMDDYYYY(s)} - ${fmtMMMDDYYYY(e)})` : "Scheduler";
 }
 
 /* ===== Organization ===== */
@@ -392,71 +392,71 @@ let ORG_INDEX = new Map();
 let ORG_SUPERVISORS = [];
 
 async function loadOrganization(){
-  try{
-    const r = await fetch(ORG_URL);
-    const data = await r.json();
+	try{
+		const r = await fetch(ORG_URL);
+		const data = await r.json();
 
-    ORG_INDEX.clear();
-    ORG_SUPERVISORS = [];
+		ORG_INDEX.clear();
+		ORG_SUPERVISORS = [];
 
-    function indexOrg(node){
-      if (!node || !node.NAME) return;
-      ORG_INDEX.set(node.NAME, node);
-      const team = Array.isArray(node.TEAM) ? node.TEAM : [];
-      if (team.length > 0) ORG_SUPERVISORS.push(node.NAME);
-      for (const child of team) indexOrg(child);
-    }
+		function indexOrg(node){
+			if (!node || !node.NAME) return;
+			ORG_INDEX.set(node.NAME, node);
+			const team = Array.isArray(node.TEAM) ? node.TEAM : [];
+			if (team.length > 0) ORG_SUPERVISORS.push(node.NAME);
+			for (const child of team) indexOrg(child);
+		}
 
-    if (Array.isArray(data)) data.forEach(indexOrg);
-    else if (data && typeof data === 'object' && data.MANAGER) indexOrg(data.MANAGER);
-    else indexOrg(data);
+		if (Array.isArray(data)) data.forEach(indexOrg);
+		else if (data && typeof data === 'object' && data.MANAGER) indexOrg(data.MANAGER);
+		else indexOrg(data);
 
-    ORG_SUPERVISORS = Array.from(new Set(ORG_SUPERVISORS)).sort();
-  }catch(e){
-    console.error('loadOrganization error', e);
-    ORG_INDEX.clear();
-    ORG_SUPERVISORS = [];
-  }
+		ORG_SUPERVISORS = Array.from(new Set(ORG_SUPERVISORS)).sort();
+	}catch(e){
+		console.error('loadOrganization error', e);
+		ORG_INDEX.clear();
+		ORG_SUPERVISORS = [];
+	}
 }
 
 /* Returns all names under each selected supervisor (including the supervisor) */
 function getSubtreeNames(supervisors){
-  const out = new Set();
-  function walk(node){
-    if(!node || !node.NAME || out.has(node.NAME)) return;
-    out.add(node.NAME);
-    (node.TEAM||[]).forEach(walk);
-  }
-  supervisors.forEach(name=>{
-    const node = ORG_INDEX.get(name);
-    if (node) walk(node);
-  });
-  return [...out];
+	const out = new Set();
+	function walk(node){
+		if(!node || !node.NAME || out.has(node.NAME)) return;
+		out.add(node.NAME);
+		(node.TEAM||[]).forEach(walk);
+	}
+	supervisors.forEach(name=>{
+		const node = ORG_INDEX.get(name);
+		if (node) walk(node);
+	});
+	return [...out];
 }
 
 /* ===== Responders ===== */
 let RESPONDERS = [];
 async function loadResponders(){
-  try{
-    const res = await fetch(RESPONDERS_URL);
-    const raw = await res.json();
-    const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
-    RESPONDERS = rows.map(r => ({
-      POSITION:   normVal(r.POSITION   ?? r.position),
-      TEAM:       normVal(r.TEAM       ?? r.team),
-      NAME:       normVal(r.NAME       ?? r.name)
-    })).filter(r => r.NAME);
-  }catch(e){
-    console.error("Failed to load responders:", e);
-  }
+	try{
+		const res = await fetch(RESPONDERS_URL);
+		const raw = await res.json();
+		const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.rows) ? raw.rows : []);
+		RESPONDERS = rows.map(r => ({
+		  POSITION:   normVal(r.POSITION   ?? r.position),
+		  TEAM:       normVal(r.TEAM       ?? r.team),
+		  NAME:       normVal(r.NAME       ?? r.name)
+		})).filter(r => r.NAME);
+	}catch(e){
+		console.error("Failed to load responders:", e);
+	}
 }
 function getAllNames(){ return uniq(RESPONDERS.map(r => r.NAME).filter(Boolean)).sort(); }
 function getAllPositions(){ return uniq(RESPONDERS.map(r => r.POSITION || 'Unspecified')).sort(); }
 
 /* ===== Local store ===== */
 function loadStore(){
-  try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
-  catch(e){ state.data = {}; }
+	try{ const raw = localStorage.getItem(state.storeKey); state.data = raw? JSON.parse(raw) : {}; }
+	catch(e){ state.data = {}; }
 }
 function saveStore(){ localStorage.setItem(state.storeKey, JSON.stringify(state.data)); }
 
@@ -468,496 +468,496 @@ const selectedList = document.getElementById('selectedList');
 
 function monthName(m){return new Date(2000,m,1).toLocaleString(undefined,{month:'long'})}
 function render(){
-  const {viewYear, viewMonth} = state;
-  monthLabel.textContent = `${monthName(viewMonth)} ${viewYear}`;
-  renderGrid(viewYear, viewMonth);
-  renderSelection();
+	const {viewYear, viewMonth} = state;
+	monthLabel.textContent = `${monthName(viewMonth)} ${viewYear}`;
+	renderGrid(viewYear, viewMonth);
+	renderSelection();
 }
 function renderGrid(year, month){
-  grid.innerHTML='';
-  const first = new Date(year, month, 1);
-  const last  = new Date(year, month+1, 0);
-  const startWeekday = first.getDay();
-  const prevLast = new Date(year, month, 0).getDate();
+	grid.innerHTML='';
+	const first = new Date(year, month, 1);
+	const last  = new Date(year, month+1, 0);
+	const startWeekday = first.getDay();
+	const prevLast = new Date(year, month, 0).getDate();
 
-  for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
-  for(let d=1; d<=last.getDate(); d++) grid.appendChild(dayCell(new Date(year, month, d), false));
-  const remaining = (7 - (grid.children.length % 7)) % 7;
-  for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
+	for(let i=startWeekday-1; i>=0; i--) grid.appendChild(dayCell(new Date(year, month-1, prevLast - i), true));
+	for(let d=1; d<=last.getDate(); d++) grid.appendChild(dayCell(new Date(year, month, d), false));
+	const remaining = (7 - (grid.children.length % 7)) % 7;
+	for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
 }
 
 function dayCell(dateObj, muted=false){
-  const id = ymd(dateObj);
-  const isToday   = id === ymd(new Date());
-  const wd        = dateObj.getDay();
-  const weekend   = (wd===0 || wd===6);
-  const outRange  = !dateInRange(dateObj);
-  const holiday   = isHoliday(dateObj);
-  const isSelected= state.selected.has(id);
-	const status = state.data[id] || '';
-	// RD/HOL override individual schedule for display
-	const effective = holiday ? 'HOL' : (weekend ? 'RD' : status);
+	const id = ymd(dateObj);
+	const isToday   = id === ymd(new Date());
+	const wd        = dateObj.getDay();
+	const weekend   = (wd===0 || wd===6);
+	const outRange  = !dateInRange(dateObj);
+	const holiday   = isHoliday(dateObj);
+	const isSelected= state.selected.has(id);
+		const status = state.data[id] || '';
+		// RD/HOL override individual schedule for display
+		const effective = holiday ? 'HOL' : (weekend ? 'RD' : status);
 
-	let bg = '';
-	if (effective) bg = COLORS[effective];
-
-
-  const disabled = outRange || holiday || weekend;
-
-  const cell = document.createElement('button');
-  cell.type='button';
-  cell.className = [
-    'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
-    muted ? 'muted' : '',
-    isSelected ? 'selected-day' : '',
-    disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
-  ].join(' ').trim();
-
-  cell.dataset.date = id;
-  if (bg) cell.style.background = bg;
-
-  let textColor = 'white';
-  if (bg) {
-    const contrast = getContrastText(bg);
-    textColor = (contrast === 'text-black') ? 'black' : 'white';
-  }
-
-	const badgeText = effective ? (LABELS[effective] || effective) : '';
+		let bg = '';
+		if (effective) bg = COLORS[effective];
 
 
-  const badge = badgeText
-    ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
-    : '';
+	const disabled = outRange || holiday || weekend;
 
-  cell.innerHTML = `
-    <div class="flex items-center justify-between">
-      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}"
-            style="color:${textColor}">${dateObj.getDate()}</span>
-    </div>
-    <div class="mt-1 overflow-hidden">${badge}</div>
-  `;
+	const cell = document.createElement('button');
+	cell.type='button';
+	cell.className = [
+		'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
+		muted ? 'muted' : '',
+		isSelected ? 'selected-day' : '',
+		disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
+	].join(' ').trim();
 
-  cell.addEventListener('click', e => {
-    if (disabled) return;
-    onDayClick(id, e.shiftKey);
-  });
-  return cell;
+	cell.dataset.date = id;
+	if (bg) cell.style.background = bg;
+
+	let textColor = 'white';
+	if (bg) {
+		const contrast = getContrastText(bg);
+		textColor = (contrast === 'text-black') ? 'black' : 'white';
+	}
+
+		const badgeText = effective ? (LABELS[effective] || effective) : '';
+
+
+	const badge = badgeText
+		? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
+		: '';
+
+	cell.innerHTML = `
+		<div class="flex items-center justify-between">
+		  <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}"
+						style="color:${textColor}">${dateObj.getDate()}</span>
+		</div>
+		<div class="mt-1 overflow-hidden">${badge}</div>
+	`;
+
+	cell.addEventListener('click', e => {
+		if (disabled) return;
+		onDayClick(id, e.shiftKey);
+	});
+	return cell;
 }
 
 function onDayClick(id, shift) {
-  const date = parseYMD(id);
-  const wd = date.getDay();
-  if (!dateInRange(date)) return;
-  if (isHoliday(date))    return;
-  if (wd === 0 || wd === 6) return;
+	const date = parseYMD(id);
+	const wd = date.getDay();
+	if (!dateInRange(date)) return;
+	if (isHoliday(date))    return;
+	if (wd === 0 || wd === 6) return;
 
-  if (shift && state.lastClicked) {
-    const a = parseYMD(state.lastClicked), b = parseYMD(id);
-    const [min, max] = a <= b ? [a, b] : [b, a];
-    const cur = new Date(min);
-    while (cur <= max) {
-      const w = cur.getDay();
-      if (dateInRange(cur) && !isHoliday(cur) && w !== 0 && w !== 6) {
-        state.selected.add(ymd(cur));
-      }
-      cur.setDate(cur.getDate() + 1);
-    }
-  } else {
-    if (state.selected.has(id)) state.selected.delete(id);
-    else state.selected.add(id);
-    state.lastClicked = id;
-  }
-  state.focusDay = id;
-  render();
+	if (shift && state.lastClicked) {
+		const a = parseYMD(state.lastClicked), b = parseYMD(id);
+		const [min, max] = a <= b ? [a, b] : [b, a];
+		const cur = new Date(min);
+		while (cur <= max) {
+		  const w = cur.getDay();
+		  if (dateInRange(cur) && !isHoliday(cur) && w !== 0 && w !== 6) {
+				state.selected.add(ymd(cur));
+		  }
+		  cur.setDate(cur.getDate() + 1);
+		}
+	} else {
+		if (state.selected.has(id)) state.selected.delete(id);
+		else state.selected.add(id);
+		state.lastClicked = id;
+	}
+	state.focusDay = id;
+	render();
 }
 function renderSelection(){
-  const items = Array.from(state.selected).sort();
-  selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
-  selectedList.innerHTML = items.length
-    ? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-800 border border-slate-700">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>`
-    : '<p class="text-xs text-slate-500">Click weekdays (non-holiday) to select.</p>';
+	const items = Array.from(state.selected).sort();
+	selectedCount.textContent = items.length? `${items.length} day(s) selected` : 'No days selected';
+	selectedList.innerHTML = items.length
+		? `<div class="flex flex-wrap gap-2">${items.map(d=>`<span class="text-xs px-2 py-1 rounded-full bg-slate-800 border border-slate-700">${d} — ${state.data[d]? LABELS[state.data[d]] : '—'}</span>`).join('')}</div>`
+		: '<p class="text-xs text-slate-500">Click weekdays (non-holiday) to select.</p>';
 }
 
 /* ===== Dynamic schedule controls (GROUPED) ===== */
 function buildScheduleButtons(){
-  const wrap = document.getElementById('schedButtons');
-  wrap.innerHTML = '';
+	const wrap = document.getElementById('schedButtons');
+	wrap.innerHTML = '';
 
-  SCHEDULE_GROUPS.forEach(group => {
-    const block = document.createElement('div');
-    block.className = 'rounded-xl border border-slate-800 p-3 bg-slate-900/40';
+	SCHEDULE_GROUPS.forEach(group => {
+		const block = document.createElement('div');
+		block.className = 'rounded-xl border border-slate-800 p-3 bg-slate-900/40';
 
-    const title = document.createElement('div');
-    title.className = 'text-xs text-slate-400 mb-2';
-    title.textContent = group.title;
-    block.appendChild(title);
+		const title = document.createElement('div');
+		title.className = 'text-xs text-slate-400 mb-2';
+		title.textContent = group.title;
+		block.appendChild(title);
 
-    const grid = document.createElement('div');
-    grid.className = 'grid grid-cols-1 gap-2';
+		const grid = document.createElement('div');
+		grid.className = 'grid grid-cols-1 gap-2';
 
-    group.codes.forEach(code => {
-      const opt = SCHEDULE_OPTIONS.find(o => o.code === code);
-      if (!opt) return;
-      const color = '#' + opt.color.toLowerCase();
-      const textClass = getContrastText(color);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `w-full px-3 py-2 rounded-xl font-medium shadow-sm hover:opacity-95 ${textClass}`;
-      btn.style.background = color;
-      btn.textContent = opt.name;
-      btn.addEventListener('click', () => applyType(opt.code));
-      grid.appendChild(btn);
-    });
+		group.codes.forEach(code => {
+			const opt = SCHEDULE_OPTIONS.find(o => o.code === code);
+			if (!opt) return;
+			const color = '#' + opt.color.toLowerCase();
+			const textClass = getContrastText(color);
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = `w-full px-3 py-2 rounded-xl font-medium shadow-sm hover:opacity-95 ${textClass}`;
+			btn.style.background = color;
+			btn.textContent = opt.name;
+			btn.addEventListener('click', () => applyType(opt.code));
+			grid.appendChild(btn);
+		});
 
-    block.appendChild(grid);
-    wrap.appendChild(block);
-  });
+		block.appendChild(grid);
+		wrap.appendChild(block);
+	});
 }
 
 /* ===== Apply / Clear ===== */
 document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
 const deleteBtn = document.getElementById('deleteBtn');
 deleteBtn.onclick = ()=>{
-  if(!(state.selected.size || state.focusDay)) return;
-  if(!confirm('Clear status from the selected day(s)?')) return;
-  const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
-  for(const d of targets){ delete state.data[d]; }
-  saveStore(); render();
+	if(!(state.selected.size || state.focusDay)) return;
+	if(!confirm('Clear status from the selected day(s)?')) return;
+	const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
+	for(const d of targets){ delete state.data[d]; }
+	saveStore(); render();
 };
 function applyType(val){
-  const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
-  for(const d of targets){
-    const dt = parseYMD(d);
-    const wd = dt.getDay();
-    if (!dateInRange(dt)) continue;
-    if (isHoliday(dt))    continue;
-    if (wd === 0 || wd === 6) continue;
-    state.data[d] = val;
-  }
-  saveStore(); state.selected.clear(); render();
+	const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
+	for(const d of targets){
+		const dt = parseYMD(d);
+		const wd = dt.getDay();
+		if (!dateInRange(dt)) continue;
+		if (isHoliday(dt))    continue;
+		if (wd === 0 || wd === 6) continue;
+		state.data[d] = val;
+	}
+	saveStore(); state.selected.clear(); render();
 }
 
 /* ===== Personnel filters (Team/Position/Name) ===== */
 function fillSelect(sel, values, selected, blankLabel = "— select —") {
-  sel.innerHTML =
-    `<option value="">${blankLabel}</option>` +
-    (values.length
-      ? values.map(v => `<option value="${v}">${v}</option>`).join("")
-      : `<option value="" disabled>— none —</option>`);
-  if (selected !== undefined) sel.value = selected;
+	sel.innerHTML =
+		`<option value="">${blankLabel}</option>` +
+		(values.length
+		  ? values.map(v => `<option value="${v}">${v}</option>`).join("")
+		  : `<option value="" disabled>— none —</option>`);
+	if (selected !== undefined) sel.value = selected;
 }
 function setSaveEnabled(enabled) {
-  ['loadBtn','exportBtn'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.disabled = !enabled;
-    btn.classList.toggle('opacity-60', !enabled);
-    btn.classList.toggle('cursor-not-allowed', !enabled);
-  });
+	['loadBtn','exportBtn'].forEach(id => {
+		const btn = document.getElementById(id);
+		if (!btn) return;
+		btn.disabled = !enabled;
+		btn.classList.toggle('opacity-60', !enabled);
+		btn.classList.toggle('cursor-not-allowed', !enabled);
+	});
 }
 function populateRespondersUI(changed = null) {
-  const teamSel = document.getElementById("selTeam");
-  const posSel  = document.getElementById("selPosition");
-  const nameSel = document.getElementById("selName");
+	const teamSel = document.getElementById("selTeam");
+	const posSel  = document.getElementById("selPosition");
+	const nameSel = document.getElementById("selName");
 
-  let cur = {
-    TEAM:     normVal(teamSel?.value),
-    POSITION: normVal(posSel?.value),
-    NAME:     normVal(nameSel?.value),
-  };
-
-  if (changed === "TEAM")     { cur.POSITION = ""; cur.NAME = ""; }
-  if (changed === "POSITION") { cur.NAME = ""; }
-
-  const all = RESPONDERS;
-	const POSITION_ORDER = [
-	  "MANAGER",
-	  "DEPUTY MANAGER",
-	  "LEAD SENIOR LAND TECHNICAL SPECIALIST",
-	  "SENIOR LAND TECHNICAL SPECIALIST",
-	  "SENIOR GIS SPECIALIST",
-	  "SENIOR GIS OPERATOR",
-	  "JUNIOR LAND TECHNICAL SPECIALIST",
-	  "JUNIOR GIS SPECIALIST",
-	  "JUNIOR GIS OPERATOR"
-	];
-
-	const uniqVals = (arr, field) => {
-	  const vals = uniq(arr.map(r => normVal(r[field]))).filter(Boolean);
-	  if (field === "POSITION") {
-		return vals.sort((a, b) => {
-		  const ia = POSITION_ORDER.indexOf(a.toUpperCase());
-		  const ib = POSITION_ORDER.indexOf(b.toUpperCase());
-		  if (ia === -1 && ib === -1) return a.localeCompare(b);
-		  if (ia === -1) return 1;   // items not in the list go after
-		  if (ib === -1) return -1;
-		  return ia - ib;
-		});
-	  }
-	  return vals.sort();
+	let cur = {
+		TEAM:     normVal(teamSel?.value),
+		POSITION: normVal(posSel?.value),
+		NAME:     normVal(nameSel?.value),
 	};
 
+	if (changed === "TEAM")     { cur.POSITION = ""; cur.NAME = ""; }
+	if (changed === "POSITION") { cur.NAME = ""; }
 
-  const teamValues = uniqVals(all, "TEAM");
-  if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
-  fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
+	const all = RESPONDERS;
+		const POSITION_ORDER = [
+		  "MANAGER",
+		  "DEPUTY MANAGER",
+		  "LEAD SENIOR LAND TECHNICAL SPECIALIST",
+		  "SENIOR LAND TECHNICAL SPECIALIST",
+		  "SENIOR GIS SPECIALIST",
+		  "SENIOR GIS OPERATOR",
+		  "JUNIOR LAND TECHNICAL SPECIALIST",
+		  "JUNIOR GIS SPECIALIST",
+		  "JUNIOR GIS OPERATOR"
+		];
 
-  const scopeTeam = cur.TEAM ? all.filter(r => normVal(r.TEAM) === cur.TEAM) : all;
-  const posValues = uniqVals(scopeTeam, "POSITION");
-  if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
-  fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
+		const uniqVals = (arr, field) => {
+		  const vals = uniq(arr.map(r => normVal(r[field]))).filter(Boolean);
+		  if (field === "POSITION") {
+			return vals.sort((a, b) => {
+			  const ia = POSITION_ORDER.indexOf(a.toUpperCase());
+			  const ib = POSITION_ORDER.indexOf(b.toUpperCase());
+			  if (ia === -1 && ib === -1) return a.localeCompare(b);
+			  if (ia === -1) return 1;   // items not in the list go after
+			  if (ib === -1) return -1;
+			  return ia - ib;
+			});
+		  }
+		  return vals.sort();
+		};
 
-  let scopeForNames = scopeTeam;
-  if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
-  const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
-  if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
-  fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
 
-  if (!cur.NAME) {
-    state.data = {};
-    saveStore();
-    render();
-  }
+	const teamValues = uniqVals(all, "TEAM");
+	if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
+	fillSelect(teamSel, teamValues, cur.TEAM, "— all teams —");
 
-  localStorage.setItem("responders-filters", JSON.stringify(cur));
-  setSaveEnabled(!!cur.NAME);
-  updateDashToggleEligibility();
+	const scopeTeam = cur.TEAM ? all.filter(r => normVal(r.TEAM) === cur.TEAM) : all;
+	const posValues = uniqVals(scopeTeam, "POSITION");
+	if (cur.POSITION && !posValues.includes(cur.POSITION)) cur.POSITION = "";
+	fillSelect(posSel, posValues, cur.POSITION, "— all positions —");
+
+	let scopeForNames = scopeTeam;
+	if (cur.POSITION) scopeForNames = scopeForNames.filter(r => normVal(r.POSITION) === cur.POSITION);
+	const nameValues = uniq(scopeForNames.map(r => normVal(r.NAME))).sort();
+	if (cur.NAME && !nameValues.includes(cur.NAME)) cur.NAME = "";
+	fillSelect(nameSel, nameValues, cur.NAME, "— select name —");
+
+	if (!cur.NAME) {
+		state.data = {};
+		saveStore();
+		render();
+	}
+
+	localStorage.setItem("responders-filters", JSON.stringify(cur));
+	setSaveEnabled(!!cur.NAME);
+	updateDashToggleEligibility();
 }
 function wireResponderEvents() {
-  const teamSel = document.getElementById("selTeam");
-  const posSel  = document.getElementById("selPosition");
-  const nameSel = document.getElementById("selName");
+	const teamSel = document.getElementById("selTeam");
+	const posSel  = document.getElementById("selPosition");
+	const nameSel = document.getElementById("selName");
 
-  teamSel?.addEventListener("change", () => { populateRespondersUI("TEAM"); });
-  posSel?.addEventListener("change",   () => { populateRespondersUI("POSITION"); });
-  nameSel?.addEventListener("change", async (e) => {
-    populateRespondersUI("NAME");
-    updateDashToggleEligibility();
-    const name = (e.target?.value || "").trim();
-    if (name) await loadScheduleForName(name);
-    else setSaveEnabled(false);
-  });
+	teamSel?.addEventListener("change", () => { populateRespondersUI("TEAM"); });
+	posSel?.addEventListener("change",   () => { populateRespondersUI("POSITION"); });
+	nameSel?.addEventListener("change", async (e) => {
+		populateRespondersUI("NAME");
+		updateDashToggleEligibility();
+		const name = (e.target?.value || "").trim();
+		if (name) await loadScheduleForName(name);
+		else setSaveEnabled(false);
+	});
 }
 
 /* ===== Save via Worker (includes preset HOL & RD) ===== */
 async function uploadScheduleViaProxy(){
-  if (isPastDeadline()){
-    const when = [CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ');
-    alert(`Saving is locked.\nDeadline was ${when}.\nPlease contact GDS-Voughn Calma.`);
-    return;
-  }
-  const exportBtn = document.getElementById('exportBtn');
-  const selName = document.getElementById('selName');
-  const selTeam = document.getElementById('selTeam');
-  const selPosition = document.getElementById('selPosition');
-
-  const name = (selName.value || '').trim();
-  if(!name){ alert("Pick a Name first."); selName.focus(); return; }
-
-  if(Object.keys(state.data).length === 0){
-    if(!confirm("Your schedule is empty. Save anyway?")) return;
-  }
-
-  exportBtn.disabled = true;
-  const prevText = exportBtn.textContent;
-  exportBtn.textContent = "Saving…";
-
-  const mergedData = { ...state.data };
-  const d = new Date(CONFIG.START_DATE);
-  while (d <= CONFIG.END_DATE) {
-    const id = ymd(d);
-    const wd = d.getDay();
-	if (isHoliday(d)) {
-	  mergedData[id] = 'HOL';           // always override to HOL
-	} else if (wd === 0 || wd === 6) {
-	  mergedData[id] = 'RD';            // always override to RD
+	if (isPastDeadline()){
+		const when = [CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ');
+		alert(`Saving is locked.\nDeadline was ${when}.\nPlease contact GDS-Voughn Calma.`);
+		return;
 	}
-    d.setDate(d.getDate() + 1);
-  }
+	const exportBtn = document.getElementById('exportBtn');
+	const selName = document.getElementById('selName');
+	const selTeam = document.getElementById('selTeam');
+	const selPosition = document.getElementById('selPosition');
 
-  const payload = {
-    op: "save",
-    name,
-    data: {
-      ...mergedData,
-      _meta: {
-        team: selTeam.value,
-        position: selPosition.value,
-        name,
-        lastSaved: new Date().toISOString()
-      }
-    }
-  };
+	const name = (selName.value || '').trim();
+	if(!name){ alert("Pick a Name first."); selName.focus(); return; }
 
-  try{
-    const res = await fetch(PROXY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload),
-    });
+	if(Object.keys(state.data).length === 0){
+		if(!confirm("Your schedule is empty. Save anyway?")) return;
+	}
 
-    let j = null;
-    try { j = await res.json(); } catch {}
-    if (!res.ok || !j?.ok) {
-      const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
-      throw new Error(err);
-    }
+	exportBtn.disabled = true;
+	const prevText = exportBtn.textContent;
+	exportBtn.textContent = "Saving…";
 
-    alert(`Saved ✅`);
-  } catch(e){
-    alert("Save failed:\n" + (e?.message || e));
-  } finally {
-    exportBtn.disabled = false;
-    exportBtn.textContent = prevText;
-  }
+	const mergedData = { ...state.data };
+	const d = new Date(CONFIG.START_DATE);
+	while (d <= CONFIG.END_DATE) {
+		const id = ymd(d);
+		const wd = d.getDay();
+		if (isHoliday(d)) {
+		  mergedData[id] = 'HOL';           // always override to HOL
+		} else if (wd === 0 || wd === 6) {
+		  mergedData[id] = 'RD';            // always override to RD
+		}
+		d.setDate(d.getDate() + 1);
+	}
+
+	const payload = {
+		op: "save",
+		name,
+		data: {
+		  ...mergedData,
+		  _meta: {
+				team: selTeam.value,
+				position: selPosition.value,
+				name,
+				lastSaved: new Date().toISOString()
+		  }
+		}
+	};
+
+	try{
+		const res = await fetch(PROXY_URL, {
+		  method: "POST",
+		  headers: { "Content-Type": "application/json", "Accept": "application/json" },
+		  body: JSON.stringify(payload),
+		});
+
+		let j = null;
+		try { j = await res.json(); } catch {}
+		if (!res.ok || !j?.ok) {
+		  const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
+		  throw new Error(err);
+		}
+
+		alert(`Saved ✅`);
+	} catch(e){
+		alert("Save failed:\n" + (e?.message || e));
+	} finally {
+		exportBtn.disabled = false;
+		exportBtn.textContent = prevText;
+	}
 }
 document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
 /* ===== Load schedule (personnel) ===== */
 async function loadScheduleForName(name) {
-  const loadBtn = document.getElementById('loadBtn');
-  const hasName = !!(name && name.trim());
-  setSaveEnabled(hasName);
+	const loadBtn = document.getElementById('loadBtn');
+	const hasName = !!(name && name.trim());
+	setSaveEnabled(hasName);
 
-  state.data = {};
-  saveStore();
-  render();
-  if (!hasName) return;
+	state.data = {};
+	saveStore();
+	render();
+	if (!hasName) return;
 
-  const prevText = loadBtn ? loadBtn.textContent : '';
-  if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
+	const prevText = loadBtn ? loadBtn.textContent : '';
+	if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
 
-  try {
-    const r = await fetch(PROXY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ op: "load", name })
-    });
-    const j = await r.json();
+	try {
+		const r = await fetch(PROXY_URL, {
+		  method: "POST",
+		  headers: { "Content-Type": "application/json", "Accept": "application/json" },
+		  body: JSON.stringify({ op: "load", name })
+		});
+		const j = await r.json();
 
-    if (j?.ok && j.data) {
-      const loaded = stripMeta(j.data);
-      const valid = {};
-      for (const [k, v] of Object.entries(loaded)) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
-      }
-      state.data = valid;
-      saveStore();
-      render();
-    } else {
-      render();
-    }
-  } catch (e) {
-    console.error("Worker load error:", e);
-  } finally {
-    if (loadBtn) { loadBtn.textContent = prevText || "Refresh"; loadBtn.disabled = !hasName; }
-  }
+		if (j?.ok && j.data) {
+		  const loaded = stripMeta(j.data);
+		  const valid = {};
+		  for (const [k, v] of Object.entries(loaded)) {
+				if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
+		  }
+		  state.data = valid;
+		  saveStore();
+		  render();
+		} else {
+		  render();
+		}
+	} catch (e) {
+		console.error("Worker load error:", e);
+	} finally {
+		if (loadBtn) { loadBtn.textContent = prevText || "Refresh"; loadBtn.disabled = !hasName; }
+	}
 }
 document.getElementById('loadBtn').onclick = async () => {
-  const selName = document.getElementById('selName');
-  const name = (selName.value || '').trim();
-  if (!name) { alert("Pick a Name first."); selName.focus(); return; }
-  await loadScheduleForName(name);
+	const selName = document.getElementById('selName');
+	const name = (selName.value || '').trim();
+	if (!name) { alert("Pick a Name first."); selName.focus(); return; }
+	await loadScheduleForName(name);
 };
 
 /* ===== Export helpers (used by dashboard too if needed) ===== */
 function parseGmtTime(str){
-  // Accepts: "GMT+8 1700", "GMT+08:00 17:00", "+08:00 17:00"
-  const s = String(str || '').trim();
-  const m = s.match(/(?:GMT)?\s*([+-]\d{1,2})(?::?(\d{2}))?\s+(\d{2}):?(\d{2})/i);
-  if (!m) return null;
-  const offH = parseInt(m[1], 10);
-  const offM = parseInt(m[2] || '0', 10);
-  const hh   = parseInt(m[3], 10);
-  const mm   = parseInt(m[4], 10);
-  if ([offH,offM,hh,mm].some(Number.isNaN)) return null;
-  return { offH, offM, hh, mm };
+	// Accepts: "GMT+8 1700", "GMT+08:00 17:00", "+08:00 17:00"
+	const s = String(str || '').trim();
+	const m = s.match(/(?:GMT)?\s*([+-]\d{1,2})(?::?(\d{2}))?\s+(\d{2}):?(\d{2})/i);
+	if (!m) return null;
+	const offH = parseInt(m[1], 10);
+	const offM = parseInt(m[2] || '0', 10);
+	const hh   = parseInt(m[3], 10);
+	const mm   = parseInt(m[4], 10);
+	if ([offH,offM,hh,mm].some(Number.isNaN)) return null;
+	return { offH, offM, hh, mm };
 }
 
 function buildDeadline(dateStr, timeStr){
-  const d = parseDateStr(dateStr);
-  const t = parseGmtTime(timeStr);
-  if (!d || !t) return null;
-  // Convert local(GMT+offset) to UTC by subtracting the offset
-  const utcMs = Date.UTC(
-    d.getFullYear(), d.getMonth(), d.getDate(),
-    t.hh - t.offH, t.mm - t.offM, 0, 0
-  );
-  return new Date(utcMs);
+	const d = parseDateStr(dateStr);
+	const t = parseGmtTime(timeStr);
+	if (!d || !t) return null;
+	// Convert local(GMT+offset) to UTC by subtracting the offset
+	const utcMs = Date.UTC(
+		d.getFullYear(), d.getMonth(), d.getDate(),
+		t.hh - t.offH, t.mm - t.offM, 0, 0
+	);
+	return new Date(utcMs);
 }
 
 function isPastDeadline(){
-  return !!CONFIG.DEADLINE_AT && Date.now() > CONFIG.DEADLINE_AT.getTime();
+	return !!CONFIG.DEADLINE_AT && Date.now() > CONFIG.DEADLINE_AT.getTime();
 }
 
 
 function dateRangeList() {
-  const out = [];
-  if (!CONFIG.START_DATE || !CONFIG.END_DATE) return out;
-  const d = new Date(CONFIG.START_DATE);
-  while (d <= CONFIG.END_DATE) {
-    out.push(ymd(d));
-    d.setDate(d.getDate() + 1);
-  }
-  return out;
+	const out = [];
+	if (!CONFIG.START_DATE || !CONFIG.END_DATE) return out;
+	const d = new Date(CONFIG.START_DATE);
+	while (d <= CONFIG.END_DATE) {
+		out.push(ymd(d));
+		d.setDate(d.getDate() + 1);
+	}
+	return out;
 }
 async function fetchScheduleData(name){
-  try{
-    const r = await fetch(PROXY_URL, {
-      method: "POST",
-      headers: { "Content-Type":"application/json", "Accept":"application/json" },
-      body: JSON.stringify({ op: "load", name })
-    });
-    const j = await r.json();
-    if (j?.ok && j.data) return stripMeta(j.data);
-  }catch(e){
-    console.warn("Fetch schedule failed for", name, e);
-  }
-  return {};
+	try{
+		const r = await fetch(PROXY_URL, {
+		  method: "POST",
+		  headers: { "Content-Type":"application/json", "Accept":"application/json" },
+		  body: JSON.stringify({ op: "load", name })
+		});
+		const j = await r.json();
+		if (j?.ok && j.data) return stripMeta(j.data);
+	}catch(e){
+		console.warn("Fetch schedule failed for", name, e);
+	}
+	return {};
 }
 /* ===== Download helper ===== */
 function downloadBlob(content, filename, type){
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+	const blob = new Blob([content], { type });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url; a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
 }
 const POSITION_ORDER_EXPORT = [
-  "MANAGER",
-  "DEPUTY MANAGER",
-  "LEAD SENIOR LAND TECHNICAL SPECIALIST",
-  "SENIOR LAND TECHNICAL SPECIALIST",
-  "SENIOR GIS SPECIALIST",
-  "SENIOR GIS OPERATOR",
-  "JUNIOR LAND TECHNICAL SPECIALIST",
-  "JUNIOR GIS SPECIALIST",
-  "JUNIOR GIS OPERATOR"
+	"MANAGER",
+	"DEPUTY MANAGER",
+	"LEAD SENIOR LAND TECHNICAL SPECIALIST",
+	"SENIOR LAND TECHNICAL SPECIALIST",
+	"SENIOR GIS SPECIALIST",
+	"SENIOR GIS OPERATOR",
+	"JUNIOR LAND TECHNICAL SPECIALIST",
+	"JUNIOR GIS SPECIALIST",
+	"JUNIOR GIS OPERATOR"
 ];
 
 
 /* ===== Ensure XLSX (SheetJS) present ===== */
 async function ensureXLSX(){
-  if (window.XLSX) return;
-  const urls = [
-    "https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
-    "https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
-    "https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
-  ];
-  for (const url of urls) {
-    try {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = url; s.async = true;
-        s.onload = resolve; s.onerror = () => reject(new Error("failed"));
-        document.head.appendChild(s);
-      });
-      if (window.XLSX) return;
-    } catch {}
-  }
-  throw new Error("Failed to load SheetJS (XLSX).");
+	if (window.XLSX) return;
+	const urls = [
+		"https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js",
+		"https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js",
+		"https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"
+	];
+	for (const url of urls) {
+		try {
+		  await new Promise((resolve, reject) => {
+				const s = document.createElement("script");
+				s.src = url; s.async = true;
+				s.onload = resolve; s.onerror = () => reject(new Error("failed"));
+				document.head.appendChild(s);
+		  });
+		  if (window.XLSX) return;
+		} catch {}
+	}
+	throw new Error("Failed to load SheetJS (XLSX).");
 }
 
 /* ===== Export menu wiring ===== */
@@ -968,95 +968,95 @@ const exportTableBtn = document.getElementById('exportTableBtn');
 
 function toggleMenu(show){ exportMenu.classList.toggle('hidden', !show); }
 if (exportFileBtn) exportFileBtn.addEventListener('click', (e)=>{
-  e.stopPropagation();
-  const isHidden = exportMenu.classList.contains('hidden');
-  toggleMenu(isHidden);
+	e.stopPropagation();
+	const isHidden = exportMenu.classList.contains('hidden');
+	toggleMenu(isHidden);
 });
 document.addEventListener('click', ()=> toggleMenu(false));
 
 /* ===== VL Summary (.txt) ===== */
 async function exportVlSummary(){
-  const names = getFilteredNamesForDashboard();
-  if (!names.length) { alert("No names match the current filter."); return; }
+	const names = getFilteredNamesForDashboard();
+	if (!names.length) { alert("No names match the current filter."); return; }
 
-  const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
-  const lines = [];
+	const pairs = await Promise.all(names.map(async n => [n, await fetchScheduleData(n)]));
+	const lines = [];
 
-  for (const [name, data] of pairs) {
-    lines.push(name);
-    const vlDates = Object.entries(data || {})
-      .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
-      .map(([k]) => parseYMD(k))
-      .sort((a,b)=>a-b);
+	for (const [name, data] of pairs) {
+		lines.push(name);
+		const vlDates = Object.entries(data || {})
+		  .filter(([k, v]) => v === 'VL' && dateInRange(parseYMD(k)))
+		  .map(([k]) => parseYMD(k))
+		  .sort((a,b)=>a-b);
 
-    if (!vlDates.length) { lines.push("(no VL)"); lines.push(""); continue; }
+		if (!vlDates.length) { lines.push("(no VL)"); lines.push(""); continue; }
 
-    const groups = {};
-    for (const d of vlDates) {
-      const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
-      (groups[key] ||= []).push(d);
-    }
-    const keys = Object.keys(groups).sort();
-    for (const key of keys) {
-      const arr = groups[key];
-      const label = arr[0].toLocaleString(undefined, { month:'long', year:'numeric' });
-      const days = arr.map(d => d.getDate()).join(", ");
-      lines.push(label);
-      lines.push(days);
-    }
-    lines.push("");
-  }
+		const groups = {};
+		for (const d of vlDates) {
+		  const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+		  (groups[key] ||= []).push(d);
+		}
+		const keys = Object.keys(groups).sort();
+		for (const key of keys) {
+		  const arr = groups[key];
+		  const label = arr[0].toLocaleString(undefined, { month:'long', year:'numeric' });
+		  const days = arr.map(d => d.getDate()).join(", ");
+		  lines.push(label);
+		  lines.push(days);
+		}
+		lines.push("");
+	}
 
-  const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
-  downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
+	const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
+	downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
 }
 
 /* ===== Table (.xlsx) ===== */
 async function exportTableXlsx(){
-  await ensureXLSX();
-  const names = getFilteredNamesForDashboard();
-  if (!names.length) { alert("No names match the current filter."); return; }
+	await ensureXLSX();
+	const names = getFilteredNamesForDashboard();
+	if (!names.length) { alert("No names match the current filter."); return; }
 
-  const dates = dateRangeList();
-  if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
+	const dates = dateRangeList();
+	if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
 
-	// include position and sort by POSITION_ORDER_EXPORT
-	const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || "Unspecified"]));
-	const schedules = await Promise.all(names.map(async n => {
-	  const data = await fetchScheduleData(n);
-	  const pos  = posMap.get(n) || "Unspecified";
-	  return [n, pos, data];
-	}));
+		// include position and sort by POSITION_ORDER_EXPORT
+		const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || "Unspecified"]));
+		const schedules = await Promise.all(names.map(async n => {
+		  const data = await fetchScheduleData(n);
+		  const pos  = posMap.get(n) || "Unspecified";
+		  return [n, pos, data];
+		}));
 
-	schedules.sort((a, b) => {
-	  const ia = POSITION_ORDER_EXPORT.indexOf(a[1].toUpperCase());
-	  const ib = POSITION_ORDER_EXPORT.indexOf(b[1].toUpperCase());
-	  if (ia === -1 && ib === -1) return a[1].localeCompare(b[1]);
-	  if (ia === -1) return 1;
-	  if (ib === -1) return -1;
-	  return ia - ib;
-	});
+		schedules.sort((a, b) => {
+		  const ia = POSITION_ORDER_EXPORT.indexOf(a[1].toUpperCase());
+		  const ib = POSITION_ORDER_EXPORT.indexOf(b[1].toUpperCase());
+		  if (ia === -1 && ib === -1) return a[1].localeCompare(b[1]);
+		  if (ia === -1) return 1;
+		  if (ib === -1) return -1;
+		  return ia - ib;
+		});
 
 
-  const header = ["Position", "Name", ...dates];
-  const rows = [header];
-  const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
+	const header = ["Position", "Name", ...dates];
+	const rows = [header];
+	const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
 
-	for (const [name, pos, data] of schedules) {
-	  const row = [pos, name];
+		for (const [name, pos, data] of schedules) {
+		  const row = [pos, name];
 
-    for (const d of dates) row.push(statusToCell(data?.[d] || ""));
-    rows.push(row);
-  }
+		for (const d of dates) row.push(statusToCell(data?.[d] || ""));
+		rows.push(row);
+	}
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!freeze"] = { xSplit: 1, ySplit: 1 };
-  ws["!cols"] = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
-  XLSX.utils.book_append_sheet(wb, ws, "Schedule");
+	const wb = XLSX.utils.book_new();
+	const ws = XLSX.utils.aoa_to_sheet(rows);
+	ws["!freeze"] = { xSplit: 1, ySplit: 1 };
+	ws["!cols"] = [{ wch: 28 }, ...dates.map(() => ({ wch: 10 }))];
+	XLSX.utils.book_append_sheet(wb, ws, "Schedule");
 
-  const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
-  XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
+	const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
+	XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
 }
 
 if (exportVlBtn)    exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportVlSummary(); });
@@ -1065,14 +1065,14 @@ if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleM
 
 /* ===== Navigation ===== */
 document.getElementById('prevBtn').onclick = ()=>{
-  const d = new Date(state.viewYear, state.viewMonth - 1, 1);
-  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-  render();
+	const d = new Date(state.viewYear, state.viewMonth - 1, 1);
+	({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+	render();
 };
 document.getElementById('nextBtn').onclick = ()=>{
-  const d = new Date(state.viewYear, state.viewMonth + 1, 1);
-  ({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
-  render();
+	const d = new Date(state.viewYear, state.viewMonth + 1, 1);
+	({year: state.viewYear, month: state.viewMonth} = clampView(d.getFullYear(), d.getMonth()));
+	render();
 };
 
 /* ===== Dashboard view & filters ===== */
@@ -1095,27 +1095,27 @@ const $missingSubtitle = document.getElementById('missingSubtitle');
 /* Eligibility (Manager / Deputy / Senior) */
 const DASH_ALLOWED_POS = new Set(['senior gis specialist','deputy manager','manager','lead senior land technical specialist', 'senior gis operator']);
 function getSelectedResponderPositionLower() {
-  const nameSel = document.getElementById('selName');
-  const name = (nameSel?.value || '').trim();
-  if (!name) return null;
-  const r = RESPONDERS.find(x => (x.NAME || '') === name);
-  return (r?.POSITION ?? '').trim().toLowerCase() || null;
+	const nameSel = document.getElementById('selName');
+	const name = (nameSel?.value || '').trim();
+	if (!name) return null;
+	const r = RESPONDERS.find(x => (x.NAME || '') === name);
+	return (r?.POSITION ?? '').trim().toLowerCase() || null;
 }
 function isDashboardEligible() {
-  const pos = getSelectedResponderPositionLower();
-  return !!pos && DASH_ALLOWED_POS.has(pos);
+	const pos = getSelectedResponderPositionLower();
+	return !!pos && DASH_ALLOWED_POS.has(pos);
 }
 function setDashToggleDisabled(disabled) {
-  const btn = document.getElementById('toggleDashboardBtn');
-  if (!btn) return;
-  btn.disabled = !!disabled;
-  btn.classList.toggle('cursor-default', !!disabled);
-  btn.classList.toggle('pointer-events-none', !!disabled);
-  btn.title = disabled ? '' : (state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View');
+	const btn = document.getElementById('toggleDashboardBtn');
+	if (!btn) return;
+	btn.disabled = !!disabled;
+	btn.classList.toggle('cursor-default', !!disabled);
+	btn.classList.toggle('pointer-events-none', !!disabled);
+	btn.title = disabled ? '' : (state.isDashboard ? 'Switch to Personnel View' : 'Switch to Dashboard View');
 }
 function updateDashToggleEligibility(){
-  if (state.isDashboard) { setDashToggleDisabled(false); return; }
-  setDashToggleDisabled(!isDashboardEligible());
+	if (state.isDashboard) { setDashToggleDisabled(false); return; }
+	setDashToggleDisabled(!isDashboardEligible());
 }
 
 /* ---- WORK/LEAVE mode ---- */
@@ -1123,31 +1123,31 @@ const WORK_CODES  = ['ONS','WFH','OFC'];
 const LEAVE_CODES = ['VL','AA','PTO','PL','ML','BDL'];
 function getSelectedTypeCodes(){ return state.typeMode === 'WORK' ? WORK_CODES : LEAVE_CODES; }
 function renderTypeSwitch(){
-  const $work  = document.getElementById('btnWork');
-  const $leave = document.getElementById('btnLeave');
-  const $hint  = document.getElementById('typeSwitchHint');
+	const $work  = document.getElementById('btnWork');
+	const $leave = document.getElementById('btnLeave');
+	const $hint  = document.getElementById('typeSwitchHint');
 
-  const active   = 'font-semibold border border-slate-500';
-  const inactive = 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/60';
+	const active   = 'font-semibold border border-slate-500';
+	const inactive = 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/60';
 
-  // Reset both buttons first
-  [$work,$leave].forEach(el=>{
-    el.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + inactive;
-    el.style.backgroundColor = '';
-    el.style.color = ''; // clear text color
-  });
+	// Reset both buttons first
+	[$work,$leave].forEach(el=>{
+		el.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + inactive;
+		el.style.backgroundColor = '';
+		el.style.color = ''; // clear text color
+	});
 
-  if(state.typeMode === 'WORK'){
-    $work.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
-    $work.style.backgroundColor = '#fcfcfc';
-    $work.style.color = '#0a0f1a';
-    $hint.textContent = 'Showing: ON-SITE, WORK FROM HOME, OFFICE';
-  } else {
-    $leave.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
-    $leave.style.backgroundColor = '#fcfcfc';
-    $leave.style.color = '#0a0f1a';
-    $hint.textContent = 'Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
-  }
+	if(state.typeMode === 'WORK'){
+		$work.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
+		$work.style.backgroundColor = '#fcfcfc';
+		$work.style.color = '#0a0f1a';
+		$hint.textContent = 'Showing: ON-SITE, WORK FROM HOME, OFFICE';
+	} else {
+		$leave.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + active;
+		$leave.style.backgroundColor = '#fcfcfc';
+		$leave.style.color = '#0a0f1a';
+		$hint.textContent = 'Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
+	}
 }
 
 document.getElementById('btnWork').onclick = ()=>{ if(state.typeMode!=='WORK'){ state.typeMode='WORK'; renderTypeSwitch(); buildDashboard(); } };
@@ -1156,252 +1156,252 @@ document.getElementById('btnLeave').onclick= ()=>{ if(state.typeMode!=='LEAVE'){
 /* Completeness (strict) */
 function isWeekend(d){ const w=d.getDay(); return w===0||w===6; }
 function hasCompleteScheduleForRangeStrict(dataObj){
-  if(!CONFIG.START_DATE||!CONFIG.END_DATE) return false;
-  const d=new Date(CONFIG.START_DATE);
-  while(d<=CONFIG.END_DATE){
-    const id=ymd(d);
-    const v=dataObj?.[id];
-    if(isHoliday(d)){ if(v!=='HOL') return false; }
-    else if(isWeekend(d)){ if(v!=='RD') return false; }
-    else { if(!v) return false; }
-    d.setDate(d.getDate()+1);
-  }
-  return true;
+	if(!CONFIG.START_DATE||!CONFIG.END_DATE) return false;
+	const d=new Date(CONFIG.START_DATE);
+	while(d<=CONFIG.END_DATE){
+		const id=ymd(d);
+		const v=dataObj?.[id];
+		if(isHoliday(d)){ if(v!=='HOL') return false; }
+		else if(isWeekend(d)){ if(v!=='RD') return false; }
+		else { if(!v) return false; }
+		d.setDate(d.getDate()+1);
+	}
+	return true;
 }
 
 /* Dashboard filter helper */
 function getFilteredNamesForDashboard() {
-  if (!state.isDashboard) return getAllNames().sort();
-  const val = $fSupervisors.value || '__ALL__';
-  return (val==='__ALL__') ? getAllNames() : getSubtreeNames([val]);
+	if (!state.isDashboard) return getAllNames().sort();
+	const val = $fSupervisors.value || '__ALL__';
+	return (val==='__ALL__') ? getAllNames() : getSubtreeNames([val]);
 }
 
 /* Toggle handler */
 $toggleDash.addEventListener('click', async () => {
-  if (!state.isDashboard && !isDashboardEligible()) return;
+	if (!state.isDashboard && !isDashboardEligible()) return;
 
-  state.isDashboard = !state.isDashboard;
-  if (state.isDashboard) {
-    enterDashboard();
-    await prepareDashboardFilters();
-    renderTypeSwitch();
-    await autoApplySupervisorFromName();
-    await buildDashboard();
-  } else {
-    exitDashboard();
-  }
+	state.isDashboard = !state.isDashboard;
+	if (state.isDashboard) {
+		enterDashboard();
+		await prepareDashboardFilters();
+		renderTypeSwitch();
+		await autoApplySupervisorFromName();
+		await buildDashboard();
+	} else {
+		exitDashboard();
+	}
 });
 function enterDashboard(){
-  $filtersWrap.classList.add('hidden');
-  $loadBtn.classList.add('hidden');
-  $saveBtn.classList.add('hidden');
-  $personnelView.classList.add('hidden');
-  $dashboardView.classList.remove('hidden');
-  document.getElementById('dashIcon').textContent = '👥';
-  $exportGroup.classList.remove('hidden');
-  setDashToggleDisabled(false);
+	$filtersWrap.classList.add('hidden');
+	$loadBtn.classList.add('hidden');
+	$saveBtn.classList.add('hidden');
+	$personnelView.classList.add('hidden');
+	$dashboardView.classList.remove('hidden');
+	document.getElementById('dashIcon').textContent = '👥';
+	$exportGroup.classList.remove('hidden');
+	setDashToggleDisabled(false);
 }
 
 function exitDashboard(){
-  $filtersWrap.classList.remove('hidden');
-  $loadBtn.classList.remove('hidden');
-  $saveBtn.classList.remove('hidden');
-  $dashboardView.classList.add('hidden');
-  $personnelView.classList.remove('hidden');
-  document.getElementById('dashIcon').textContent = '🗓️';
-  $exportGroup.classList.add('hidden');
-  updateDashToggleEligibility();
+	$filtersWrap.classList.remove('hidden');
+	$loadBtn.classList.remove('hidden');
+	$saveBtn.classList.remove('hidden');
+	$dashboardView.classList.add('hidden');
+	$personnelView.classList.remove('hidden');
+	document.getElementById('dashIcon').textContent = '🗓️';
+	$exportGroup.classList.add('hidden');
+	updateDashToggleEligibility();
 }
 
 
 /* Populate supervisors with -ALL- (single select) */
 async function prepareDashboardFilters(){
-  const supList = ORG_SUPERVISORS.slice().sort();
-  $fSupervisors.innerHTML = `<option value="__ALL__">-ALL-</option>` + supList.map(n => `<option>${n}</option>`).join('');
-  $fSupervisors.onchange   = buildDashboard;
+	const supList = ORG_SUPERVISORS.slice().sort();
+	$fSupervisors.innerHTML = `<option value="__ALL__">-ALL-</option>` + supList.map(n => `<option>${n}</option>`).join('');
+	$fSupervisors.onchange   = buildDashboard;
 }
 
 /* Auto-select current user as supervisor if applicable */
 async function autoApplySupervisorFromName(){
-  const nameSel = document.getElementById('selName');
-  const chosen = (nameSel?.value || '').trim();
-  if (!chosen || !$fSupervisors) return;
+	const nameSel = document.getElementById('selName');
+	const chosen = (nameSel?.value || '').trim();
+	if (!chosen || !$fSupervisors) return;
 
-  const opts = Array.from($fSupervisors.options);
-  const idx = opts.findIndex(o => (o.value || o.textContent).trim() === chosen);
-  if (idx >= 0) {
-    $fSupervisors.selectedIndex = idx;
-  }
+	const opts = Array.from($fSupervisors.options);
+	const idx = opts.findIndex(o => (o.value || o.textContent).trim() === chosen);
+	if (idx >= 0) {
+		$fSupervisors.selectedIndex = idx;
+	}
 }
 
 /* Build dashboard (date → aggregate by code, list names) */
 async function buildDashboard(){
-  $hint.textContent = 'Loading…';
-  $centerTable.innerHTML = '';
-  $missingList.innerHTML = '';
+	$hint.textContent = 'Loading…';
+	$centerTable.innerHTML = '';
+	$missingList.innerHTML = '';
 
-  const selectedTypes = getSelectedTypeCodes();
-  $currentTypeCaption.textContent = selectedTypes.length
-    ? `Types: ${selectedTypes.map(c=>NAMES[c]||c).join(', ')}`
-    : 'Types: (none)';
+	const selectedTypes = getSelectedTypeCodes();
+	$currentTypeCaption.textContent = selectedTypes.length
+		? `Types: ${selectedTypes.map(c=>NAMES[c]||c).join(', ')}`
+		: 'Types: (none)';
 
-  const val = $fSupervisors.value || '__ALL__';
-  const allowedNames = (val==='__ALL__') ? getAllNames() : getSubtreeNames([val]);
+	const val = $fSupervisors.value || '__ALL__';
+	const allowedNames = (val==='__ALL__') ? getAllNames() : getSubtreeNames([val]);
 
-  // fetch all schedules
-  const dates = dateRangeList();
-  const dateSet = new Set(dates);
-  const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
+	// fetch all schedules
+	const dates = dateRangeList();
+	const dateSet = new Set(dates);
+	const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
 
-  // Aggregate by date -> [{name, code}]
-  const dateToPeople = new Map();
-  let totalRecords = 0;
-  for (const [name, sched] of pairs) {
-    for (const [d, code] of Object.entries(sched || {})) {
-      if (!dateSet.has(d)) continue;
-      if (!selectedTypes.includes(code)) continue;
-      if (!dateToPeople.has(d)) dateToPeople.set(d, []);
-      dateToPeople.get(d).push({ name, code });
-      totalRecords++;
-    }
-  }
-  $metricTotal.textContent = String(totalRecords);
-
-	// ===== WARNING: Days when everyone (EXCEPT the immediate supervisor) is on leave =====
-	const leaveCodes = ['VL','AA','PTO','PL','ML','BDL'];
-	const warningEl = document.getElementById('warningList');
-
-	// If filtering "ALL", we can't know each team's supervisor—show a hint instead
-	const supVal = ($fSupervisors.value || '__ALL__');
-	if (supVal === '__ALL__') {
-	  warningEl.innerHTML = `<div class="text-slate-500 text-xs italic">
-		Select an Immediate Supervisor to see full-team leave days (supervisor excluded).
-	  </div>`;
-	} else {
-	  // Subtree under selected supervisor, EXCLUDING the supervisor themself
-	  const teamWithoutSupervisor = getSubtreeNames([supVal]).filter(n => n !== supVal);
-
-	  // Build a quick name -> schedule map from the already-fetched pairs
-	  const schedByName = new Map(pairs.map(([n, d]) => [n, d || {}]));
-
-	  const warningDates = [];
-	  for (const d of dates) {
-		if (teamWithoutSupervisor.length === 0) continue; // no direct reports
-		const everyoneOnLeave = teamWithoutSupervisor.every(n => {
-		  const code = schedByName.get(n)?.[d] || '';
-		  return leaveCodes.includes(code);
-		});
-		if (everyoneOnLeave) warningDates.push(fmtMMMDDYYYY(parseYMD(d)));
-	  }
-
-	  warningEl.innerHTML = warningDates.length
-		? warningDates.map(date => `<div class="text-red-300 font-medium">${date}</div>`).join('')
-		: `<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>`;
+	// Aggregate by date -> [{name, code}]
+	const dateToPeople = new Map();
+	let totalRecords = 0;
+	for (const [name, sched] of pairs) {
+		for (const [d, code] of Object.entries(sched || {})) {
+		  if (!dateSet.has(d)) continue;
+		  if (!selectedTypes.includes(code)) continue;
+		  if (!dateToPeople.has(d)) dateToPeople.set(d, []);
+		  dateToPeople.get(d).push({ name, code });
+		  totalRecords++;
+		}
 	}
+	$metricTotal.textContent = String(totalRecords);
 
-	// Build center table in requested layout:
-	let html = '<thead><tr>';
-	html += '<th class="text-left">Date</th>';
-	html += '<th class="text-left">Count</th>';
-	html += '<th class="text-left">Details</th>';
-	html += '</tr></thead><tbody>';
+		// ===== WARNING: Days when everyone (EXCEPT the immediate supervisor) is on leave =====
+		const leaveCodes = ['VL','AA','PTO','PL','ML','BDL'];
+		const warningEl = document.getElementById('warningList');
 
-	const rows = Array.from(dateToPeople.entries())
-	  .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
-	  .sort((a,b)=>(a[0] < b[0] ? -1 : 1));
+		// If filtering "ALL", we can't know each team's supervisor—show a hint instead
+		const supVal = ($fSupervisors.value || '__ALL__');
+		if (supVal === '__ALL__') {
+		  warningEl.innerHTML = `<div class="text-slate-500 text-xs italic">
+			Select an Immediate Supervisor to see full-team leave days (supervisor excluded).
+		  </div>`;
+		} else {
+		  // Subtree under selected supervisor, EXCLUDING the supervisor themself
+		  const teamWithoutSupervisor = getSubtreeNames([supVal]).filter(n => n !== supVal);
 
-	for (const [d, people] of rows) {
-	  // group names by schedule code
-	  const byCode = {};
-	  for (const p of people) (byCode[p.code] ||= []).push(p.name);
+		  // Build a quick name -> schedule map from the already-fetched pairs
+		  const schedByName = new Map(pairs.map(([n, d]) => [n, d || {}]));
 
-	  const codes = Object.keys(byCode).sort();
-	  const dateLabel = new Date(d).toLocaleDateString(undefined, {
-		month:'short', day:'numeric', year:'numeric'
-	  });
+		  const warningDates = [];
+		  for (const d of dates) {
+			if (teamWithoutSupervisor.length === 0) continue; // no direct reports
+			const everyoneOnLeave = teamWithoutSupervisor.every(n => {
+			  const code = schedByName.get(n)?.[d] || '';
+			  return leaveCodes.includes(code);
+			});
+			if (everyoneOnLeave) warningDates.push(fmtMMMDDYYYY(parseYMD(d)));
+		  }
 
-		codes.forEach((code, idx) => {
-		  const names = byCode[code].slice().sort((a,b)=>a.localeCompare(b));
-		  const dateCell = idx === 0 ? dateLabel : '';
-		  const countCell = names.length;
-		  const nameLines = names.map(n => `<div>${n}</div>`).join('');
-		  const details = `
-			<div>
-			  <div class="font-semibold text-slate-100 mb-1">${code}</div>
-			  <div class="pl-3 border-l border-slate-700 space-y-1">${nameLines}</div>
-			</div>
-		  `;
+		  warningEl.innerHTML = warningDates.length
+			? warningDates.map(date => `<div class="text-red-300 font-medium">${date}</div>`).join('')
+			: `<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>`;
+		}
 
-		  html += `
-			<tr class="align-top">
-			  <td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
-			  <td>${countCell}</td>
-			  <td class="text-slate-300">${details}</td>
-			</tr>
-		  `;
-		});
+		// Build center table in requested layout:
+		let html = '<thead><tr>';
+		html += '<th class="text-left">Date</th>';
+		html += '<th class="text-left">Count</th>';
+		html += '<th class="text-left">Details</th>';
+		html += '</tr></thead><tbody>';
+
+		const rows = Array.from(dateToPeople.entries())
+		  .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
+		  .sort((a,b)=>(a[0] < b[0] ? -1 : 1));
+
+		for (const [d, people] of rows) {
+		  // group names by schedule code
+		  const byCode = {};
+		  for (const p of people) (byCode[p.code] ||= []).push(p.name);
+
+		  const codes = Object.keys(byCode).sort();
+		  const dateLabel = new Date(d).toLocaleDateString(undefined, {
+			month:'short', day:'numeric', year:'numeric'
+		  });
+
+			codes.forEach((code, idx) => {
+			  const names = byCode[code].slice().sort((a,b)=>a.localeCompare(b));
+			  const dateCell = idx === 0 ? dateLabel : '';
+			  const countCell = names.length;
+			  const nameLines = names.map(n => `<div>${n}</div>`).join('');
+			  const details = `
+				<div>
+				  <div class="font-semibold text-slate-100 mb-1">${code}</div>
+				  <div class="pl-3 border-l border-slate-700 space-y-1">${nameLines}</div>
+				</div>
+			  `;
+
+			  html += `
+				<tr class="align-top">
+				  <td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
+				  <td>${countCell}</td>
+				  <td class="text-slate-300">${details}</td>
+				</tr>
+			  `;
+			});
 
 
+		}
+
+		html += '</tbody>';
+		$centerTable.innerHTML = rows.length
+		  ? html
+		  : '<tbody><tr><td colspan="3" class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
+
+	// Incomplete list (strict) — only filtered by supervisor
+	const nameToData = new Map(pairs.map(([n,d])=>[n,d||{}]));
+	const incomplete = allowedNames.filter(n=>!hasCompleteScheduleForRangeStrict(nameToData.get(n))).sort((a,b)=>a.localeCompare(b));
+
+	if(!incomplete.length){
+		$missingList.innerHTML=`<div class="text-slate-400 text-sm">Everyone under the selected supervisor has a complete schedule for the range.</div>`;
+	}else{
+		// position lookup
+		const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
+		$missingList.innerHTML=incomplete.map(n=>{
+		  const pos=posMap.get(n)||'Unspecified';
+		  return `<div class="flex items-start gap-2">
+				<span class="w-2 h-2 mt-2 rounded-full bg-yellow-500/80"></span>
+				<div><div class="font-medium">${n}</div><div class="text-xs text-slate-400">${pos}</div></div>
+		  </div>`;
+		}).join('');
 	}
+	$missingSubtitle.textContent =
+		`Under: ${val==='__ALL__'?'All supervisors':val} • Completeness: HOL on holidays, RD on weekends, any set on weekdays`;
 
-	html += '</tbody>';
-	$centerTable.innerHTML = rows.length
-	  ? html
-	  : '<tbody><tr><td colspan="3" class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
-
-  // Incomplete list (strict) — only filtered by supervisor
-  const nameToData = new Map(pairs.map(([n,d])=>[n,d||{}]));
-  const incomplete = allowedNames.filter(n=>!hasCompleteScheduleForRangeStrict(nameToData.get(n))).sort((a,b)=>a.localeCompare(b));
-
-  if(!incomplete.length){
-    $missingList.innerHTML=`<div class="text-slate-400 text-sm">Everyone under the selected supervisor has a complete schedule for the range.</div>`;
-  }else{
-    // position lookup
-    const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
-    $missingList.innerHTML=incomplete.map(n=>{
-      const pos=posMap.get(n)||'Unspecified';
-      return `<div class="flex items-start gap-2">
-        <span class="w-2 h-2 mt-2 rounded-full bg-yellow-500/80"></span>
-        <div><div class="font-medium">${n}</div><div class="text-xs text-slate-400">${pos}</div></div>
-      </div>`;
-    }).join('');
-  }
-  $missingSubtitle.textContent =
-    `Under: ${val==='__ALL__'?'All supervisors':val} • Completeness: HOL on holidays, RD on weekends, any set on weekdays`;
-
-  $hint.textContent = rows.length ? 'Showing selected schedule types per day.' : 'Adjust supervisor or schedule mode.';
+	$hint.textContent = rows.length ? 'Showing selected schedule types per day.' : 'Adjust supervisor or schedule mode.';
 }
 
 /* ===== Init ===== */
 (async () => {
-  loadStore();
-  await loadConfig();
-	if (isPastDeadline()){
-	  const saveBtn = document.getElementById('exportBtn');
-	  if (saveBtn){
-		saveBtn.disabled = true;
-		saveBtn.title = `Deadline passed: ${[CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ')}`;
-		saveBtn.classList.add('opacity-60','cursor-not-allowed');
-	  }
-	}
+	loadStore();
+	await loadConfig();
+		if (isPastDeadline()){
+		  const saveBtn = document.getElementById('exportBtn');
+		  if (saveBtn){
+			saveBtn.disabled = true;
+			saveBtn.title = `Deadline passed: ${[CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ')}`;
+			saveBtn.classList.add('opacity-60','cursor-not-allowed');
+		  }
+		}
 
-  updateTitleFromConfig();
-  await loadResponders();
-  await loadOrganization();
+	updateTitleFromConfig();
+	await loadResponders();
+	await loadOrganization();
 
-  // GROUPED schedule controls
-  buildScheduleButtons();
+	// GROUPED schedule controls
+	buildScheduleButtons();
 
-  // Personnel filters
-  populateRespondersUI();
-  wireResponderEvents();
-  setSaveEnabled(false);
-  ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
-  render();
+	// Personnel filters
+	populateRespondersUI();
+	wireResponderEvents();
+	setSaveEnabled(false);
+	({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
+	render();
 
-  // Dashboard eligibility
-  updateDashToggleEligibility();
-  
+	// Dashboard eligibility
+	updateDashToggleEligibility();
+	
  // Dashboard eligibility
 updateDashToggleEligibility();
 
@@ -1414,53 +1414,53 @@ showIntroModal(true);
 
 <!-- Intro modal -->
 <div id="introModal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center hidden">
-  <div class="w-[min(680px,92vw)] rounded-2xl border border-slate-700 bg-[#0a0f1a] shadow-2xl p-5">
-    <h2 class="text-lg font-semibold mb-3">INSTRUCTIONS
-	 <p class="text-[#0a0f1a] italic text-center font-semibold">
-        IF SITE IS NOT INTUITIVE ENOUGH (..PC Intel 4004)
-      </p>
-    <div class="text-sm leading-relaxed text-slate-200 space-y-4">
-       <div>
-        <p class="font-semibold text-slate-100">(1)</p>
-        <ul class="list-disc list-inside pl-2">
-          <li>SELECT TEAM</li>
-          <li>SELECT POSITION</li>
-          <li><strong><u>SELECT NAME</u></strong></li>
-        </ul>
-      </div>
+	<div class="w-[min(680px,92vw)] rounded-2xl border border-slate-700 bg-[#0a0f1a] shadow-2xl p-5">
+		<h2 class="text-lg font-semibold mb-3">INSTRUCTIONS
+		 <p class="text-[#0a0f1a] italic text-center font-semibold">
+				IF SITE IS NOT INTUITIVE ENOUGH (..PC Intel 4004)
+			</p>
+		<div class="text-sm leading-relaxed text-slate-200 space-y-4">
+			 <div>
+				<p class="font-semibold text-slate-100">(1)</p>
+				<ul class="list-disc list-inside pl-2">
+					<li>SELECT TEAM</li>
+					<li>SELECT POSITION</li>
+					<li><strong><u>SELECT NAME</u></strong></li>
+				</ul>
+			</div>
 
-      <div>
-        <p class="font-semibold text-slate-100">(2)</p>
-        <ul class="list-disc list-inside pl-2">
-          <li><u>SELECT DATE/S</u></li>
-          <li><u>SELECT WORK SETUP / LEAVES FOR SELECTED DATE/S</u></li>
-          <li>REPEAT TIL COMPLETE</li>
-        </ul>
-      </div>
+			<div>
+				<p class="font-semibold text-slate-100">(2)</p>
+				<ul class="list-disc list-inside pl-2">
+					<li><u>SELECT DATE/S</u></li>
+					<li><u>SELECT WORK SETUP / LEAVES FOR SELECTED DATE/S</u></li>
+					<li>REPEAT TIL COMPLETE</li>
+				</ul>
+			</div>
 
-      <div>
-        <p class="font-semibold text-slate-100">(3)</p>
-        <ul class="list-disc list-inside pl-2">
-          <li><strong><u>SAVE</u></strong></li>
-          <li>WAIT FOR POP-UP CONFIRMATION</li>
-          <li>IF NO CONFIRMATION, CONTACT <strong>GDS-VOUGHN CALMA</strong></li>
-        </ul>
-      </div>
-    </div>
-	
-      <div>
-	 <p class="font-semibold italic text-center font-semibold">
-		---------------------------------------------------<br>
-        <strong><u>NOTE!</u></strong> PULLOUT/DEPLOYMENT is still ON-SITE, <u><strong>NOT</strong> WFH</u><br>
-		---------------------------------------------------
+			<div>
+				<p class="font-semibold text-slate-100">(3)</p>
+				<ul class="list-disc list-inside pl-2">
+					<li><strong><u>SAVE</u></strong></li>
+					<li>WAIT FOR POP-UP CONFIRMATION</li>
+					<li>IF NO CONFIRMATION, CONTACT <strong>GDS-VOUGHN CALMA</strong></li>
+				</ul>
+			</div>
+		</div>
 		
-      </p>
-      </div>
+			 <div>
+		 <p class="font-semibold italic text-center font-semibold">
+				---------------------------------------------------<br>
+				<strong><u>NOTE!</u></strong> PULLOUT/DEPLOYMENT is still ON-SITE, <u><strong>NOT</strong> WFH</u><br>
+				---------------------------------------------------
+				
+			</p>
+			</div>
 
-    <div class="mt-6 text-right">
-      <button id="introCloseBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800">GOTCHA</button>
-    </div>
-  </div>
+		<div class="mt-6 text-right">
+			<button id="introCloseBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800">GOTCHA</button>
+		</div>
+	</div>
 </div>
 
 
