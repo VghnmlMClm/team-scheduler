@@ -505,7 +505,6 @@ async function computeDeploymentMarkersForSelected(){
   const windowStart = CONFIG.START_DATE ?? fallbackStart;
   const windowEnd   = CONFIG.END_DATE   ?? fallbackEnd;
 
-
   const selEl = document.getElementById('selName');
   const name  = (selEl?.value || '').trim();
   if (!name) return;
@@ -522,9 +521,6 @@ async function computeDeploymentMarkersForSelected(){
   const WEEK  = Number(plan.WEEK);
   const DAY   = Number(plan.DAY);
 
-  const windowStart = new Date(CONFIG.START_DATE);
-  const windowEnd   = new Date(CONFIG.END_DATE);
-
   const week1 = workweekStartByIndex(windowStart.getFullYear(), WEEK);
   const isWorking = d => isWorkingDay(d);
 
@@ -536,6 +532,7 @@ async function computeDeploymentMarkersForSelected(){
       d.setDate(d.getDate()+1);
     }
   }
+  function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
   function advanceOneWorkWeek(start){
     let d = new Date(start);
     let worked = 0;
@@ -588,6 +585,7 @@ async function computeDeploymentMarkersForSelected(){
     }
   }
 }
+
 
 
 /* ===== Responders ===== */
