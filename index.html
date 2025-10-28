@@ -437,6 +437,48 @@ async function loadConfig(){
 		};
 	}
 }
+// --- Intro modal: always show on open ---
+function showIntroModal(){
+  const m = document.getElementById('introModal');
+  if (!m) return;
+  m.classList.remove('hidden');            // force visible
+  setTimeout(() => document.getElementById('introCloseBtn')?.focus(), 0);
+}
+
+function wireIntroModal(){
+  const m = document.getElementById('introModal');
+  if (!m) return;
+
+  // Close button
+  document.getElementById('introCloseBtn')?.addEventListener('click', () => {
+    m.classList.add('hidden');
+  });
+
+  // Click backdrop to close
+  m.addEventListener('click', (e) => {
+    if (e.target === m) m.classList.add('hidden');
+  });
+
+  // ESC to close
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') m.classList.add('hidden');
+  });
+}
+
+// Run immediately if DOM is ready; otherwise wait.
+(function openIntroWhenReady(){
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', () => {
+      wireIntroModal();
+      showIntroModal();
+    });
+  } else {
+    wireIntroModal();
+    showIntroModal();
+  }
+})();
+
+
 function clampView(year, month) {
 	if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
 	const monthLast  = new Date(year, month+1, 0);
@@ -1720,8 +1762,9 @@ async function buildDashboard(){
 })();
 
 // ✅ show the modal once the DOM (including the modal element) is ready
-window.addEventListener('DOMContentLoaded', () => {
-  showIntroModal(true);
+window.addEventListener('load', () => {
+  wireIntroModal();
+  showIntroModal();
 });
 
 </script>
