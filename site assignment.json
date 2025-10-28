@@ -1,16 +1,4 @@
 {
-	"GDS Antipolo Basemap": [
-		"Zapanta, Andrew",
-		"Concepcion, Jamaica",
-		"Cruz, Vjan Michael",
-		"Llegue, Michelle",
-		"Mendoza, Anthony",
-		"Salcedo, Francis"
-	],
-	"GDS Antipolo Basemap (MDM Iba)": [
-		"Etable, Joseph",
-		"Nicolas, Jonalyn"
-	],
 	"GDS Antipolo HQ": [
 		"Daluping, Aizely",
 		"Barcena, Blincent Addam",
@@ -20,6 +8,16 @@
 		"Encarnado, Gerik Ivan",
 		"See, Eliza Kathleen",
 		"Wenceslao, Roesel"
+	],
+	"GDS Antipolo Basemap": [
+		"Zapanta, Andrew",
+		"Concepcion, Jamaica",
+		"Cruz, Vjan Michael",
+		"Llegue, Michelle",
+		"Mendoza, Anthony",
+		"Salcedo, Francis",
+		"Etable, Joseph",
+		"Nicolas, Jonalyn"
 	],
 	"GDS Nasugbu DC": [
 		"Laserna, Kernell",
