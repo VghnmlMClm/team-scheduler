@@ -6,7 +6,9 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<script>
-	tailwind.config = { darkMode: 'class' }
+	  // keep dark mode
+	  tailwind = window.tailwind || {};
+	  tailwind.config = { darkMode: 'class' };
 	</script>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
@@ -78,7 +80,6 @@
 		#centerTable th:first-child, #centerTable td:first-child { width: 170px; white-space: nowrap; }
 		#centerTable th:nth-child(2), #centerTable td:nth-child(2) { width: 72px; }
 		#centerTable tbody tr:hover td { background-color: #0f172a; }
-
 	</style>
 </head>
 
@@ -231,7 +232,6 @@
 				</div>
 			</div>
 
-
 			<!-- Table -->
 			<div class="border border-slate-800 rounded-2xl p-4 bg-[#0a0f1a]">
 				<div class="flex items-baseline justify-between">
@@ -252,18 +252,15 @@
 </footer>
 
 <script>
-/* ===== URLs ===== */
-const PROXY_URL   = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
-const RESPONDERS_URL = "Responders.json";
-const CONFIG_URL  = "config.json";
-const ORG_URL     = "organization.json";
-const SITE_ASSIGN_URL = "site assignment.json";
-const PULLOUT_RULES_URL = "pullout-deployment.json";
+/* ===== URLs (single source of truth) ===== */
+const PROXY_URL          = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
+const RESPONDERS_URL     = "Responders.json";
+const CONFIG_URL         = "config.json";
+const ORG_URL            = "organization.json";
+const SITE_ASSIGN_URL    = "site assignment.json";
+const PULLOUT_RULES_URL  = "pullout-deployment.json";
 
-
-/* ===== Schedules ===== */
-const SITE_ASSIGN_URL = "site assignment.json";
-const PULLOUT_URL     = "pullout-deployment.json";
+/* ===== Schedules (no duplicate consts) ===== */
 const SCHEDULE_OPTIONS = [
 	{ name:"ON-SITE",         code:"ONS",  abbr:"ONS", color:"ffffff" },
 	{ name:"OFFICE",          code:"OFC",  abbr:"OFC", color:"ffffff" },
@@ -292,22 +289,6 @@ const COLORS = Object.fromEntries([
 	['HOL', '#ffff00']  // holidays
 ]);
 
-/*======INSTRUCTIONS======*/
-function showIntroModal(show = true){
-	const m = document.getElementById('introModal');
-	if (!m) return;
-	m.classList.toggle('hidden', !show);
-	if (show) setTimeout(()=>document.getElementById('introCloseBtn')?.focus(), 0);
-}
-
-document.addEventListener('click', (e) => {
-	if (e.target?.id === 'introCloseBtn') {
-		showIntroModal(false);
-		localStorage.setItem('introSeen', '1');
-	}
-});
-
-
 /* ===== Helpers ===== */
 const stripMeta = o => Object.fromEntries(Object.entries(o||{}).filter(([k]) => !k.startsWith("_")));
 const pad = n => String(n).padStart(2,'0');
@@ -319,11 +300,7 @@ function fmtMMMDDYYYY(d){const MMM=["JAN","FEB","MAR","APR","MAY","JUN","JUL","A
 function hexToRGB(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); const n=parseInt(hex,16); return {r:(n>>16)&255, g:(n>>8)&255, b:(n&255)}; }
 function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(g*587)+(b*114))/1000; return yiq>=128 ? 'text-black' : 'text-white'; }
 
-/* ===== State ===== */
-state.deploymentMarkers = new Map(); // dateStr -> "DEPLOYMENT" | "PULLOUT"
-state.siteAssignments = null;        // {site: [names...] }
-state.sitePlan = null;               // [{Site,CYCLE,WEEK,DAY}, ...]
-
+/* ===== State (define BEFORE any usage) ===== */
 const state = {
 	viewYear: new Date().getFullYear(),
 	viewMonth: new Date().getMonth(),
@@ -333,7 +310,10 @@ const state = {
 	storeKey: 'calendar-scheduler-v2',
 	data: {},
 	isDashboard: false,
-	typeMode: 'LEAVE' // default
+	typeMode: 'LEAVE', // default
+	deploymentMarkers: new Map(), // dateStr -> "DEPLOYMENT" | "PULLOUT"
+	siteAssignments: null,        // {site: [names...] }
+	sitePlan: null                // [{Site,CYCLE,WEEK,DAY}, ...]
 };
 
 /* ===== Config & Holidays ===== */
@@ -361,13 +341,11 @@ async function loadConfig(){
 		CONFIG.END_DATE     = parseDateStr(j.END_DATE);
 		CONFIG.HOLIDAYS_SET = new Set(Array.isArray(j.HOLIDAYS) ? j.HOLIDAYS : []);
 
-		// Deadline fields
 		CONFIG.DEADLINE_DATE_STR = j["DEADLINE DATE"] || null;
 		CONFIG.DEADLINE_TIME_STR = j["DEADLINE TIME"] || null;
 		CONFIG.DEADLINE_AT       = (CONFIG.DEADLINE_DATE_STR && CONFIG.DEADLINE_TIME_STR)
 		  ? buildDeadline(CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR)
 		  : null;
-
 	}catch{
 		CONFIG = {
 		  START_DATE: null,
@@ -379,8 +357,6 @@ async function loadConfig(){
 		};
 	}
 }
-
-
 function clampView(year, month) {
 	if (!CONFIG.START_DATE || !CONFIG.END_DATE) return { year, month };
 	const monthLast  = new Date(year, month+1, 0);
@@ -399,7 +375,6 @@ function updateTitleFromConfig(){
 /* ===== Organization ===== */
 let ORG_INDEX = new Map();
 let ORG_SUPERVISORS = [];
-
 async function loadOrganization(){
 	try{
 		const r = await fetch(ORG_URL);
@@ -437,60 +412,33 @@ async function loadDeploymentData(){
 		const [saRes, prRes] = await Promise.all([
 			fetch(SITE_ASSIGN_URL), fetch(PULLOUT_RULES_URL)
 		]);
-		SITE_ASSIGN   = await saRes.json();         // site -> array of names
-		PULLOUT_RULES = await prRes.json();         // array of rules
+		SITE_ASSIGN   = await saRes.json();
+		PULLOUT_RULES = await prRes.json();
 	}catch(e){
 		console.error("Deployment data load failed", e);
 		SITE_ASSIGN = {}; 
 		PULLOUT_RULES = [];
 	}
 }
-
-/* Find the assigned site by full name exactly as listed */
 function findSiteForName(fullName){
 	for (const [site, people] of Object.entries(SITE_ASSIGN || {})){
 		if (Array.isArray(people) && people.includes(fullName)) return site;
 	}
 	return null;
 }
-
-/* Find rule row by site */
 function findRuleForSite(site){
 	return (PULLOUT_RULES || []).find(r => (r?.Site||"") === site) || null;
 }
 
-/* ===== Workweek helpers (Mon–Fri; holidays stay in the week) ===== */
-function isWorkingDay(d){
-  const w = d.getDay();
-  return w !== 0 && w !== 6 && !isHoliday(d);
-}
-function sameYMD(a,b){ return ymd(a) === ymd(b); }
-function findNthWorkingDay(fromDate, n){
-  // n = 1 => first working day on/after fromDate
-  const d = new Date(fromDate);
-  let count = 0;
-  while (true){
-    if (isWorkingDay(d)){
-      count++;
-      if (count === n) return new Date(d);
-    }
-    d.setDate(d.getDate()+1);
-  }
-}
-function nextWorkingDay(d){
-  const x = new Date(d);
-  do { x.setDate(x.getDate()+1); } while(!isWorkingDay(x));
-  return x;
-}
+/* ===== Workweek helpers ===== */
+function isWorkingDay(d){ const w = d.getDay(); return w !== 0 && w !== 6 && !isHoliday(d); }
 function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-function isFriday(d){ return d.getDay()===5; }
 function thirdFridayOfSpan(startDate, spanDays){
-  // look for 3rd Friday inside [startDate, startDate+spanDays)
   let friCount = 0;
   const end = addDays(startDate, spanDays);
   const d = new Date(startDate);
   while (d < end){
-    if (isFriday(d) && isWorkingDay(d)){
+    if (d.getDay() === 5 && isWorkingDay(d)){
       friCount++;
       if (friCount === 3) return new Date(d);
     }
@@ -498,24 +446,19 @@ function thirdFridayOfSpan(startDate, spanDays){
   }
   return null;
 }
-
 function firstMondayOfYear(year){
-	const d = new Date(year, 0, 1); // Jan 1
-	const wd = d.getDay();          // 0 Sun .. 6 Sat
-	const offset = (wd === 0) ? 1 : (wd <= 1 ? 1 - wd : 8 - wd); // to Monday
+	const d = new Date(year, 0, 1);
+	const wd = d.getDay();
+	const offset = (wd === 0) ? 1 : (wd <= 1 ? 1 - wd : 8 - wd);
 	d.setDate(d.getDate() + offset);
 	return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
-
 function workweekStartByIndex(year, weekIndex1){
 	const firstMon = firstMondayOfYear(year);
 	const d = new Date(firstMon);
 	d.setDate(d.getDate() + 7*(weekIndex1-1));
 	return d; // Monday
 }
-
-/* Return an array of Date objects for the workdays (Mon–Fri) inside [start, end],
-   skipping weekends and using your HOLIDAYS_SET to mark non-working days. */
 function listWorkdays(startDate, endDate){
 	const out = [];
 	const d = new Date(startDate);
@@ -527,274 +470,91 @@ function listWorkdays(startDate, endDate){
 	return out;
 }
 
-/* 3rd Friday within a window (if holiday → previous workday) */
-function thirdFridayOrPrevWorkday(windowStart, windowEnd){
-	const d = new Date(windowStart);
-	const fridays = [];
-	while (d <= windowEnd){
-		if (d.getDay() === 5) fridays.push(new Date(d));
-		d.setDate(d.getDate()+1);
-	}
-	if (fridays.length < 3) return null;
-	let target = fridays[2]; // 0-based -> 3rd Friday
-	if (isHoliday(target)){  // back up to previous workday
-		let b = new Date(target);
-		do { b.setDate(b.getDate()-1); } 
-		while ((b.getDay()===0||b.getDay()===6) || isHoliday(b));
-		target = b;
-	}
-	return target;
-}
-
-/* Compute DEPLOYMENT/PULLOUT dates falling inside the visible month for a name */
-function computeDeploymentEventsForMonth(fullName, year, month){
-	const site = findSiteForName(fullName);
-	if (!site) return []; // no site assignment
-	const rule = findRuleForSite(site);
-	if (!rule) return [];
-
-	const { CYCLE, WEEK, DAY } = rule; // DAY: 0|1|2 (ignored for CYCLE=3 per spec)
-	const monthStart = new Date(year, month, 1);
-	const monthEnd   = new Date(year, month+1, 0);
-
-	// Walk enough weeks to cover the month safely
-	const events = [];
-
-	if (CYCLE === 3){
-		// Active 3 weeks from anchor week, then 1-week gap; repeat
-		// Anchor week index is WEEK
-		const anchorY = year; // good enough for within-month traversal
-		const anchorStart = workweekStartByIndex(anchorY, WEEK);
-
-		// Iterate windows across ~10 weeks around the month
-		for (let k=-8; k<=8; k++){
-			const start = new Date(anchorStart);
-			start.setDate(start.getDate() + k*28);        // 3w active + 1w gap = 4-week cycle
-			const activeStart = new Date(start);
-			const activeEnd   = new Date(start); 
-			activeEnd.setDate(activeEnd.getDate() + 7*3 - 1); // 3 weeks window
-
-			// deployment: first workday in [activeStart, activeEnd]
-			const wds = listWorkdays(activeStart, activeEnd);
-			if (wds.length === 0) continue;
-			const dep = wds[0];
-
-			// pullout: 3rd Friday within active window (or prev workday if holiday)
-			const po = thirdFridayOrPrevWorkday(activeStart, activeEnd);
-
-			// push if within month & config range
-			for (const [label, date] of [["DEPLOYMENT", dep], ["PULLOUT", po]]){
-				if (!date) continue;
-				if (!dateInRange(date)) continue;
-				if (date < monthStart || date > monthEnd) continue;
-				events.push({ date: ymd(date), label });
-			}
-		}
-	} else {
-		// CYCLE 1/2: cycle window size = CYCLE weeks
-		const weeksPerCycle = Math.max(1, Number(CYCLE)||1);
-		const anchorStart = workweekStartByIndex(year, WEEK);
-
-		// Iterate several cycles around the month
-		for (let k=-8; k<=8; k++){
-			const cycleStart = new Date(anchorStart);
-			cycleStart.setDate(cycleStart.getDate() + k * 7*weeksPerCycle);
-			const cycleEnd   = new Date(cycleStart);
-			cycleEnd.setDate(cycleEnd.getDate() + 7*weeksPerCycle - 1);
-
-			const wds = listWorkdays(cycleStart, cycleEnd);
-			if (wds.length === 0) continue;
-
-			// deployment
-			let dep = null;
-			if (DAY === 0 || DAY === 1){ // "1st workday"
-				dep = wds[0];
-			} else if (DAY === 2){       // "2nd workday"
-				dep = wds[1] || wds[0];
-			}
-
-			// pullout
-			let po = null;
-			if (DAY === 0){              // last workday
-				po = wds[wds.length-1];
-			} else if (DAY === 1){       // 2nd-to-last
-				po = wds[wds.length-2] || wds[wds.length-1];
-			} else if (DAY === 2){       // last workday
-				po = wds[wds.length-1];
-			}
-
-			for (const [label, date] of [["DEPLOYMENT", dep], ["PULLOUT", po]]){
-				if (!date) continue;
-				if (!dateInRange(date)) continue;
-				if (date < monthStart || date > monthEnd) continue;
-				events.push({ date: ymd(date), label });
-			}
-		}
-	}
-
-	// dedupe by date+label
-	const keyset = new Set();
-	const out = [];
-	for (const e of events){
-		const key = e.date + "|" + e.label;
-		if (!keyset.has(key)){ 
-			keyset.add(key); 
-			out.push(e); 
-		}
-	}
-	return out;
-}
+/* ===== Compute & store markers for selected name/month range ===== */
 async function computeDeploymentMarkersForSelected(){
   state.deploymentMarkers.clear();
 
-  // Need selected name
   const sel = document.getElementById('selName');
   const name = (sel?.value || '').trim();
   if (!name || !CONFIG.START_DATE || !CONFIG.END_DATE) return;
 
-  // Ensure JSONs loaded
-  if (!state.siteAssignments || !state.sitePlan) return;
+  if (!SITE_ASSIGN || !PULLOUT_RULES) return;
 
-  // Find site assigned to this name
-  let assignedSite = null;
-  for (const [site, arr] of Object.entries(state.siteAssignments)){
-    if (Array.isArray(arr) && arr.some(n => n.trim().toLowerCase() === name.toLowerCase())){
-      assignedSite = site;
-      break;
-    }
-  }
+  const assignedSite = findSiteForName(name);
   if (!assignedSite) return;
 
-  // Find plan for that site
-  const plan = state.sitePlan.find(p => (p.Site || p.site) === assignedSite);
+  const plan = findRuleForSite(assignedSite);
   if (!plan) return;
 
   const CYCLE = Number(plan.CYCLE);
-  const WEEK  = Number(plan.WEEK); // 1-based: 1,2,3
-  const DAY   = Number(plan.DAY);  // 0,1,2 rules
+  const WEEK  = Number(plan.WEEK);
+  const DAY   = Number(plan.DAY);
 
-  // Anchor: first work week of the YEAR, then shift to WEEK (1-based)
   const Y = CONFIG.START_DATE.getFullYear();
-  const yearStart = new Date(Y, 0, 1);
-  // first working day of the year:
-  const firstWD = findNthWorkingDay(yearStart, 1);
-
-  // Workweek length = count of working days  (we still iterate day-by-day respecting holidays/weekends)
-  // We'll simulate cycles forward inside the CONFIG window.
   const windowStart = new Date(CONFIG.START_DATE);
   const windowEnd   = new Date(CONFIG.END_DATE);
 
-  // Build week anchors: week 1 starts at firstWD; week 2 starts on the first working day AFTER finishing week1, etc.
+  // Week 1 anchor
+  const week1 = workweekStartByIndex(Y, WEEK);
+  const isWorking = d => isWorkingDay(d);
+
+  function nthWorkingFrom(d0, n){
+    const d = new Date(d0);
+    let c=0;
+    while(true){
+      if(isWorking(d)){ c++; if(c===n) return new Date(d); }
+      d.setDate(d.getDate()+1);
+    }
+  }
   function advanceOneWorkWeek(start){
-    // move through 5 working days (Mon-Fri except holidays). After 5th working day, return next working day as next week start.
     let d = new Date(start);
     let worked = 0;
     while (worked < 5){
-      if (isWorkingDay(d)) worked++;
+      if (isWorking(d)) worked++;
       d.setDate(d.getDate()+1);
     }
-    // d is the day after completing 5 working days; get the next working day as the start of the next week
-    while (!isWorkingDay(d)) d.setDate(d.getDate()+1);
+    while (!isWorking(d)) d.setDate(d.getDate()+1);
     return d;
   }
 
-  // compute start of WEEK N (1-based)
-  let weekStart = new Date(firstWD);
-  for (let i=1;i<WEEK;i++){
-    weekStart = advanceOneWorkWeek(weekStart);
-  }
-
-  // Now iterate by cycles until after windowEnd
-  let cursor = new Date(weekStart);
-
+  let cursor = new Date(week1);
   while (cursor <= windowEnd){
     if (CYCLE === 1 || CYCLE === 2){
-      // cycle span = CYCLE weeks
-      // start of cycle = cursor
-      // deployment: DAY 0 => first workday, DAY 1 => still first workday (deploy fixed at first), DAY 2 => second workday
-      const firstWorkday = findNthWorkingDay(cursor, 1);
-      const secondWorkday = findNthWorkingDay(cursor, 2);
+      const firstWD  = nthWorkingFrom(cursor, 1);
+      const secondWD = nthWorkingFrom(cursor, 2);
+      const deploy   = (DAY === 2) ? secondWD : firstWD;
 
-      const deploy = (DAY === 2) ? secondWorkday : firstWorkday;
-
-      // pullout: based on DAY rule and last/2nd-last workday in the cycle
-      // We’ll find the last and 2nd-last working day inside the cycle span.
-      const spanDays = CYCLE * 7; // approx window to scan
-      const endScan = addDays(cursor, spanDays);
-      // collect working days in this span
+      const spanDays = CYCLE * 7;
+      const endScan  = addDays(cursor, spanDays);
       const wds = [];
       const t = new Date(cursor);
       while (t < endScan){
-        if (isWorkingDay(t)) wds.push(ymd(t));
+        if (isWorking(t)) wds.push(ymd(t));
         t.setDate(t.getDate()+1);
       }
       if (wds.length){
         let pull;
-        if (DAY === 0){
-          pull = parseYMD(wds[wds.length-1]); // last workday
-        } else if (DAY === 1){
-          pull = parseYMD(wds[Math.max(0, wds.length-2)]); // 2nd to last
-        } else { // DAY === 2
-          pull = parseYMD(wds[wds.length-1]); // last workday
-        }
+        if (DAY === 0) pull = parseYMD(wds[wds.length-1]);
+        else if (DAY === 1) pull = parseYMD(wds[Math.max(0, wds.length-2)]);
+        else pull = parseYMD(wds[wds.length-1]);
 
-        // record if inside window
         if (deploy >= windowStart && deploy <= windowEnd) state.deploymentMarkers.set(ymd(deploy), "DEPLOYMENT");
         if (pull   >= windowStart && pull   <= windowEnd) state.deploymentMarkers.set(ymd(pull),   "PULLOUT");
       }
 
-      // move to next cycle start: advance CYCLE weeks
       for (let i=0;i<CYCLE;i++) cursor = advanceOneWorkWeek(cursor);
-
     } else if (CYCLE === 3){
-      // deployment on first workday of cycle
-      const deploy = findNthWorkingDay(cursor, 1);
-
-      // pullout: 3rd Friday within the cycle span (3 weeks active), then 1-week gap
-      const spanDays = 21; // 3 weeks active
-      const pull = thirdFridayOfSpan(cursor, spanDays);
+      const deploy = nthWorkingFrom(cursor, 1);
+      const pull   = thirdFridayOfSpan(cursor, 21); // 3-week active window
 
       if (deploy >= windowStart && deploy <= windowEnd) state.deploymentMarkers.set(ymd(deploy), "DEPLOYMENT");
       if (pull && pull >= windowStart && pull <= windowEnd) state.deploymentMarkers.set(ymd(pull), "PULLOUT");
 
-      // advance: 3 weeks active + 1 week gap => 4 weeks total to next cycle
-      for (let i=0;i<4;i++) cursor = advanceOneWorkWeek(cursor);
+      for (let i=0;i<4;i++) cursor = advanceOneWorkWeek(cursor); // 3w active + 1w gap
     } else {
-      // unknown CYCLE: break to avoid infinite loop
       break;
     }
   }
-}
-
-async function loadSiteData(){
-  try{
-    const [a, b] = await Promise.all([
-      fetch(SITE_ASSIGN_URL).then(r=>r.json()),
-      fetch(PULLOUT_URL).then(r=>r.json())
-    ]);
-    state.siteAssignments = a || {};
-    state.sitePlan = Array.isArray(b) ? b : [];
-  } catch(e){
-    console.error('Failed to load site/pullout JSON:', e);
-    state.siteAssignments = {};
-    state.sitePlan = [];
-  }
-}
-
-
-/* Returns all names under each selected supervisor (including the supervisor) */
-function getSubtreeNames(supervisors){
-	const out = new Set();
-	function walk(node){
-		if(!node || !node.NAME || out.has(node.NAME)) return;
-		out.add(node.NAME);
-		(node.TEAM||[]).forEach(walk);
-	}
-	supervisors.forEach(name=>{
-		const node = ORG_INDEX.get(name);
-		if (node) walk(node);
-	});
-	return [...out];
 }
 
 /* ===== Responders ===== */
@@ -848,7 +608,6 @@ function renderGrid(year, month){
 	const remaining = (7 - (grid.children.length % 7)) % 7;
 	for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
 }
-
 function dayCell(dateObj, muted=false){
   const id = ymd(dateObj);
   const isToday   = id === ymd(new Date());
@@ -911,9 +670,6 @@ function dayCell(dateObj, muted=false){
   });
   return cell;
 }
-
-
-
 function onDayClick(id, shift) {
 	const date = parseYMD(id);
 	const wd = date.getDay();
@@ -948,7 +704,7 @@ function renderSelection(){
 		: '<p class="text-xs text-slate-500">Click weekdays (non-holiday) to select.</p>';
 }
 
-/* ===== Dynamic schedule controls (GROUPED) ===== */
+/* ===== Dynamic schedule controls ===== */
 function buildScheduleButtons(){
 	const wrap = document.getElementById('schedButtons');
 	wrap.innerHTML = '';
@@ -986,8 +742,7 @@ function buildScheduleButtons(){
 
 /* ===== Apply / Clear ===== */
 document.getElementById('clearSelectionBtn').onclick = ()=>{ state.selected.clear(); render(); };
-const deleteBtn = document.getElementById('deleteBtn');
-deleteBtn.onclick = ()=>{
+document.getElementById('deleteBtn').onclick = ()=>{
 	if(!(state.selected.size || state.focusDay)) return;
 	if(!confirm('Clear status from the selected day(s)?')) return;
 	const targets = state.selected.size? Array.from(state.selected) : [state.focusDay];
@@ -1007,7 +762,7 @@ function applyType(val){
 	saveStore(); state.selected.clear(); render();
 }
 
-/* ===== Personnel filters (Team/Position/Name) ===== */
+/* ===== Personnel filters ===== */
 function fillSelect(sel, values, selected, blankLabel = "— select —") {
 	sel.innerHTML =
 		`<option value="">${blankLabel}</option>` +
@@ -1040,33 +795,25 @@ function populateRespondersUI(changed = null) {
 	if (changed === "POSITION") { cur.NAME = ""; }
 
 	const all = RESPONDERS;
-		const POSITION_ORDER = [
-		  "MANAGER",
-		  "DEPUTY MANAGER",
-		  "LEAD SENIOR LAND TECHNICAL SPECIALIST",
-		  "SENIOR LAND TECHNICAL SPECIALIST",
-		  "SENIOR GIS SPECIALIST",
-		  "SENIOR GIS OPERATOR",
-		  "JUNIOR LAND TECHNICAL SPECIALIST",
-		  "JUNIOR GIS SPECIALIST",
-		  "JUNIOR GIS OPERATOR"
-		];
-
-		const uniqVals = (arr, field) => {
-		  const vals = uniq(arr.map(r => normVal(r[field]))).filter(Boolean);
-		  if (field === "POSITION") {
-			return vals.sort((a, b) => {
-			  const ia = POSITION_ORDER.indexOf(a.toUpperCase());
-			  const ib = POSITION_ORDER.indexOf(b.toUpperCase());
-			  if (ia === -1 && ib === -1) return a.localeCompare(b);
-			  if (ia === -1) return 1;   // items not in the list go after
-			  if (ib === -1) return -1;
-			  return ia - ib;
-			});
-		  }
-		  return vals.sort();
-		};
-
+	const POSITION_ORDER = [
+	  "MANAGER","DEPUTY MANAGER","LEAD SENIOR LAND TECHNICAL SPECIALIST",
+	  "SENIOR LAND TECHNICAL SPECIALIST","SENIOR GIS SPECIALIST","SENIOR GIS OPERATOR",
+	  "JUNIOR LAND TECHNICAL SPECIALIST","JUNIOR GIS SPECIALIST","JUNIOR GIS OPERATOR"
+	];
+	const uniqVals = (arr, field) => {
+	  const vals = uniq(arr.map(r => normVal(r[field]))).filter(Boolean);
+	  if (field === "POSITION") {
+		return vals.sort((a, b) => {
+		  const ia = POSITION_ORDER.indexOf(a.toUpperCase());
+		  const ib = POSITION_ORDER.indexOf(b.toUpperCase());
+		  if (ia === -1 && ib === -1) return a.localeCompare(b);
+		  if (ia === -1) return 1;
+		  if (ib === -1) return -1;
+		  return ia - ib;
+		});
+	  }
+	  return vals.sort();
+	};
 
 	const teamValues = uniqVals(all, "TEAM");
 	if (cur.TEAM && !teamValues.includes(cur.TEAM)) cur.TEAM = "";
@@ -1106,12 +853,37 @@ function wireResponderEvents() {
 		const name = (e.target?.value || "").trim();
 		if (name) await loadScheduleForName(name);
 		else setSaveEnabled(false);
+
+		// compute markers AFTER site/rules are loaded
 		await computeDeploymentMarkersForSelected();
-			render(); // ensure calendar re-renders with markers
+		render();
 	});
 }
 
-/* ===== Save via Worker (includes preset HOL & RD) ===== */
+/* ===== Save via Worker ===== */
+function isPastDeadline(){ return !!CONFIG.DEADLINE_AT && Date.now() > CONFIG.DEADLINE_AT.getTime(); }
+function parseGmtTime(str){
+	const s = String(str || '').trim();
+	const m = s.match(/(?:GMT)?\s*([+-]\d{1,2})(?::?(\d{2}))?\s+(\d{2}):?(\d{2})/i);
+	if (!m) return null;
+	const offH = parseInt(m[1], 10);
+	const offM = parseInt(m[2] || '0', 10);
+	const hh   = parseInt(m[3], 10);
+	const mm   = parseInt(m[4], 10);
+	if ([offH,offM,hh,mm].some(Number.isNaN)) return null;
+	return { offH, offM, hh, mm };
+}
+function buildDeadline(dateStr, timeStr){
+	const d = parseDateStr(dateStr);
+	const t = parseGmtTime(timeStr);
+	if (!d || !t) return null;
+	const utcMs = Date.UTC(
+		d.getFullYear(), d.getMonth(), d.getDate(),
+		t.hh - t.offH, t.mm - t.offM, 0, 0
+	);
+	return new Date(utcMs);
+}
+
 async function uploadScheduleViaProxy(){
 	if (isPastDeadline()){
 		const when = [CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ');
@@ -1140,9 +912,9 @@ async function uploadScheduleViaProxy(){
 		const id = ymd(d);
 		const wd = d.getDay();
 		if (isHoliday(d)) {
-		  mergedData[id] = 'HOL';           // always override to HOL
+		  mergedData[id] = 'HOL';
 		} else if (wd === 0 || wd === 6) {
-		  mergedData[id] = 'RD';            // always override to RD
+		  mergedData[id] = 'RD';
 		}
 		d.setDate(d.getDate() + 1);
 	}
@@ -1167,14 +939,12 @@ async function uploadScheduleViaProxy(){
 		  headers: { "Content-Type": "application/json", "Accept": "application/json" },
 		  body: JSON.stringify(payload),
 		});
-
 		let j = null;
 		try { j = await res.json(); } catch {}
 		if (!res.ok || !j?.ok) {
 		  const err = (j && (j.error || j.message)) || `HTTP ${res.status}`;
 		  throw new Error(err);
 		}
-
 		alert(`Saved ✅`);
 	} catch(e){
 		alert("Save failed:\n" + (e?.message || e));
@@ -1186,6 +956,20 @@ async function uploadScheduleViaProxy(){
 document.getElementById('exportBtn').onclick = uploadScheduleViaProxy;
 
 /* ===== Load schedule (personnel) ===== */
+async function fetchScheduleData(name){
+	try{
+		const r = await fetch(PROXY_URL, {
+		  method: "POST",
+		  headers: { "Content-Type":"application/json", "Accept":"application/json" },
+		  body: JSON.stringify({ op: "load", name })
+		});
+		const j = await r.json();
+		if (j?.ok && j.data) return stripMeta(j.data);
+	}catch(e){
+		console.warn("Fetch schedule failed for", name, e);
+	}
+	return {};
+}
 async function loadScheduleForName(name) {
 	const loadBtn = document.getElementById('loadBtn');
 	const hasName = !!(name && name.trim());
@@ -1200,17 +984,10 @@ async function loadScheduleForName(name) {
 	if (loadBtn) { loadBtn.textContent = "Loading…"; loadBtn.disabled = true; }
 
 	try {
-		const r = await fetch(PROXY_URL, {
-		  method: "POST",
-		  headers: { "Content-Type": "application/json", "Accept": "application/json" },
-		  body: JSON.stringify({ op: "load", name })
-		});
-		const j = await r.json();
-
-		if (j?.ok && j.data) {
-		  const loaded = stripMeta(j.data);
+		const j = await fetchScheduleData(name);
+		if (j) {
 		  const valid = {};
-		  for (const [k, v] of Object.entries(loaded)) {
+		  for (const [k, v] of Object.entries(j)) {
 				if (/^\d{4}-\d{2}-\d{2}$/.test(k) && typeof v === "string") valid[k] = v;
 		  }
 		  state.data = valid;
@@ -1232,37 +1009,7 @@ document.getElementById('loadBtn').onclick = async () => {
 	await loadScheduleForName(name);
 };
 
-/* ===== Export helpers (used by dashboard too if needed) ===== */
-function parseGmtTime(str){
-	// Accepts: "GMT+8 1700", "GMT+08:00 17:00", "+08:00 17:00"
-	const s = String(str || '').trim();
-	const m = s.match(/(?:GMT)?\s*([+-]\d{1,2})(?::?(\d{2}))?\s+(\d{2}):?(\d{2})/i);
-	if (!m) return null;
-	const offH = parseInt(m[1], 10);
-	const offM = parseInt(m[2] || '0', 10);
-	const hh   = parseInt(m[3], 10);
-	const mm   = parseInt(m[4], 10);
-	if ([offH,offM,hh,mm].some(Number.isNaN)) return null;
-	return { offH, offM, hh, mm };
-}
-
-function buildDeadline(dateStr, timeStr){
-	const d = parseDateStr(dateStr);
-	const t = parseGmtTime(timeStr);
-	if (!d || !t) return null;
-	// Convert local(GMT+offset) to UTC by subtracting the offset
-	const utcMs = Date.UTC(
-		d.getFullYear(), d.getMonth(), d.getDate(),
-		t.hh - t.offH, t.mm - t.offM, 0, 0
-	);
-	return new Date(utcMs);
-}
-
-function isPastDeadline(){
-	return !!CONFIG.DEADLINE_AT && Date.now() > CONFIG.DEADLINE_AT.getTime();
-}
-
-
+/* ===== Export helpers (VL / XLSX) ===== */
 function dateRangeList() {
 	const out = [];
 	if (!CONFIG.START_DATE || !CONFIG.END_DATE) return out;
@@ -1273,44 +1020,6 @@ function dateRangeList() {
 	}
 	return out;
 }
-async function fetchScheduleData(name){
-	try{
-		const r = await fetch(PROXY_URL, {
-		  method: "POST",
-		  headers: { "Content-Type":"application/json", "Accept":"application/json" },
-		  body: JSON.stringify({ op: "load", name })
-		});
-		const j = await r.json();
-		if (j?.ok && j.data) return stripMeta(j.data);
-	}catch(e){
-		console.warn("Fetch schedule failed for", name, e);
-	}
-	return {};
-}
-/* ===== Download helper ===== */
-function downloadBlob(content, filename, type){
-	const blob = new Blob([content], { type });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url; a.download = filename;
-	document.body.appendChild(a);
-	a.click();
-	setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
-}
-const POSITION_ORDER_EXPORT = [
-	"MANAGER",
-	"DEPUTY MANAGER",
-	"LEAD SENIOR LAND TECHNICAL SPECIALIST",
-	"SENIOR LAND TECHNICAL SPECIALIST",
-	"SENIOR GIS SPECIALIST",
-	"SENIOR GIS OPERATOR",
-	"JUNIOR LAND TECHNICAL SPECIALIST",
-	"JUNIOR GIS SPECIALIST",
-	"JUNIOR GIS OPERATOR"
-];
-
-
-/* ===== Ensure XLSX (SheetJS) present ===== */
 async function ensureXLSX(){
 	if (window.XLSX) return;
 	const urls = [
@@ -1331,22 +1040,19 @@ async function ensureXLSX(){
 	}
 	throw new Error("Failed to load SheetJS (XLSX).");
 }
-
-/* ===== Export menu wiring ===== */
+const POSITION_ORDER_EXPORT = [
+	"MANAGER","DEPUTY MANAGER","LEAD SENIOR LAND TECHNICAL SPECIALIST",
+	"SENIOR LAND TECHNICAL SPECIALIST","SENIOR GIS SPECIALIST","SENIOR GIS OPERATOR",
+	"JUNIOR LAND TECHNICAL SPECIALIST","JUNIOR GIS SPECIALIST","JUNIOR GIS OPERATOR"
+];
 const exportFileBtn  = document.getElementById('exportFileBtn');
 const exportMenu     = document.getElementById('exportMenu');
 const exportVlBtn    = document.getElementById('exportVlBtn');
 const exportTableBtn = document.getElementById('exportTableBtn');
-
 function toggleMenu(show){ exportMenu.classList.toggle('hidden', !show); }
-if (exportFileBtn) exportFileBtn.addEventListener('click', (e)=>{
-	e.stopPropagation();
-	const isHidden = exportMenu.classList.contains('hidden');
-	toggleMenu(isHidden);
-});
+if (exportFileBtn) exportFileBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleMenu(exportMenu.classList.contains('hidden')); });
 document.addEventListener('click', ()=> toggleMenu(false));
 
-/* ===== VL Summary (.txt) ===== */
 async function exportVlSummary(){
 	const names = getFilteredNamesForDashboard();
 	if (!names.length) { alert("No names match the current filter."); return; }
@@ -1378,12 +1084,9 @@ async function exportVlSummary(){
 		}
 		lines.push("");
 	}
-
 	const fname = `VL_Summary_${new Date().toISOString().slice(0,10)}.txt`;
 	downloadBlob(lines.join("\n"), fname, "text/plain;charset=utf-8");
 }
-
-/* ===== Table (.xlsx) ===== */
 async function exportTableXlsx(){
 	await ensureXLSX();
 	const names = getFilteredNamesForDashboard();
@@ -1392,33 +1095,29 @@ async function exportTableXlsx(){
 	const dates = dateRangeList();
 	if (!dates.length) { alert("Config START_DATE/END_DATE missing."); return; }
 
-		// include position and sort by POSITION_ORDER_EXPORT
-		const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || "Unspecified"]));
-		const schedules = await Promise.all(names.map(async n => {
-		  const data = await fetchScheduleData(n);
-		  const pos  = posMap.get(n) || "Unspecified";
-		  return [n, pos, data];
-		}));
+	const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || "Unspecified"]));
+	const schedules = await Promise.all(names.map(async n => {
+	  const data = await fetchScheduleData(n);
+	  const pos  = posMap.get(n) || "Unspecified";
+	  return [n, pos, data];
+	}));
 
-		schedules.sort((a, b) => {
-		  const ia = POSITION_ORDER_EXPORT.indexOf(a[1].toUpperCase());
-		  const ib = POSITION_ORDER_EXPORT.indexOf(b[1].toUpperCase());
-		  if (ia === -1 && ib === -1) return a[1].localeCompare(b[1]);
-		  if (ia === -1) return 1;
-		  if (ib === -1) return -1;
-		  return ia - ib;
-		});
-
+	schedules.sort((a, b) => {
+	  const ia = POSITION_ORDER_EXPORT.indexOf((a[1]||'').toUpperCase());
+	  const ib = POSITION_ORDER_EXPORT.indexOf((b[1]||'').toUpperCase());
+	  if (ia === -1 && ib === -1) return (a[1]||'').localeCompare(b[1]||'');
+	  if (ia === -1) return 1;
+	  if (ib === -1) return -1;
+	  return ia - ib;
+	});
 
 	const header = ["Position", "Name", ...dates];
 	const rows = [header];
 	const statusToCell = (code) => (code ? (LABELS[code] ?? code) : "");
-
-		for (const [name, pos, data] of schedules) {
-		  const row = [pos, name];
-
-		for (const d of dates) row.push(statusToCell(data?.[d] || ""));
-		rows.push(row);
+	for (const [name, pos, data] of schedules) {
+	  const row = [pos, name];
+	  for (const d of dates) row.push(statusToCell(data?.[d] || ""));
+	  rows.push(row);
 	}
 
 	const wb = XLSX.utils.book_new();
@@ -1430,10 +1129,17 @@ async function exportTableXlsx(){
 	const ts = new Date().toISOString().slice(0,10).replaceAll("-","");
 	XLSX.writeFile(wb, `TeamSchedule_Table_${ts}.xlsx`);
 }
-
+function downloadBlob(content, filename, type){
+	const blob = new Blob([content], { type });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url; a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+}
 if (exportVlBtn)    exportVlBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportVlSummary(); });
 if (exportTableBtn) exportTableBtn.addEventListener('click', async ()=>{ toggleMenu(false); await exportTableXlsx(); });
-
 
 /* ===== Navigation ===== */
 document.getElementById('prevBtn').onclick = ()=>{
@@ -1464,8 +1170,11 @@ const $currentTypeCaption = document.getElementById('currentTypeCaption');
 const $missingList  = document.getElementById('missingList');
 const $missingSubtitle = document.getElementById('missingSubtitle');
 
-/* Eligibility (Manager / Deputy / Senior) */
-const DASH_ALLOWED_POS = new Set(['senior gis specialist','deputy manager','manager','lead senior land technical specialist', 'senior gis operator']);
+/* Eligibility */
+const DASH_ALLOWED_POS = new Set([
+  'senior gis specialist','deputy manager','manager',
+  'lead senior land technical specialist','senior gis operator'
+]);
 function getSelectedResponderPositionLower() {
 	const nameSel = document.getElementById('selName');
 	const name = (nameSel?.value || '').trim();
@@ -1490,7 +1199,7 @@ function updateDashToggleEligibility(){
 	setDashToggleDisabled(!isDashboardEligible());
 }
 
-/* ---- WORK/LEAVE mode ---- */
+/* WORK/LEAVE mode */
 const WORK_CODES  = ['ONS','WFH','OFC'];
 const LEAVE_CODES = ['VL','AA','PTO','PL','ML','BDL'];
 function getSelectedTypeCodes(){ return state.typeMode === 'WORK' ? WORK_CODES : LEAVE_CODES; }
@@ -1502,11 +1211,10 @@ function renderTypeSwitch(){
 	const active   = 'font-semibold border border-slate-500';
 	const inactive = 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700/60';
 
-	// Reset both buttons first
 	[$work,$leave].forEach(el=>{
 		el.className = 'px-3 py-1.5 text-sm rounded-none transition-colors ' + inactive;
 		el.style.backgroundColor = '';
-		el.style.color = ''; // clear text color
+		el.style.color = '';
 	});
 
 	if(state.typeMode === 'WORK'){
@@ -1521,7 +1229,6 @@ function renderTypeSwitch(){
 		$hint.textContent = 'Showing: VACATION LEAVE, AUTHORIZED ABSENT, PTO, PATERNITY, MATERNITY, BIRTHDAY';
 	}
 }
-
 document.getElementById('btnWork').onclick = ()=>{ if(state.typeMode!=='WORK'){ state.typeMode='WORK'; renderTypeSwitch(); buildDashboard(); } };
 document.getElementById('btnLeave').onclick= ()=>{ if(state.typeMode!=='LEAVE'){ state.typeMode='LEAVE'; renderTypeSwitch(); buildDashboard(); } };
 
@@ -1545,7 +1252,19 @@ function hasCompleteScheduleForRangeStrict(dataObj){
 function getFilteredNamesForDashboard() {
 	if (!state.isDashboard) return getAllNames().sort();
 	const val = $fSupervisors.value || '__ALL__';
-	return (val==='__ALL__') ? getAllNames() : getSubtreeNames([val]);
+	return (val==='__ALL__') ? getAllNames() : (function getSubtreeNames(supervisors){
+		const out = new Set();
+		function walk(node){
+			if(!node || !node.NAME || out.has(node.NAME)) return;
+			out.add(node.NAME);
+			(node.TEAM||[]).forEach(walk);
+		}
+		supervisors.forEach(name=>{
+			const node = ORG_INDEX.get(name);
+			if (node) walk(node);
+		});
+		return [...out];
+	})([val]);
 }
 
 /* Toggle handler */
@@ -1573,7 +1292,6 @@ function enterDashboard(){
 	$exportGroup.classList.remove('hidden');
 	setDashToggleDisabled(false);
 }
-
 function exitDashboard(){
 	$filtersWrap.classList.remove('hidden');
 	$loadBtn.classList.remove('hidden');
@@ -1585,14 +1303,12 @@ function exitDashboard(){
 	updateDashToggleEligibility();
 }
 
-
-/* Populate supervisors with -ALL- (single select) */
+/* Populate supervisors with -ALL- */
 async function prepareDashboardFilters(){
 	const supList = ORG_SUPERVISORS.slice().sort();
 	$fSupervisors.innerHTML = `<option value="__ALL__">-ALL-</option>` + supList.map(n => `<option>${n}</option>`).join('');
 	$fSupervisors.onchange   = buildDashboard;
 }
-
 /* Auto-select current user as supervisor if applicable */
 async function autoApplySupervisorFromName(){
 	const nameSel = document.getElementById('selName');
@@ -1601,13 +1317,14 @@ async function autoApplySupervisorFromName(){
 
 	const opts = Array.from($fSupervisors.options);
 	const idx = opts.findIndex(o => (o.value || o.textContent).trim() === chosen);
-	if (idx >= 0) {
-		$fSupervisors.selectedIndex = idx;
-	}
+	if (idx >= 0) $fSupervisors.selectedIndex = idx;
 }
 
-/* Build dashboard (date → aggregate by code, list names) */
+/* Build dashboard */
 async function buildDashboard(){
+	const $warning = document.getElementById('warningList');
+	const $currentTypeCaption = document.getElementById('currentTypeCaption');
+
 	$hint.textContent = 'Loading…';
 	$centerTable.innerHTML = '';
 	$missingList.innerHTML = '';
@@ -1618,14 +1335,25 @@ async function buildDashboard(){
 		: 'Types: (none)';
 
 	const val = $fSupervisors.value || '__ALL__';
-	const allowedNames = (val==='__ALL__') ? getAllNames() : getSubtreeNames([val]);
+	const allowedNames = (val==='__ALL__') ? getAllNames() : (function getSubtreeNames(supervisors){
+		const out = new Set();
+		function walk(node){
+			if(!node || !node.NAME || out.has(node.NAME)) return;
+			out.add(node.NAME);
+			(node.TEAM||[]).forEach(walk);
+		}
+		supervisors.forEach(name=>{
+			const node = ORG_INDEX.get(name);
+			if (node) walk(node);
+		});
+		return [...out];
+	})([val]);
 
-	// fetch all schedules
 	const dates = dateRangeList();
 	const dateSet = new Set(dates);
 	const pairs = await Promise.all(allowedNames.map(async n => [n, await fetchScheduleData(n)]));
 
-	// Aggregate by date -> [{name, code}]
+	// Aggregate by date
 	const dateToPeople = new Map();
 	let totalRecords = 0;
 	for (const [name, sched] of pairs) {
@@ -1639,96 +1367,90 @@ async function buildDashboard(){
 	}
 	$metricTotal.textContent = String(totalRecords);
 
-		// ===== WARNING: Days when everyone (EXCEPT the immediate supervisor) is on leave =====
-		const leaveCodes = ['VL','AA','PTO','PL','ML','BDL'];
-		const warningEl = document.getElementById('warningList');
-
-		// If filtering "ALL", we can't know each team's supervisor—show a hint instead
-		const supVal = ($fSupervisors.value || '__ALL__');
-		if (supVal === '__ALL__') {
-		  warningEl.innerHTML = `<div class="text-slate-500 text-xs italic">
-			Select an Immediate Supervisor to see full-team leave days (supervisor excluded).
-		  </div>`;
-		} else {
-		  // Subtree under selected supervisor, EXCLUDING the supervisor themself
-		  const teamWithoutSupervisor = getSubtreeNames([supVal]).filter(n => n !== supVal);
-
-		  // Build a quick name -> schedule map from the already-fetched pairs
-		  const schedByName = new Map(pairs.map(([n, d]) => [n, d || {}]));
-
-		  const warningDates = [];
-		  for (const d of dates) {
-			if (teamWithoutSupervisor.length === 0) continue; // no direct reports
-			const everyoneOnLeave = teamWithoutSupervisor.every(n => {
-			  const code = schedByName.get(n)?.[d] || '';
-			  return leaveCodes.includes(code);
-			});
-			if (everyoneOnLeave) warningDates.push(fmtMMMDDYYYY(parseYMD(d)));
-		  }
-
-		  warningEl.innerHTML = warningDates.length
-			? warningDates.map(date => `<div class="text-red-300 font-medium">${date}</div>`).join('')
-			: `<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>`;
+	// Warning: everyone (except supervisor) on leave
+	const leaveCodes = ['VL','AA','PTO','PL','ML','BDL'];
+	if (val === '__ALL__') {
+	  $warning.innerHTML = `<div class="text-slate-500 text-xs italic">
+	    Select an Immediate Supervisor to see full-team leave days (supervisor excluded).
+	  </div>`;
+	} else {
+	  const teamWithoutSupervisor = (function getSubtreeNames2(supervisors){
+		const out = new Set();
+		function walk(node){
+			if(!node || !node.NAME || out.has(node.NAME)) return;
+			out.add(node.NAME);
+			(node.TEAM||[]).forEach(walk);
 		}
+		supervisors.forEach(name=>{
+			const node = ORG_INDEX.get(name);
+			if (node) walk(node);
+		});
+		return [...out];
+	  })([val]).filter(n => n !== val);
 
-		// Build center table in requested layout:
-		let html = '<thead><tr>';
-		html += '<th class="text-left">Date</th>';
-		html += '<th class="text-left">Count</th>';
-		html += '<th class="text-left">Details</th>';
-		html += '</tr></thead><tbody>';
+	  const schedByName = new Map(pairs.map(([n, d]) => [n, d || {}]));
 
-		const rows = Array.from(dateToPeople.entries())
-		  .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
-		  .sort((a,b)=>(a[0] < b[0] ? -1 : 1));
+	  const warningDates = [];
+	  for (const d of dates) {
+		if (teamWithoutSupervisor.length === 0) continue;
+		const everyoneOnLeave = teamWithoutSupervisor.every(n => leaveCodes.includes((schedByName.get(n)?.[d]) || ''));
+		if (everyoneOnLeave) warningDates.push(fmtMMMDDYYYY(parseYMD(d)));
+	  }
+	  $warning.innerHTML = warningDates.length
+		? warningDates.map(date => `<div class="text-red-300 font-medium">${date}</div>`).join('')
+		: `<div class="text-slate-500 text-xs italic">No full-team leave days detected.</div>`;
+	}
 
-		for (const [d, people] of rows) {
-		  // group names by schedule code
-		  const byCode = {};
-		  for (const p of people) (byCode[p.code] ||= []).push(p.name);
+	// Table
+	let html = '<thead><tr>';
+	html += '<th class="text-left">Date</th>';
+	html += '<th class="text-left">Count</th>';
+	html += '<th class="text-left">Details</th>';
+	html += '</tr></thead><tbody>';
 
-		  const codes = Object.keys(byCode).sort();
-		  const dateLabel = new Date(d).toLocaleDateString(undefined, {
-			month:'short', day:'numeric', year:'numeric'
-		  });
+	const rows = Array.from(dateToPeople.entries())
+	  .map(([d, people]) => [d, people.slice().sort((a,b)=> a.name.localeCompare(b.name))])
+	  .sort((a,b)=>(a[0] < b[0] ? -1 : 1));
 
-			codes.forEach((code, idx) => {
-			  const names = byCode[code].slice().sort((a,b)=>a.localeCompare(b));
-			  const dateCell = idx === 0 ? dateLabel : '';
-			  const countCell = names.length;
-			  const nameLines = names.map(n => `<div>${n}</div>`).join('');
-			  const details = `
-				<div>
-				  <div class="font-semibold text-slate-100 mb-1">${code}</div>
-				  <div class="pl-3 border-l border-slate-700 space-y-1">${nameLines}</div>
-				</div>
-			  `;
+	for (const [d, people] of rows) {
+	  const byCode = {};
+	  for (const p of people) (byCode[p.code] ||= []).push(p.name);
 
-			  html += `
-				<tr class="align-top">
-				  <td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
-				  <td>${countCell}</td>
-				  <td class="text-slate-300">${details}</td>
-				</tr>
-			  `;
-			});
+	  const codes = Object.keys(byCode).sort();
+	  const dateLabel = new Date(d).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
 
+	  codes.forEach((code, idx) => {
+		const names = byCode[code].slice().sort((a,b)=>a.localeCompare(b));
+		const dateCell = idx === 0 ? dateLabel : '';
+		const countCell = names.length;
+		const nameLines = names.map(n => `<div>${n}</div>`).join('');
+		const details = `
+		  <div>
+			<div class="font-semibold text-slate-100 mb-1">${code}</div>
+			<div class="pl-3 border-l border-slate-700 space-y-1">${nameLines}</div>
+		  </div>
+		`;
 
-		}
+		html += `
+		  <tr class="align-top">
+			<td class="whitespace-nowrap ${idx === 0 ? 'font-medium' : ''}">${dateCell}</td>
+			<td>${countCell}</td>
+			<td class="text-slate-300">${details}</td>
+		  </tr>
+		`;
+	  });
+	}
+	html += '</tbody>';
+	$centerTable.innerHTML = rows.length
+	  ? html
+	  : '<tbody><tr><td colspan="3" class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
 
-		html += '</tbody>';
-		$centerTable.innerHTML = rows.length
-		  ? html
-		  : '<tbody><tr><td colspan="3" class="text-slate-400">No data for selected filters/types.</td></tr></tbody>';
-
-	// Incomplete list (strict) — only filtered by supervisor
+	// Incomplete list
 	const nameToData = new Map(pairs.map(([n,d])=>[n,d||{}]));
 	const incomplete = allowedNames.filter(n=>!hasCompleteScheduleForRangeStrict(nameToData.get(n))).sort((a,b)=>a.localeCompare(b));
-
 	if(!incomplete.length){
 		$missingList.innerHTML=`<div class="text-slate-400 text-sm">Everyone under the selected supervisor has a complete schedule for the range.</div>`;
 	}else{
-		// position lookup
 		const posMap = new Map(RESPONDERS.map(r => [r.NAME, r.POSITION || 'Unspecified']));
 		$missingList.innerHTML=incomplete.map(n=>{
 		  const pos=posMap.get(n)||'Unspecified';
@@ -1748,29 +1470,23 @@ async function buildDashboard(){
 (async () => {
 	loadStore();
 	await loadConfig();
-		if (isPastDeadline()){
-		  const saveBtn = document.getElementById('exportBtn');
-		  if (saveBtn){
-			saveBtn.disabled = true;
-			saveBtn.title = `Deadline passed: ${[CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ')}`;
-			saveBtn.classList.add('opacity-60','cursor-not-allowed');
-		  }
-		}
+
+	if (isPastDeadline()){
+	  const saveBtn = document.getElementById('exportBtn');
+	  if (saveBtn){
+		saveBtn.disabled = true;
+		saveBtn.title = `Deadline passed: ${[CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ')}`;
+		saveBtn.classList.add('opacity-60','cursor-not-allowed');
+	  }
+	}
 
 	updateTitleFromConfig();
 	await loadResponders();
 	await loadOrganization();
-	await loadSiteData();
-	await loadDeploymentData();
-	await computeDeploymentMarkersForSelected();
+	await loadDeploymentData(); // site assignments + rules for DEPLOYMENT/PULLOUT
 
-
-
-
-	// GROUPED schedule controls
+	// Controls
 	buildScheduleButtons();
-
-	// Personnel filters
 	populateRespondersUI();
 	wireResponderEvents();
 	setSaveEnabled(false);
@@ -1779,24 +1495,33 @@ async function buildDashboard(){
 
 	// Dashboard eligibility
 	updateDashToggleEligibility();
-	
- // Dashboard eligibility
-updateDashToggleEligibility();
 
-// Show intro modal if first visit
-showIntroModal(true);
-
+	// Show intro modal on first visit (keeps your existing UX)
+	showIntroModal(true);
 })();
-</script>
 
+/* ===== Intro modal (unchanged) ===== */
+function showIntroModal(show = true){
+	const m = document.getElementById('introModal');
+	if (!m) return;
+	// only show if not seen
+	const seen = localStorage.getItem('introSeen') === '1';
+	m.classList.toggle('hidden', show ? seen === true : true);
+	if (show && !seen) setTimeout(()=>document.getElementById('introCloseBtn')?.focus(), 0);
+}
+document.addEventListener('click', (e) => {
+	if (e.target?.id === 'introCloseBtn') {
+		showIntroModal(false);
+		localStorage.setItem('introSeen', '1');
+	}
+});
+</script>
 
 <!-- Intro modal -->
 <div id="introModal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center hidden">
 	<div class="w-[min(680px,92vw)] rounded-2xl border border-slate-700 bg-[#0a0f1a] shadow-2xl p-5">
-		<h2 class="text-lg font-semibold mb-3">INSTRUCTIONS
-		 <p class="text-[#0a0f1a] italic text-center font-semibold">
-				IF SITE IS NOT INTUITIVE ENOUGH (..PC Intel 4004)
-			</p>
+		<h2 class="text-lg font-semibold mb-3">INSTRUCTIONS</h2>
+		<p class="text-[#0a0f1a] italic text-center font-semibold">IF SITE IS NOT INTUITIVE ENOUGH (..PC Intel 4004)</p>
 		<div class="text-sm leading-relaxed text-slate-200 space-y-4">
 			 <div>
 				<p class="font-semibold text-slate-100">(1)</p>
@@ -1806,7 +1531,6 @@ showIntroModal(true);
 					<li><strong><u>SELECT NAME</u></strong></li>
 				</ul>
 			</div>
-
 			<div>
 				<p class="font-semibold text-slate-100">(2)</p>
 				<ul class="list-disc list-inside pl-2">
@@ -1815,7 +1539,6 @@ showIntroModal(true);
 					<li>REPEAT TIL COMPLETE</li>
 				</ul>
 			</div>
-
 			<div>
 				<p class="font-semibold text-slate-100">(3)</p>
 				<ul class="list-disc list-inside pl-2">
@@ -1824,24 +1547,17 @@ showIntroModal(true);
 					<li>IF NO CONFIRMATION, CONTACT <strong>GDS-VOUGHN CALMA</strong></li>
 				</ul>
 			</div>
-		</div>
-		
-			 <div>
-		 <p class="font-semibold italic text-center font-semibold">
+			<p class="font-semibold italic text-center">
 				---------------------------------------------------<br>
 				<strong><u>NOTE!</u></strong> PULLOUT/DEPLOYMENT is still ON-SITE, <u><strong>NOT</strong> WFH</u><br>
 				---------------------------------------------------
-				
 			</p>
-			</div>
-
+		</div>
 		<div class="mt-6 text-right">
 			<button id="introCloseBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800">GOTCHA</button>
 		</div>
 	</div>
 </div>
-
-
 
 </body>
 </html>
