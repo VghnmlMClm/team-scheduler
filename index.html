@@ -251,6 +251,48 @@
 	<p>By:VghnmlMClm (2025)</p>
 </footer>
 
+<!-- Intro modal -->
+<div id="introModal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center hidden">
+	<div class="w-[min(680px,92vw)] rounded-2xl border border-slate-700 bg-[#0a0f1a] shadow-2xl p-5">
+		<h2 class="text-lg font-semibold mb-3">INSTRUCTIONS</h2>
+		<p class="text-[#0a0f1a] italic text-center font-semibold">IF SITE IS NOT INTUITIVE ENOUGH (..PC Intel 4004)</p>
+		<div class="text-sm leading-relaxed text-slate-200 space-y-4">
+			 <div>
+				<p class="font-semibold text-slate-100">(1)</p>
+				<ul class="list-disc list-inside pl-2">
+					<li>SELECT TEAM</li>
+					<li>SELECT POSITION</li>
+					<li><strong><u>SELECT NAME</u></strong></li>
+				</ul>
+			</div>
+			<div>
+				<p class="font-semibold text-slate-100">(2)</p>
+				<ul class="list-disc list-inside pl-2">
+					<li><u>SELECT DATE/S</u></li>
+					<li><u>SELECT WORK SETUP / LEAVES FOR SELECTED DATE/S</u></li>
+					<li>REPEAT TIL COMPLETE</li>
+				</ul>
+			</div>
+			<div>
+				<p class="font-semibold text-slate-100">(3)</p>
+				<ul class="list-disc list-inside pl-2">
+					<li><strong><u>SAVE</u></strong></li>
+					<li>WAIT FOR POP-UP CONFIRMATION</li>
+					<li>IF NO CONFIRMATION, CONTACT <strong>GDS-VOUGHN CALMA</strong></li>
+				</ul>
+			</div>
+			<p class="font-semibold italic text-center">
+				---------------------------------------------------<br>
+				<strong><u>NOTE!</u></strong> PULLOUT/DEPLOYMENT is still ON-SITE, <u><strong>NOT</strong> WFH</u><br>
+				---------------------------------------------------
+			</p>
+		</div>
+		<div class="mt-6 text-right">
+			<button id="introCloseBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800">GOTCHA</button>
+		</div>
+	</div>
+</div>
+
 <script>
 /* ===== URLs (single source of truth) ===== */
 const PROXY_URL          = "https://frosty-water-9f6a.voughn-calma-086.workers.dev/";
@@ -1643,98 +1685,46 @@ async function buildDashboard(){
 
 /* ===== Init ===== */
 (async () => {
-	loadStore();
-	await loadConfig();
+  loadStore();
+  await loadConfig();
 
-	if (isPastDeadline()){
-	  const saveBtn = document.getElementById('exportBtn');
-	  if (saveBtn){
-		saveBtn.disabled = true;
-		saveBtn.title = `Deadline passed: ${[CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ')}`;
-		saveBtn.classList.add('opacity-60','cursor-not-allowed');
-	  }
-	}
+  if (isPastDeadline()){
+    const saveBtn = document.getElementById('exportBtn');
+    if (saveBtn){
+      saveBtn.disabled = true;
+      saveBtn.title = `Deadline passed: ${[CONFIG.DEADLINE_DATE_STR, CONFIG.DEADLINE_TIME_STR].filter(Boolean).join(' ')}`;
+      saveBtn.classList.add('opacity-60','cursor-not-allowed');
+    }
+  }
 
-	updateTitleFromConfig();
-	await loadResponders();
-	await loadOrganization();
-	await loadDeploymentData(); // site assignments + rules for DEPLOYMENT/PULLOUT
-	const n0 = document.getElementById('selName')?.value?.trim();
-	if (n0) { await computeDeploymentMarkersForSelected(); render(); }
+  updateTitleFromConfig();
+  await loadResponders();
+  await loadOrganization();
+  await loadDeploymentData();
+  const n0 = document.getElementById('selName')?.value?.trim();
+  if (n0) { await computeDeploymentMarkersForSelected(); render(); }
 
-	// Controls
-	buildScheduleButtons();
-	populateRespondersUI();
-	wireResponderEvents();
-	setSaveEnabled(false);
-	({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
-	render();
+  // Controls
+  buildScheduleButtons();
+  populateRespondersUI();
+  wireResponderEvents();
+  setSaveEnabled(false);
+  ({year: state.viewYear, month: state.viewMonth} = clampView(state.viewYear, state.viewMonth));
+  render();
 
-	// Dashboard eligibility
-	updateDashToggleEligibility();
+  // Dashboard eligibility
+  updateDashToggleEligibility();
 
-	// Show intro modal on first visit (keeps your existing UX)
-	showIntroModal(true);
+  // ❌ remove the immediate call:
+  // showIntroModal(true);
 })();
 
-/* ===== Intro modal (unchanged) ===== */
-function showIntroModal(show = true){
-	const m = document.getElementById('introModal');
-	if (!m) return;
-	// only show if not seen
-	const seen = localStorage.getItem('introSeen') === '1';
-	m.classList.toggle('hidden', show ? seen === true : true);
-	if (show && !seen) setTimeout(()=>document.getElementById('introCloseBtn')?.focus(), 0);
-}
-document.addEventListener('click', (e) => {
-	if (e.target?.id === 'introCloseBtn') {
-		showIntroModal(false);
-		localStorage.setItem('introSeen', '1');
-	}
+// ✅ show the modal once the DOM (including the modal element) is ready
+window.addEventListener('DOMContentLoaded', () => {
+  showIntroModal(true);
 });
-</script>
 
-<!-- Intro modal -->
-<div id="introModal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center hidden">
-	<div class="w-[min(680px,92vw)] rounded-2xl border border-slate-700 bg-[#0a0f1a] shadow-2xl p-5">
-		<h2 class="text-lg font-semibold mb-3">INSTRUCTIONS</h2>
-		<p class="text-[#0a0f1a] italic text-center font-semibold">IF SITE IS NOT INTUITIVE ENOUGH (..PC Intel 4004)</p>
-		<div class="text-sm leading-relaxed text-slate-200 space-y-4">
-			 <div>
-				<p class="font-semibold text-slate-100">(1)</p>
-				<ul class="list-disc list-inside pl-2">
-					<li>SELECT TEAM</li>
-					<li>SELECT POSITION</li>
-					<li><strong><u>SELECT NAME</u></strong></li>
-				</ul>
-			</div>
-			<div>
-				<p class="font-semibold text-slate-100">(2)</p>
-				<ul class="list-disc list-inside pl-2">
-					<li><u>SELECT DATE/S</u></li>
-					<li><u>SELECT WORK SETUP / LEAVES FOR SELECTED DATE/S</u></li>
-					<li>REPEAT TIL COMPLETE</li>
-				</ul>
-			</div>
-			<div>
-				<p class="font-semibold text-slate-100">(3)</p>
-				<ul class="list-disc list-inside pl-2">
-					<li><strong><u>SAVE</u></strong></li>
-					<li>WAIT FOR POP-UP CONFIRMATION</li>
-					<li>IF NO CONFIRMATION, CONTACT <strong>GDS-VOUGHN CALMA</strong></li>
-				</ul>
-			</div>
-			<p class="font-semibold italic text-center">
-				---------------------------------------------------<br>
-				<strong><u>NOTE!</u></strong> PULLOUT/DEPLOYMENT is still ON-SITE, <u><strong>NOT</strong> WFH</u><br>
-				---------------------------------------------------
-			</p>
-		</div>
-		<div class="mt-6 text-right">
-			<button id="introCloseBtn" class="px-4 py-2 rounded-xl border border-slate-600 hover:bg-slate-800">GOTCHA</button>
-		</div>
-	</div>
-</div>
+</script>
 
 </body>
 </html>
