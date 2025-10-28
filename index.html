@@ -262,6 +262,8 @@ const PULLOUT_RULES_URL = "pullout-deployment.json";
 
 
 /* ===== Schedules ===== */
+const SITE_ASSIGN_URL = "site assignment.json";
+const PULLOUT_URL     = "pullout-deployment.json";
 const SCHEDULE_OPTIONS = [
 	{ name:"ON-SITE",         code:"ONS",  abbr:"ONS", color:"ffffff" },
 	{ name:"OFFICE",          code:"OFC",  abbr:"OFC", color:"ffffff" },
@@ -318,6 +320,10 @@ function hexToRGB(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.
 function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(g*587)+(b*114))/1000; return yiq>=128 ? 'text-black' : 'text-white'; }
 
 /* ===== State ===== */
+state.deploymentMarkers = new Map(); // dateStr -> "DEPLOYMENT" | "PULLOUT"
+state.siteAssignments = null;        // {site: [names...] }
+state.sitePlan = null;               // [{Site,CYCLE,WEEK,DAY}, ...]
+
 const state = {
 	viewYear: new Date().getFullYear(),
 	viewMonth: new Date().getMonth(),
@@ -454,6 +460,45 @@ function findRuleForSite(site){
 }
 
 /* ===== Workweek helpers (Mon–Fri; holidays stay in the week) ===== */
+function isWorkingDay(d){
+  const w = d.getDay();
+  return w !== 0 && w !== 6 && !isHoliday(d);
+}
+function sameYMD(a,b){ return ymd(a) === ymd(b); }
+function findNthWorkingDay(fromDate, n){
+  // n = 1 => first working day on/after fromDate
+  const d = new Date(fromDate);
+  let count = 0;
+  while (true){
+    if (isWorkingDay(d)){
+      count++;
+      if (count === n) return new Date(d);
+    }
+    d.setDate(d.getDate()+1);
+  }
+}
+function nextWorkingDay(d){
+  const x = new Date(d);
+  do { x.setDate(x.getDate()+1); } while(!isWorkingDay(x));
+  return x;
+}
+function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function isFriday(d){ return d.getDay()===5; }
+function thirdFridayOfSpan(startDate, spanDays){
+  // look for 3rd Friday inside [startDate, startDate+spanDays)
+  let friCount = 0;
+  const end = addDays(startDate, spanDays);
+  const d = new Date(startDate);
+  while (d < end){
+    if (isFriday(d) && isWorkingDay(d)){
+      friCount++;
+      if (friCount === 3) return new Date(d);
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return null;
+}
+
 function firstMondayOfYear(year){
 	const d = new Date(year, 0, 1); // Jan 1
 	const wd = d.getDay();          // 0 Sun .. 6 Sat
@@ -599,6 +644,142 @@ function computeDeploymentEventsForMonth(fullName, year, month){
 	}
 	return out;
 }
+async function computeDeploymentMarkersForSelected(){
+  state.deploymentMarkers.clear();
+
+  // Need selected name
+  const sel = document.getElementById('selName');
+  const name = (sel?.value || '').trim();
+  if (!name || !CONFIG.START_DATE || !CONFIG.END_DATE) return;
+
+  // Ensure JSONs loaded
+  if (!state.siteAssignments || !state.sitePlan) return;
+
+  // Find site assigned to this name
+  let assignedSite = null;
+  for (const [site, arr] of Object.entries(state.siteAssignments)){
+    if (Array.isArray(arr) && arr.some(n => n.trim().toLowerCase() === name.toLowerCase())){
+      assignedSite = site;
+      break;
+    }
+  }
+  if (!assignedSite) return;
+
+  // Find plan for that site
+  const plan = state.sitePlan.find(p => (p.Site || p.site) === assignedSite);
+  if (!plan) return;
+
+  const CYCLE = Number(plan.CYCLE);
+  const WEEK  = Number(plan.WEEK); // 1-based: 1,2,3
+  const DAY   = Number(plan.DAY);  // 0,1,2 rules
+
+  // Anchor: first work week of the YEAR, then shift to WEEK (1-based)
+  const Y = CONFIG.START_DATE.getFullYear();
+  const yearStart = new Date(Y, 0, 1);
+  // first working day of the year:
+  const firstWD = findNthWorkingDay(yearStart, 1);
+
+  // Workweek length = count of working days  (we still iterate day-by-day respecting holidays/weekends)
+  // We'll simulate cycles forward inside the CONFIG window.
+  const windowStart = new Date(CONFIG.START_DATE);
+  const windowEnd   = new Date(CONFIG.END_DATE);
+
+  // Build week anchors: week 1 starts at firstWD; week 2 starts on the first working day AFTER finishing week1, etc.
+  function advanceOneWorkWeek(start){
+    // move through 5 working days (Mon-Fri except holidays). After 5th working day, return next working day as next week start.
+    let d = new Date(start);
+    let worked = 0;
+    while (worked < 5){
+      if (isWorkingDay(d)) worked++;
+      d.setDate(d.getDate()+1);
+    }
+    // d is the day after completing 5 working days; get the next working day as the start of the next week
+    while (!isWorkingDay(d)) d.setDate(d.getDate()+1);
+    return d;
+  }
+
+  // compute start of WEEK N (1-based)
+  let weekStart = new Date(firstWD);
+  for (let i=1;i<WEEK;i++){
+    weekStart = advanceOneWorkWeek(weekStart);
+  }
+
+  // Now iterate by cycles until after windowEnd
+  let cursor = new Date(weekStart);
+
+  while (cursor <= windowEnd){
+    if (CYCLE === 1 || CYCLE === 2){
+      // cycle span = CYCLE weeks
+      // start of cycle = cursor
+      // deployment: DAY 0 => first workday, DAY 1 => still first workday (deploy fixed at first), DAY 2 => second workday
+      const firstWorkday = findNthWorkingDay(cursor, 1);
+      const secondWorkday = findNthWorkingDay(cursor, 2);
+
+      const deploy = (DAY === 2) ? secondWorkday : firstWorkday;
+
+      // pullout: based on DAY rule and last/2nd-last workday in the cycle
+      // We’ll find the last and 2nd-last working day inside the cycle span.
+      const spanDays = CYCLE * 7; // approx window to scan
+      const endScan = addDays(cursor, spanDays);
+      // collect working days in this span
+      const wds = [];
+      const t = new Date(cursor);
+      while (t < endScan){
+        if (isWorkingDay(t)) wds.push(ymd(t));
+        t.setDate(t.getDate()+1);
+      }
+      if (wds.length){
+        let pull;
+        if (DAY === 0){
+          pull = parseYMD(wds[wds.length-1]); // last workday
+        } else if (DAY === 1){
+          pull = parseYMD(wds[Math.max(0, wds.length-2)]); // 2nd to last
+        } else { // DAY === 2
+          pull = parseYMD(wds[wds.length-1]); // last workday
+        }
+
+        // record if inside window
+        if (deploy >= windowStart && deploy <= windowEnd) state.deploymentMarkers.set(ymd(deploy), "DEPLOYMENT");
+        if (pull   >= windowStart && pull   <= windowEnd) state.deploymentMarkers.set(ymd(pull),   "PULLOUT");
+      }
+
+      // move to next cycle start: advance CYCLE weeks
+      for (let i=0;i<CYCLE;i++) cursor = advanceOneWorkWeek(cursor);
+
+    } else if (CYCLE === 3){
+      // deployment on first workday of cycle
+      const deploy = findNthWorkingDay(cursor, 1);
+
+      // pullout: 3rd Friday within the cycle span (3 weeks active), then 1-week gap
+      const spanDays = 21; // 3 weeks active
+      const pull = thirdFridayOfSpan(cursor, spanDays);
+
+      if (deploy >= windowStart && deploy <= windowEnd) state.deploymentMarkers.set(ymd(deploy), "DEPLOYMENT");
+      if (pull && pull >= windowStart && pull <= windowEnd) state.deploymentMarkers.set(ymd(pull), "PULLOUT");
+
+      // advance: 3 weeks active + 1 week gap => 4 weeks total to next cycle
+      for (let i=0;i<4;i++) cursor = advanceOneWorkWeek(cursor);
+    } else {
+      // unknown CYCLE: break to avoid infinite loop
+      break;
+    }
+  }
+}
+
+async function loadSiteData(){
+  try{
+    const [a, b] = await Promise.all([
+      fetch(SITE_ASSIGN_URL).then(r=>r.json()),
+      fetch(PULLOUT_URL).then(r=>r.json())
+    ]);
+    state.siteAssignments = a || {};
+    state.sitePlan = Array.isArray(b) ? b : [];
+  } catch(e){
+    console.error('Failed to load site/pullout JSON:', e);
+    state.siteAssignments = {};
+    state.sitePlan = [];
+  }
+}
 
 
 /* Returns all names under each selected supervisor (including the supervisor) */
@@ -676,9 +857,7 @@ function dayCell(dateObj, muted=false){
   const outRange  = !dateInRange(dateObj);
   const holiday   = isHoliday(dateObj);
   const isSelected= state.selected.has(id);
-
   const status = state.data[id] || '';
-  // RD/HOL override individual schedule for display
   const effective = holiday ? 'HOL' : (weekend ? 'RD' : status);
 
   let bg = '';
@@ -704,47 +883,26 @@ function dayCell(dateObj, muted=false){
     textColor = (contrast === 'text-black') ? 'black' : 'white';
   }
 
-  // --- BADGES ---
+  const marker = state.deploymentMarkers.get(id) || ''; // "DEPLOYMENT" | "PULLOUT" | ""
 
-  // 1) Schedule code badge (ONS/WFH/etc)
   const badgeText = effective ? (LABELS[effective] || effective) : '';
-  const codeBadge = badgeText
-    ? `<div class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10 inline-block" style="color:${textColor}">${badgeText}</div>`
+
+  const markerHtml = marker
+    ? `<div class="text-[10px] px-1.5 py-0.5 rounded-full border border-sky-300/20 bg-sky-300/10 text-sky-200 inline-block">${marker}</div>`
     : '';
 
-  // 2) Deployment / Pullout labels (each on its own line, ABOVE the sched code)
-  let dpBlocks = '';
-  try {
-    const nameSel = document.getElementById('selName');
-    const currentName = (nameSel?.value || '').trim();
-    if (currentName && typeof computeDeploymentEventsForMonth === 'function') {
-      const evts = computeDeploymentEventsForMonth(currentName, state.viewYear, state.viewMonth) || [];
-      const todayKey = ymd(dateObj);
-      const hits = evts.filter(e => e.date === todayKey).map(e => e.label); // e.g., "DEPLOYMENT", "PULLOUT"
-      if (hits.length) {
-        dpBlocks = hits.map(lbl => `
-          <div class="text-[10px] px-1.5 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/15 text-sky-200 inline-block">
-            ${lbl}
-          </div>
-        `).join('');
-      }
-    }
-  } catch (_) { /* no-op if helper not present */ }
-
-  const stackedBadges = (dpBlocks || codeBadge)
-    ? `<div class="mt-1 space-y-1">
-         ${dpBlocks ? `<div class="space-y-1">${dpBlocks}</div>` : ''}
-         ${codeBadge ? `<div>${codeBadge}</div>` : ''}
-       </div>`
+  const schedHtml = badgeText
+    ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
     : '';
 
-  // --- RENDER ---
   cell.innerHTML = `
     <div class="flex items-center justify-between">
-      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}"
-            style="color:${textColor}">${dateObj.getDate()}</span>
+      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}" style="color:${textColor}">${dateObj.getDate()}</span>
     </div>
-    ${stackedBadges}
+    <div class="mt-1 space-y-1 overflow-hidden">
+      ${markerHtml}
+      ${schedHtml}
+    </div>
   `;
 
   cell.addEventListener('click', e => {
@@ -753,6 +911,7 @@ function dayCell(dateObj, muted=false){
   });
   return cell;
 }
+
 
 
 function onDayClick(id, shift) {
@@ -947,6 +1106,8 @@ function wireResponderEvents() {
 		const name = (e.target?.value || "").trim();
 		if (name) await loadScheduleForName(name);
 		else setSaveEnabled(false);
+		await computeDeploymentMarkersForSelected();
+			render(); // ensure calendar re-renders with markers
 	});
 }
 
@@ -1599,7 +1760,11 @@ async function buildDashboard(){
 	updateTitleFromConfig();
 	await loadResponders();
 	await loadOrganization();
+	await loadSiteData();
 	await loadDeploymentData();
+	await computeDeploymentMarkersForSelected();
+
+
 
 
 	// GROUPED schedule controls
