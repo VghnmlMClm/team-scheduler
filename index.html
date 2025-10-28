@@ -299,6 +299,10 @@ const uniq = arr => [...new Set(arr)];
 function fmtMMMDDYYYY(d){const MMM=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];return `${MMM[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;}
 function hexToRGB(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); const n=parseInt(hex,16); return {r:(n>>16)&255, g:(n>>8)&255, b:(n&255)}; }
 function getContrastText(hex){ const {r,g,b}=hexToRGB(hex); const yiq=((r*299)+(g*587)+(b*114))/1000; return yiq>=128 ? 'text-black' : 'text-white'; }
+function firstMondayOfYear(year){
+  const jan1 = new Date(year, 0, 1);
+  return firstMondayOnOrAfter(jan1);
+}
 
 /* ===== State (define BEFORE any usage) ===== */
 const state = {
@@ -657,9 +661,12 @@ async function computeDeploymentMarkersForSelected() {
   const cfg = cycleConfig[CYCLE];
   if (!cfg) return; // unknown cycle → nothing
 
-  // Baseline "week 1" Monday is defined from the YEAR of START_DATE (your note)
-  const baselineYear  = (CONFIG.START_DATE ?? windowStart).getFullYear();
-  let cursor = workweekStartByIndex(baselineYear, WEEK); // Monday of WEEK # in that year
+  // Baseline "week 1" Monday is the first Monday of the YEAR of START_DATE
+  const startYear = (CONFIG.START_DATE ?? windowStart).getFullYear();
+  const baseMon   = firstMondayOfYear(startYear);
+  let cursor = new Date(baseMon);
+  cursor.setDate(cursor.getDate() + 7 * (Math.max(1, Number(WEEK)||1) - 1)); // Monday of WEEK#
+
 
   // To compute "SCHED WFH between pull(n) and deploy(n+1)", we need sequences
   const deployments = [];
