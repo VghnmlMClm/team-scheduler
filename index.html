@@ -683,14 +683,16 @@ function renderGrid(year, month){
 	for(let i=1;i<=remaining;i++) grid.appendChild(dayCell(new Date(year, month+1, i), true));
 }
 function dayCell(dateObj, muted = false) {
-  const id = ymd(dateObj);
+  const id        = ymd(dateObj);
   const isToday   = id === ymd(new Date());
   const wd        = dateObj.getDay();
-  const weekend   = (wd===0 || wd===6);
+  const weekend   = (wd === 0 || wd === 6);
   const outRange  = !dateInRange(dateObj);
   const holiday   = isHoliday(dateObj);
   const isSelected= state.selected.has(id);
-  const status = state.data[id] || '';
+
+  const status    = state.data[id] || '';
+  // RD/HOL override individual schedule for display
   const effective = holiday ? 'HOL' : (weekend ? 'RD' : status);
 
   let bg = '';
@@ -701,43 +703,58 @@ function dayCell(dateObj, muted = false) {
   const cell = document.createElement('button');
   cell.type = 'button';
   cell.className = [
-    'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
+    'day-cell relative aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
     muted ? 'muted' : '',
     isSelected ? 'selected-day' : '',
     disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
   ].join(' ').trim();
-
   cell.dataset.date = id;
   if (bg) cell.style.background = bg;
 
+  // text color vs background
   let textColor = 'white';
   if (bg) {
     const contrast = getContrastText(bg);
     textColor = (contrast === 'text-black') ? 'black' : 'white';
   }
 
-  const marker = state.deploymentMarkers.get(id) || ''; // "DEPLOYMENT" | "PULLOUT"
+  // badges
   const schedCode = effective ? (LABELS[effective] || effective) : '';
+  const marker    = state.deploymentMarkers.get(id) || ''; // "DEPLOYMENT" | "PULLOUT" | ""
 
-  // --- LINE 1: "11 - DEPLOYMENT" ---
-  const firstLine = `
-    <div class="flex items-center gap-1" style="color:${textColor}">
-      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday ? 'today-ring' : ''}">
-        ${dateObj.getDate()}
-      </span>
-      ${marker ? `<span class="text-[11px] font-medium tracking-wide">- ${marker}</span>` : ''}
-    </div>
+  const badgeChip = (txt) => `
+    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10"
+          style="color:${textColor}">${txt}</span>
   `;
 
-  // --- LINE 2: restored schedule code rendering ---
-  let secondLine = '';
-  if (schedCode) {
-    secondLine = `
-      <div class="text-[12px] font-semibold mt-1" style="color:${textColor}">
-        ${schedCode}
+  cell.innerHTML = `
+    <!-- DAY (top-left) -->
+    <div class="absolute top-2 left-2">
+      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday ? 'today-ring' : ''}"
+            style="color:${textColor}">${dateObj.getDate()}</span>
+    </div>
+
+    <!-- DEPLOYMENT/PULLOUT (center) -->
+    ${marker ? `
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        ${badgeChip(marker)}
       </div>
-    `;
-  }
+    ` : ''}
+
+    <!-- SCHED CODE (bottom-left) -->
+    ${schedCode ? `
+      <div class="absolute bottom-2 left-2">
+        ${badgeChip(schedCode)}
+      </div>
+    ` : ''}
+  `;
+
+  cell.addEventListener('click', (e) => {
+    if (disabled) return;
+    onDayClick(id, e.shiftKey);
+  });
+  return cell;
+}
 
   cell.innerHTML = firstLine + secondLine;
 
