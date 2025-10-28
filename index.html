@@ -669,62 +669,91 @@ function renderGrid(year, month){
 }
 
 function dayCell(dateObj, muted=false){
-	const id = ymd(dateObj);
-	const isToday   = id === ymd(new Date());
-	const wd        = dateObj.getDay();
-	const weekend   = (wd===0 || wd===6);
-	const outRange  = !dateInRange(dateObj);
-	const holiday   = isHoliday(dateObj);
-	const isSelected= state.selected.has(id);
-		const status = state.data[id] || '';
-		// RD/HOL override individual schedule for display
-		const effective = holiday ? 'HOL' : (weekend ? 'RD' : status);
+  const id = ymd(dateObj);
+  const isToday   = id === ymd(new Date());
+  const wd        = dateObj.getDay();
+  const weekend   = (wd===0 || wd===6);
+  const outRange  = !dateInRange(dateObj);
+  const holiday   = isHoliday(dateObj);
+  const isSelected= state.selected.has(id);
 
-		let bg = '';
-		if (effective) bg = COLORS[effective];
+  const status = state.data[id] || '';
+  // RD/HOL override individual schedule for display
+  const effective = holiday ? 'HOL' : (weekend ? 'RD' : status);
 
+  let bg = '';
+  if (effective) bg = COLORS[effective];
 
-	const disabled = outRange || holiday || weekend;
+  const disabled = outRange || holiday || weekend;
 
-	const cell = document.createElement('button');
-	cell.type='button';
-	cell.className = [
-		'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
-		muted ? 'muted' : '',
-		isSelected ? 'selected-day' : '',
-		disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
-	].join(' ').trim();
+  const cell = document.createElement('button');
+  cell.type='button';
+  cell.className = [
+    'day-cell aspect-square rounded-xl border border-slate-700 p-2 text-left transition',
+    muted ? 'muted' : '',
+    isSelected ? 'selected-day' : '',
+    disabled ? 'cursor-not-allowed' : 'hover:border-blue-300'
+  ].join(' ').trim();
 
-	cell.dataset.date = id;
-	if (bg) cell.style.background = bg;
+  cell.dataset.date = id;
+  if (bg) cell.style.background = bg;
 
-	let textColor = 'white';
-	if (bg) {
-		const contrast = getContrastText(bg);
-		textColor = (contrast === 'text-black') ? 'black' : 'white';
-	}
+  let textColor = 'white';
+  if (bg) {
+    const contrast = getContrastText(bg);
+    textColor = (contrast === 'text-black') ? 'black' : 'white';
+  }
 
-		const badgeText = effective ? (LABELS[effective] || effective) : '';
+  // --- BADGES ---
 
+  // 1) Schedule code badge (ONS/WFH/etc)
+  const badgeText = effective ? (LABELS[effective] || effective) : '';
+  const codeBadge = badgeText
+    ? `<div class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10 inline-block" style="color:${textColor}">${badgeText}</div>`
+    : '';
 
-	const badge = badgeText
-		? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
-		: '';
+  // 2) Deployment / Pullout labels (each on its own line, ABOVE the sched code)
+  let dpBlocks = '';
+  try {
+    const nameSel = document.getElementById('selName');
+    const currentName = (nameSel?.value || '').trim();
+    if (currentName && typeof computeDeploymentEventsForMonth === 'function') {
+      const evts = computeDeploymentEventsForMonth(currentName, state.viewYear, state.viewMonth) || [];
+      const todayKey = ymd(dateObj);
+      const hits = evts.filter(e => e.date === todayKey).map(e => e.label); // e.g., "DEPLOYMENT", "PULLOUT"
+      if (hits.length) {
+        dpBlocks = hits.map(lbl => `
+          <div class="text-[10px] px-1.5 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/15 text-sky-200 inline-block">
+            ${lbl}
+          </div>
+        `).join('');
+      }
+    }
+  } catch (_) { /* no-op if helper not present */ }
 
-	cell.innerHTML = `
-		<div class="flex items-center justify-between">
-		  <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}"
-						style="color:${textColor}">${dateObj.getDate()}</span>
-		</div>
-		<div class="mt-1 overflow-hidden">${badge}</div>
-	`;
+  const stackedBadges = (dpBlocks || codeBadge)
+    ? `<div class="mt-1 space-y-1">
+         ${dpBlocks ? `<div class="space-y-1">${dpBlocks}</div>` : ''}
+         ${codeBadge ? `<div>${codeBadge}</div>` : ''}
+       </div>`
+    : '';
 
-	cell.addEventListener('click', e => {
-		if (disabled) return;
-		onDayClick(id, e.shiftKey);
-	});
-	return cell;
+  // --- RENDER ---
+  cell.innerHTML = `
+    <div class="flex items-center justify-between">
+      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}"
+            style="color:${textColor}">${dateObj.getDate()}</span>
+    </div>
+    ${stackedBadges}
+  `;
+
+  cell.addEventListener('click', e => {
+    if (disabled) return;
+    onDayClick(id, e.shiftKey);
+  });
+  return cell;
 }
+
 
 function onDayClick(id, shift) {
 	const date = parseYMD(id);
