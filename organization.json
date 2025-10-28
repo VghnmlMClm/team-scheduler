@@ -18,7 +18,7 @@
 		"NAME": "Bongalbal, Ronnel",
 		"POSITION": "DEPUTY MANAGER",
 		"TEAM": [
-			{ "NAME": "Lafuente, Rj", "POSITION": "JUNIOR GIS SPECIALIST" },
+			{ "NAME": "Lafuente, RJ", "POSITION": "JUNIOR GIS SPECIALIST" },
 			{ "NAME": "Postrado, Jay", "POSITION": "JUNIOR GIS SPECIALIST" }
 		]
 	},
@@ -84,20 +84,20 @@
 		"TEAM": [
 			{ "NAME": "Cruz, Jan Michael Vincent", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
 			{ "NAME": "Dancel, Angelic", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
-			{ "NAME": "Castilla, Regine", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
+			{ "NAME": "Casilla, Regine", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
 			{ "NAME": "Reboroso, Sunrise", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
 			{ "NAME": "Rollo, Mark Gil", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
-			{ "NAME": "Tumbaga, Nicole", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" }
+			{ "NAME": "Tumbaga, Nicole Louisse", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" }
 		]
 	},
 	{
 		"NAME": "Cutamora, Marc Justin",
 		"POSITION": "LEAD SENIOR LAND TECHNICAL SPECIALIST",
 		"TEAM": [
-			{ "NAME": "Bernabe, Christopher", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
+			{ "NAME": "Bernabe, Christopher Gian", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
 			{ "NAME": "Lorenzo, Lindley", "POSITION": "SENIOR LAND TECHNICAL SPECIALIST" },
 			{ "NAME": "Dacayanan, Jessa Mae", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
-			{ "NAME": "Datul, Pel-jay", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
+			{ "NAME": "Datul, Pel-Jay", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
 			{ "NAME": "Felipe, Roberto Jr.", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" },
 			{ "NAME": "Pacada, Roniel", "POSITION": "JUNIOR LAND TECHNICAL SPECIALIST" }
 		]
