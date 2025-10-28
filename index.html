@@ -498,11 +498,13 @@ async function computeDeploymentMarkersForSelected(){
   state.deploymentMarkers.clear();
 
   // fallback window: current month if config missing
-  if (!CONFIG.START_DATE || !CONFIG.END_DATE){
-    const y = state.viewYear, m = state.viewMonth;
-    CONFIG.START_DATE = new Date(y, m, 1);
-    CONFIG.END_DATE   = new Date(y, m+1, 0);
-  }
+  const y = state.viewYear, m = state.viewMonth;
+  const fallbackStart = new Date(y, m, 1);
+  const fallbackEnd   = new Date(y, m+1, 0);
+
+  const windowStart = CONFIG.START_DATE ?? fallbackStart;
+  const windowEnd   = CONFIG.END_DATE   ?? fallbackEnd;
+
 
   const selEl = document.getElementById('selName');
   const name  = (selEl?.value || '').trim();
