@@ -674,26 +674,22 @@ function dayCell(dateObj, muted=false){
   }
 
   const marker = state.deploymentMarkers.get(id) || ''; // "DEPLOYMENT" | "PULLOUT" | ""
+  const schedCode = effective ? (LABELS[effective] || effective) : '';
 
-  const badgeText = effective ? (LABELS[effective] || effective) : '';
-
-  const markerHtml = marker
-    ? `<div class="text-[10px] px-1.5 py-0.5 rounded-full border border-sky-300/20 bg-sky-300/10 text-sky-200 inline-block">${marker}</div>`
-    : '';
-
-  const schedHtml = badgeText
-    ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 border border-black/10" style="color:${textColor}">${badgeText}</span>`
-    : '';
-
-  cell.innerHTML = `
-    <div class="flex items-center justify-between">
-      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}" style="color:${textColor}">${dateObj.getDate()}</span>
-    </div>
-    <div class="mt-1 space-y-1 overflow-hidden">
-      ${markerHtml}
-      ${schedHtml}
+  // First line: "11 - DEPLOYMENT" (marker only if present)
+  const firstLine = `
+    <div class="flex items-center gap-1" style="color:${textColor}">
+      <span class="w-7 h-7 rounded-full grid place-items-center ${isToday?'today-ring':''}">${dateObj.getDate()}</span>
+      ${marker ? `<span class="text-[11px] font-medium tracking-wide">- ${marker}</span>` : ''}
     </div>
   `;
+
+  // Second line: "[SCHED CODE]" if there is one
+  const secondLine = schedCode
+    ? `<div class="mt-0.5 text-[11px] opacity-90" style="color:${textColor}">[${schedCode}]</div>`
+    : '';
+
+  cell.innerHTML = firstLine + secondLine;
 
   cell.addEventListener('click', e => {
     if (disabled) return;
@@ -701,6 +697,7 @@ function dayCell(dateObj, muted=false){
   });
   return cell;
 }
+
 function onDayClick(id, shift) {
 	const date = parseYMD(id);
 	const wd = date.getDay();
